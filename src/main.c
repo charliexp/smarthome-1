@@ -6,7 +6,6 @@
 #include "cJSON.h"
 #include <unistd.h>
 #include <sys/queue.h>
-#include <uuid.h>
 
 #define NUM_THREADS 2
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
@@ -20,9 +19,15 @@
 #define PASSWORD    "jim777"
 #define DISCONNECT  "out"
 
-int CONNECT = 1;
 volatile MQTTClient_deliveryToken deliveredtoken;
-bool usedflag;
+int usedflag = 1;
+
+char *RESULTPUBMSG[] =
+{
+	"The other user is operating,please wait a moment.",
+	"Operation failed.",
+	"Operation success.",
+};
 
 void delivered(void *context, MQTTClient_deliveryToken dt)
 {
@@ -39,7 +44,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 	const char* user = "name";
 	const char* userid = "userid";
 	const char* type = "type";
-	const char* notificationid = "notificationid"
+	const char* notificationid = "notificationid";
 	
     printf("Message arrived\n");
 
@@ -52,7 +57,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
 		useridjson = cJSON_GetObjectItem(jsons, userid);
         if(usedflag)
         {
-        	pubClient()
+        	pubresult(OPBUSY, message);
         }
 
 	}
@@ -107,11 +112,10 @@ void *subClient(void *threadid){
    
    pthread_exit(NULL);
 }
-void *pubClient(pubmsgTypes type, char* payload, MQTTClient_message *message)
+void pubresult(pubmsgTypes type, MQTTClient_message *message)
 {
-    long tid;
-    tid = (long)threadid;
     int count = 0;
+	char topicname[MAX_TOPIC_LENGTH] = {0};
 
     //声明一个MQTTClient
     MQTTClient client;
@@ -135,23 +139,22 @@ void *pubClient(pubmsgTypes type, char* payload, MQTTClient_message *message)
         printf("Failed to connect, return code %d\n", rc);
         exit(EXIT_FAILURE);
     }
-    pubmsg.payload = payload;
-    pubmsg.payloadlen = strlen(payload);
-    pubmsg.qos = QOS;
+    pubmsg.payload = RESULTPUBMSG[type];
+    pubmsg.payloadlen = strlen(RESULTPUBMSG[type]);
+    pubmsg.qos = message->qos;
     pubmsg.retained = 0;
-    while(CONNECT){
-    MQTTClient_publishMessage(client, TOPIC, &pubmsg, &token);
-    printf("Waiting for up to %d seconds for publication of %s\n"
-            "on topic %s for client with ClientID: %s\n",
-            (int)(TIMEOUT/1000), PAYLOAD, TOPIC, CLIENTID);
-    rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-    printf("Message with delivery token %d delivered\n", token);
-    usleep(3000000L);
-    }
-    
+	sprintf(topicname, "%s", "/" + getgatewayid() + "/" + itoa(message->msgid));
+
+    MQTTClient_publishMessage(client, topicname, &pubmsg, &token);
+    rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);   
     
     MQTTClient_disconnect(client, 10000);
     MQTTClient_destroy(&client);
+}
+
+char *getgatewayid()
+{
+	return "123456789";
 }
 int main(int argc, char* argv[])
 {

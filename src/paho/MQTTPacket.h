@@ -55,12 +55,13 @@ enum msgTypes
 	DISCONNECT
 };
 
-enum pubmsgTypes
+typedef enum 
 {
 	OPBUSY = 1,
     OPFAIL,
     OPSUCCESS,
-}
+}pubmsgTypes;
+
 
 #if defined(__linux__)
 #include <endian.h>

@@ -126,6 +126,7 @@
 #include "MQTTClientPersistence.h"
 #endif
 
+
 /**
  * Return code: No error. Indicates successful completion of an MQTT client
  * operation.
@@ -196,6 +197,8 @@
  * Bad return code from subscribe, as defined in the 3.1.1 specification
  */
 #define MQTT_BAD_SUBSCRIBE 0x80
+
+#define MAX_TOPIC_LENGTH 100
 
 /**
  *  Initialization options
