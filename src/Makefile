@@ -84,4 +84,4 @@ ${MQTTVERSION_TARGET}: $(srcdir)/MQTTVersion.c $(srcdir)/MQTTAsync.h ${MQTTLIB_A
 	${CC} ${FLAGS_EXE} -o $@ -l${MQTTLIB_A} $(srcdir)/MQTTVersion.c -ldl
 	
 ${MAIN}: main.c tools/tools.c ${MQTTLIB_C_TARGET} ${MQTTLIB_CS_TARGET} ${MQTTLIB_A_TARGET} ${MQTTLIB_AS_TARGET} ${MQTTVERSION_TARGET} ${CJSON_TARGET}
-	${CC} -g -o $@ $< -l${MQTTLIB_C} -lcjson ${FLAGS_EXES} -lm
+	${CC} -g -o $@ $<  tools/tools.c -l${MQTTLIB_C} -lcjson ${FLAGS_EXES} -lm
