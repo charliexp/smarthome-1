@@ -55,7 +55,7 @@ enum msgTypes
 	DISCONNECT
 };
 
-typedef enum 
+typedef enum
 {
 	OPBUSY = 1,
     OPFAIL,
