@@ -127,7 +127,7 @@ void *pubClient(void *threadid){
     pubmsg.qos = QOS;
     pubmsg.retained = 0;
     while(CONNECT){
-    MQTTClient_publishMessage(client, TOPIC, &pubmsg, &token);
+    MQTTClient_publishMessage(client, TOPICROOT, &pubmsg, &token);
     printf("Waiting for up to %d seconds for publication of %s\n"
             "on topic %s for client with ClientID: %s\n",
             (int)(TIMEOUT/1000), pubmsg.payload, TOPICROOT, PUB_CLIENTID);
@@ -149,7 +149,7 @@ int main(int argc, char* argv[])
 	//获取每个设备Topic的根节点
 	if(getmac(mac) == 0)
 	{
-        fprintf(TOPICROOT, "/%s/", mac);    
+        sprintf(TOPICROOT, "/%s/", mac);    
 	}
     pthread_create(&threads[0], NULL, subClient, NULL);
     pthread_create(&threads[1], NULL, pubClient, NULL);
