@@ -149,6 +149,7 @@ int main(int argc, char* argv[])
 	//获取每个设备Topic的根节点
 	if(getmac(mac) == 0)
 	{
+		mac[17] = '0';
         sprintf(TOPICROOT, "/%s/", mac);    
 	}
     pthread_create(&threads[0], NULL, subClient, NULL);
