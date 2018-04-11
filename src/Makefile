@@ -43,7 +43,7 @@ END_GROUP = -Wl,--end-group
 
 CCFLAGS_SO = -g -fPIC $(CFLAGS) -Wall -fvisibility=hidden
 FLAGS_EXE = $(LDFLAGS) -I ${srcdir} -lpthread -L ${blddir}
-FLAGS_EXES = $(LDFLAGS) -I ${srcdir} -I ${cjsonsrcdir} ${START_GROUP} -lpthread -lssl -lcrypto ${END_GROUP} -L ${blddir}
+FLAGS_EXES = $(LDFLAGS) -I ${srcdir} -I ${cjsonsrcdir} ${START_GROUP} -lpthread -lssl -lcrypto ${END_GROUP} -L ${blddir} -I tools
 
 LDFLAGS_C = $(LDFLAGS) -shared -Wl,-init,$(MQTTCLIENT_INIT) -lpthread
 LDFLAGS_CS = $(LDFLAGS) -shared $(START_GROUP) -lpthread $(EXTRA_LIB) -lssl -lcrypto $(END_GROUP) -Wl,-init,$(MQTTCLIENT_INIT)
