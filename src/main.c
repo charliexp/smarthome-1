@@ -18,7 +18,7 @@
 
 char g_topicroot[20] = "/00:00:00:00:00:00/";
 char g_mac[20] = {0};
-char **g_topicthemes =
+const char **g_topicthemes =
 	{
 		"operation",
 		"update",
@@ -118,9 +118,9 @@ void onConnect(void* context, MQTTAsync_successData* response)
 
 	rc = MQTTAsync_subscribeMany(client, TOPICSNUM, g_topics, g_qoss, &opts)
 	if (rc != MQTTASYNC_SUCCESS)
-		;
-	
-	
+	{
+		printf("sub error!\n");
+	}
 }
 
 void connlost(void *context, char *cause)
@@ -138,7 +138,7 @@ void connlost(void *context, char *cause)
 
 	do
 	{
-	    rc = MQTTAsync_connect(client, &conn_opts));
+	    rc = MQTTAsync_connect(client, &conn_opts);
 	}
 	while (!rc)
 	
@@ -182,6 +182,8 @@ int main(int argc, char* argv[])
 	}
     pthread_create(&threads[0], NULL, MyMQTTClient, NULL);
     pthread_exit(NULL);
+
+	return 0;
 }
 
 
