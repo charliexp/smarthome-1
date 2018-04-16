@@ -2,165 +2,185 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "MQTTClient.h"
+#include "MQTTAsync.h"
 #include "tools.h"
-#if !defined(WIN32)
-#include <unistd.h>
-#else
-#include <windows.h>
-#endif
+#include <unistd.h>
+#include <semaphore.h>
 
-#define NUM_THREADS 2
+#define NUM_THREADS 1
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
-#define PUB_CLIENTID    "pubid" //发布客户端ID
-#define SUB_CLIENTID    "subid" //订阅客户端ID
+#define CLIENTID    "todlee" //发布客户端ID
 #define TIMEOUT     10000L
 #define QOS 1
 #define USERNAME    "root"
 #define PASSWORD    "root"
-#define DISCONNECT  "out"
-char TOPICROOT[20] = "/00:00:00:00:00:00/";
+#define TOPICSNUM 5
 
-char *topictypes = 
+char g_topicroot[20] = "/00:00:00:00:00:00/";
+char g_mac[20] = {0};
+char **g_topicthemes =
+	{
+		"operation",
+		"update",
+		"device",
+		"configuration",
+		"warning",
+	};
+
+
+int g_operationflag = 0;
+sem_t g_devicestatussem;
+int *g_qoss = {2, 1, 2, 1};
+char* g_topics[TOPICSNUM] ={0};
+
+void ConstructTopics()
 {
-	"operation",
-	"configuration",
-	"update",
-	"result",
-};
+	int i = 0;
 
-int CONNECT = 1;
-volatile MQTTClient_deliveryToken deliveredtoken;
-
-void delivered(void *context, MQTTClient_deliveryToken dt)
+	for(; i < TOPICSNUM; i++)
+	{
+		g_topics[i] = malloc(sizeof(g_topicroot) + sizeof(g_topicthemes[i]) + strlen("/+"));
+		sprintf(g_topics[i], "%s%s/+", g_topicroot, g_topicthemes[i]);
+	}
+}
+void onDisconnect(void* context, MQTTAsync_successData* response)
 {
-    printf("Message with token value %d delivery confirmed\n", dt);
-    deliveredtoken = dt;
+	printf("Successful disconnection\n");
 }
 
-int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message)
+int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *message)
 {
     int i;
     char* payloadptr;
 
     printf("Message arrived\n");
+    printf("     topic: %s\n", topicName);
+    printf("   message: ");
 
     payloadptr = message->payload;
-    if(strcmp(payloadptr, DISCONNECT) == 0){
-        printf(" \n out!!");
-        CONNECT = 0;
-    }
-    
-    for(i=0; i<message->payloadlen; i++)
-    {
-        putchar(*payloadptr++);
-    }
-    printf("\n");
-    
-    MQTTClient_freeMessage(&message);
-    MQTTClient_free(topicName);
+
+	if (strstr(topicName, "operation") != 0)
+	{
+		if (g_operationflag != 1)
+		{
+			printf("busy,wait a mement.\n");//发送操作忙消息，提示用户等待当前操作完成。
+		}
+		printf("get an operation msg.\n");
+		g_operationflag = 1;
+		sleep(10);
+	}
+	else if(strstr(topicName, "update") != 0)
+	{
+	
+	}
+	else if(strstr(topicName, "device") != 0)
+	{
+	}
+	
+    MQTTAsync_freeMessage(&message);
+    MQTTAsync_free(topicName);
     return 1;
+}
+
+void onSend(void* context, MQTTAsync_successData* response)
+{
+	MQTTAsync client = (MQTTAsync)context;
+	MQTTAsync_disconnectOptions opts = MQTTAsync_disconnectOptions_initializer;
+	int rc;
+
+	printf("Message with token value %d delivery confirmed\n", response->token);
+
+	opts.onSuccess = onDisconnect;
+	opts.context = client;
+
+	if ((rc = MQTTAsync_disconnect(client, &opts)) != MQTTASYNC_SUCCESS)
+	{
+		printf("Failed to start sendMessage, return code %d\n", rc);
+		exit(EXIT_FAILURE);
+	}
+}
+
+
+void onConnectFailure(void* context, MQTTAsync_failureData* response)
+{
+	printf("Connect failed, rc %d\n", response ? response->code : 0);
+}
+
+
+void onConnect(void* context, MQTTAsync_successData* response)
+{
+	MQTTAsync client = (MQTTAsync)context;
+	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
+	MQTTAsync_message pubmsg = MQTTAsync_message_initializer;
+	int rc;
+
+	printf("Successful connection\n");
+
+	rc = MQTTAsync_subscribeMany(client, TOPICSNUM, g_topics, g_qoss, &opts)
+	if (rc != MQTTASYNC_SUCCESS)
+		;
+	
+	
 }
 
 void connlost(void *context, char *cause)
 {
-    printf("\nConnection lost\n");
-    printf("     cause: %s\n", cause);
+	MQTTAsync client = (MQTTAsync)context;
+	MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
+	int rc;
+
+	printf("\nConnection lost\n");
+	printf("     cause: %s\n", cause);
+
+	printf("Reconnecting\n");
+	conn_opts.keepAliveInterval = 20;
+	conn_opts.cleansession = 1;
+
+	do
+	{
+	    rc = MQTTAsync_connect(client, &conn_opts));
+	}
+	while (!rc)
+	
 }
 
-void *subClient(void *argc)
+void *MyMQTTClient(void *argc)
 {  
-    MQTTClient client;
-    MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
-    int rc;
-    int ch;
+	MQTTAsync client;
+	MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
+	int rc;
 
-    MQTTClient_create(&client, ADDRESS, SUB_CLIENTID,
-        MQTTCLIENT_PERSISTENCE_NONE, NULL);
-    conn_opts.keepAliveInterval = 20;
-    conn_opts.cleansession = 1;
-    conn_opts.username = USERNAME;
-    conn_opts.password = PASSWORD;
+	MQTTAsync_create(&client, ADDRESS, CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
-    MQTTClient_setCallbacks(client, NULL, connlost, msgarrvd, delivered);
+	MQTTAsync_setCallbacks(client, client, connlost, msgarrvd, NULL);
 
-    if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
-    {
-        printf("Failed to connect, return code %d\n", rc);
-        exit(EXIT_FAILURE);
-    }
-    printf("Subscribing to topic %s\nfor client %s using QoS%d\n\n"
-           "Press Q<Enter> to quit\n\n", TOPICROOT, SUB_CLIENTID, QOS);
-    MQTTClient_subscribe(client, TOPICROOT, QOS);
-
-    do 
-    {
-        ch = getchar();
-    } while(ch!='Q' && ch != 'q');
-
-    MQTTClient_unsubscribe(client, TOPICROOT);
-    MQTTClient_disconnect(client, 10000);
-    MQTTClient_destroy(&client);
-   
-   pthread_exit(NULL);
+	conn_opts.keepAliveInterval = 20;
+	conn_opts.cleansession = 1;
+	conn_opts.onSuccess = onConnect;
+	conn_opts.onFailure = onConnectFailure;
+	conn_opts.context = client;
+	if ((rc = MQTTAsync_connect(client, &conn_opts)) != MQTTASYNC_SUCCESS)
+	{
+		printf("Failed to start connect, return code %d\n", rc);
+		exit(EXIT_FAILURE);
+	}
+	
+    MQTTAsync_destroy(&client);   
+    pthread_exit(NULL);
 }
-void *pubClient(void *threadid){
-    long tid;
-    tid = (long)threadid;
-    int count = 0;
-    //声明一个MQTTClient
-    MQTTClient client;
-    //初始化MQTT Client选项
-    MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
-    //#define MQTTClient_message_initializer { {'M', 'Q', 'T', 'M'}, 0, 0, NULL, 0, 0, 0, 0 }
-    MQTTClient_message pubmsg = MQTTClient_message_initializer;
-    //声明消息token
-    MQTTClient_deliveryToken token;
-    int rc;
-    //使用参数创建一个client，并将其赋值给之前声明的client
-    MQTTClient_create(&client, ADDRESS, PUB_CLIENTID,
-        MQTTCLIENT_PERSISTENCE_NONE, NULL);
-    conn_opts.keepAliveInterval = 20;
-    conn_opts.cleansession = 1;
-    conn_opts.username = USERNAME;
-    conn_opts.password = PASSWORD;
-     //使用MQTTClient_connect将client连接到服务器，使用指定的连接选项。成功则返回MQTTCLIENT_SUCCESS
-    if ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
-    {
-        printf("Failed to connect, return code %d\n", rc);
-        exit(EXIT_FAILURE);
-    }
-    pubmsg.payload = "smarthome process";
-    pubmsg.payloadlen = strlen("smarthome process");
-    pubmsg.qos = QOS;
-    pubmsg.retained = 0;
-    while(CONNECT){
-    MQTTClient_publishMessage(client, TOPICROOT, &pubmsg, &token);
-    printf("Waiting for up to %d seconds for publication of %s\n"
-            "on topic %s for client with ClientID: %s\n",
-            (int)(TIMEOUT/1000), pubmsg.payload, TOPICROOT, PUB_CLIENTID);
-    rc = MQTTClient_waitForCompletion(client, token, TIMEOUT);
-    printf("Message with delivery token %d delivered\n", token);
-    usleep(3000000L);
-    }
-    
-    
-    MQTTClient_disconnect(client, 10000);
-    MQTTClient_destroy(&client);
-}
+
 int main(int argc, char* argv[])
 {
     pthread_t threads[NUM_THREADS];
-    long t;
-	char mac[20] = {0};
+
+	sem_init(&g_devicestatussem, 0, 0);	
 	
 	//获取每个设备Topic的根节点
-	if(getmac(mac) == 0)
+	if(getmac(g_mac) == 0)
 	{
-        sprintf(TOPICROOT, "/%s/", mac);    
+        sprintf(g_topicroot, "/%s/", g_mac);    
 	}
-    pthread_create(&threads[0], NULL, subClient, NULL);
-    pthread_create(&threads[1], NULL, pubClient, NULL);
+    pthread_create(&threads[0], NULL, MyMQTTClient, NULL);
     pthread_exit(NULL);
 }
 
