@@ -116,7 +116,7 @@ void onConnect(void* context, MQTTAsync_successData* response)
 
 	printf("Successful connection\n");
 
-	rc = MQTTAsync_subscribeMany(client, TOPICSNUM, g_topics, g_qoss, &opts)
+	rc = MQTTAsync_subscribeMany(client, TOPICSNUM, g_topics, g_qoss, &opts);
 	if (rc != MQTTASYNC_SUCCESS)
 	{
 		printf("sub error!\n");
@@ -140,7 +140,7 @@ void connlost(void *context, char *cause)
 	{
 	    rc = MQTTAsync_connect(client, &conn_opts);
 	}
-	while (!rc)
+	while (!rc);
 	
 }
 
