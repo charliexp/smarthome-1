@@ -9,7 +9,7 @@
 
 #define NUM_THREADS 1
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
-#define CLIENTID    "todlee" //ÂèëÂ∏ÉÂÆ¢Êà∑Á´ØID
+#define CLIENTID    "todlee" //øÕªß∂ÀID
 #define TIMEOUT     10000L
 #define QOS 1
 #define USERNAME    "root"
@@ -18,28 +18,25 @@
 
 char g_topicroot[20] = "/00:00:00:00:00:00/";
 char g_mac[20] = {0};
-const char **g_topicthemes =
-	{
-		"operation",
-		"update",
-		"device",
-		"configuration",
-		"warning",
-	};
 
 
 int g_operationflag = 0;
 sem_t g_devicestatussem;
-int *g_qoss = {2, 1, 2, 1};
-char* g_topics[TOPICSNUM] ={0};
+sem_t g_mqttconnetionsem;
+//∂©‘ƒg_topics∂‘”¶µƒqos
+int g_qoss[TOPICSNUM] = {2, 1, 2, 1, 1};
+//≥Ã–Ú∆Ù∂Ø∫Û…Í«Î∂—¥Ê∑≈–Ë“™∂©‘ƒµƒtopic
+char* g_topics[TOPICSNUM] ={0x0, 0x0, 0x0, 0x0, 0x0};
+char g_topicthemes[TOPICSNUM][10] = {{"operation"}, {"update"}, {"device"}, {"config"}, {"warning"}};
 
-void ConstructTopics()
+
+void constructSubTopics()
 {
 	int i = 0;
 
 	for(; i < TOPICSNUM; i++)
 	{
-		g_topics[i] = malloc(sizeof(g_topicroot) + sizeof(g_topicthemes[i]) + strlen("/+"));
+		g_topics[i] = (char*)malloc(sizeof(g_topicroot) + sizeof(g_topicthemes[i]) + strlen("/+"));
 		sprintf(g_topics[i], "%s%s/+", g_topicroot, g_topicthemes[i]);
 	}
 }
@@ -54,8 +51,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
     char* payloadptr;
 
     printf("Message arrived\n");
-    printf("     topic: %s\n", topicName);
-    printf("   message: ");
+    printf("topic: %s\n", topicName);
+    printf("message: ");
 
     payloadptr = message->payload;
 
@@ -63,11 +60,12 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	{
 		if (g_operationflag != 1)
 		{
-			printf("busy,wait a mement.\n");//ÂèëÈÄÅÊìç‰ΩúÂøôÊ∂àÊÅØÔºåÊèêÁ§∫Áî®Êà∑Á≠âÂæÖÂΩìÂâçÊìç‰ΩúÂÆåÊàê„ÄÇ
+			printf("busy,wait a mement.\n");
 		}
 		printf("get an operation msg.\n");
 		g_operationflag = 1;
 		sleep(10);
+		g_operationflag = 0;
 	}
 	else if(strstr(topicName, "update") != 0)
 	{
@@ -104,6 +102,7 @@ void onSend(void* context, MQTTAsync_successData* response)
 void onConnectFailure(void* context, MQTTAsync_failureData* response)
 {
 	printf("Connect failed, rc %d\n", response ? response->code : 0);
+    sem_post(&g_mqttconnetionsem);
 }
 
 
@@ -131,17 +130,9 @@ void connlost(void *context, char *cause)
 
 	printf("\nConnection lost\n");
 	printf("     cause: %s\n", cause);
-
 	printf("Reconnecting\n");
-	conn_opts.keepAliveInterval = 20;
-	conn_opts.cleansession = 1;
 
-	do
-	{
-	    rc = MQTTAsync_connect(client, &conn_opts);
-	}
-	while (!rc);
-	
+    sem_post(&g_mqttconnetionsem);
 }
 
 void *MyMQTTClient(void *argc)
@@ -152,19 +143,26 @@ void *MyMQTTClient(void *argc)
 
 	MQTTAsync_create(&client, ADDRESS, CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
-	MQTTAsync_setCallbacks(client, client, connlost, msgarrvd, NULL);
+	MQTTAsync_setCallbacks(client, client, connlost, msgarrvd, NULL);  
 
 	conn_opts.keepAliveInterval = 20;
 	conn_opts.cleansession = 1;
+	conn_opts.username = "root";
+	conn_opts.password = "root";
 	conn_opts.onSuccess = onConnect;
 	conn_opts.onFailure = onConnectFailure;
 	conn_opts.context = client;
-	if ((rc = MQTTAsync_connect(client, &conn_opts)) != MQTTASYNC_SUCCESS)
+
+    while(1)
 	{
-		printf("Failed to start connect, return code %d\n", rc);
-		exit(EXIT_FAILURE);
+        sem_wait(&g_mqttconnetionsem);
+        rc = MQTTAsync_connect(client, &conn_opts);
+        if (rc != MQTTASYNC_SUCCESS)
+        {
+            printf("MyMQTTClient: MQTT connect fail!\n");
+        }
 	}
-	
+
     MQTTAsync_destroy(&client);   
     pthread_exit(NULL);
 }
@@ -174,12 +172,15 @@ int main(int argc, char* argv[])
     pthread_t threads[NUM_THREADS];
 
 	sem_init(&g_devicestatussem, 0, 0);	
-	
-	//Ëé∑ÂèñÊØè‰∏™ËÆæÂ§áTopicÁöÑÊ†πËäÇÁÇπ
+    sem_init(&g_mqttconnetionsem, 0, 1); 
+
+    
 	if(getmac(g_mac) == 0)
 	{
         sprintf(g_topicroot, "/%s/", g_mac);    
 	}
+	constructSubTopics();
+	
     pthread_create(&threads[0], NULL, MyMQTTClient, NULL);
     pthread_exit(NULL);
 
