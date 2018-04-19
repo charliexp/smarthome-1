@@ -5,7 +5,7 @@
 
 typedef enum
 {
-    BOX,
+    BOX = 1,
 	AIRCONDITIONING,
 	NEWTREND,
 	OTHERS,
@@ -18,12 +18,25 @@ typedef enum
     STANDBY,
 } DEVICESTATUS;
 
+typedef struct
+{
+	int type;
+	char *condition;
+
+}devicetask;
 
 typedef struct
 {
     zigbeeaddress address;
-	char *devicename;
+	char devicename[125];
 	DEVICETYPE devicetype;
-	DEVICESTATUS devicestatus;	
-} deviceinfo;
+	char operation;
+	devicetask task;
+} deviceoperation;
+
+typedef struct  
+{
+	long msgtype;
+	deviceoperation operation;
+};
 #endif

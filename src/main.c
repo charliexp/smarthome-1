@@ -4,7 +4,8 @@
 #include <string.h>
 #include "MQTTAsync.h"
 #include "tools.h"
-#include <unistd.h>
+#include <unistd.h>#include <sys/types.h>
+#include <sys/ipc.h>
 #include <semaphore.h>
 
 #define NUM_THREADS 1
@@ -170,9 +171,19 @@ void *MyMQTTClient(void *argc)
 int main(int argc, char* argv[])
 {
     pthread_t threads[NUM_THREADS];
+	int msgid;
 
 	sem_init(&g_devicestatussem, 0, 0);	
     sem_init(&g_mqttconnetionsem, 0, 1); 
+	mkdir("/etc/devicelist", 777);
+	key_t msqqueuekey;
+	msqqueuekey = ftok("/etc/devicelist", 1);
+	msgid = msgget(key, IPC_CREAT | 0666);
+	if (msgid < 0)
+	{
+		printf("get ipc_id error!\n");
+		return -1;
+	}
 
     
 	if(getmac(g_mac) == 0)
