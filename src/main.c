@@ -4,7 +4,8 @@
 #include <string.h>
 #include "MQTTAsync.h"
 #include "tools.h"
-#include <unistd.h>#include <sys/types.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <sys/ipc.h>
 #include <semaphore.h>
 
@@ -35,16 +36,26 @@ void constructSubTopics()
 {
 	int i = 0;
 
+    //获取网关mac地址
+	if(getmac(g_mac) == 0)
+	{
+        sprintf(g_topicroot, "/%s/", g_mac);    
+	}
+
+
 	for(; i < TOPICSNUM; i++)
 	{
 		g_topics[i] = (char*)malloc(sizeof(g_topicroot) + sizeof(g_topicthemes[i]) + strlen("/+"));
 		sprintf(g_topics[i], "%s%s/+", g_topicroot, g_topicthemes[i]);
 	}
 }
+
 void onDisconnect(void* context, MQTTAsync_successData* response)
 {
 	printf("Successful disconnection\n");
 }
+
+
 
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *message)
 {
@@ -53,7 +64,6 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 
     printf("Message arrived\n");
     printf("topic: %s\n", topicName);
-    printf("message: ");
 
     payloadptr = message->payload;
 
@@ -99,7 +109,6 @@ void onSend(void* context, MQTTAsync_successData* response)
 	}
 }
 
-
 void onConnectFailure(void* context, MQTTAsync_failureData* response)
 {
 	printf("Connect failed, rc %d\n", response ? response->code : 0);
@@ -136,7 +145,7 @@ void connlost(void *context, char *cause)
     sem_post(&g_mqttconnetionsem);
 }
 
-void *MyMQTTClient(void *argc)
+void *MQTTClient(void *argc)
 {  
 	MQTTAsync client;
 	MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
@@ -168,31 +177,45 @@ void *MyMQTTClient(void *argc)
     pthread_exit(NULL);
 }
 
-int main(int argc, char* argv[])
+/*创建四个消息队列，分布用于订阅、发布、去订阅以及设备操作消息*/
+int CreateMessageQueue()
 {
-    pthread_t threads[NUM_THREADS];
-	int msgid;
+   	int submsgid, pubmsgid, unsubmsgid, devicemsgid;     
 
-	sem_init(&g_devicestatussem, 0, 0);	
-    sem_init(&g_mqttconnetionsem, 0, 1); 
-	mkdir("/etc/devicelist", 777);
-	key_t msqqueuekey;
-	msqqueuekey = ftok("/etc/devicelist", 1);
-	msgid = msgget(key, IPC_CREAT | 0666);
-	if (msgid < 0)
+	key_t subkey, pubkey, unsubkey, devicemsgkey;
+	subkey = ftok("/etc", 's');
+    pubkey = ftok("/etc", 'p');
+    unsubkey = ftok("/etc", 'u');
+    devicemsgkey = ftok("/etc", 'd');
+    
+	submsgid = msgget(subkey, IPC_CREAT | 0666);
+    pubmsgid = msgget(pubkey, IPC_CREAT | 0666);
+    unsubmsgid = msgget(unsubkey, IPC_CREAT | 0666);
+    devicemsgid = msgget(devicemsgkey, IPC_CREAT | 0666);
+	if (submsgid < 0 || pubmsgid < 0 || unsubmsgid < 0 || devicemsgid < 0)
 	{
 		printf("get ipc_id error!\n");
 		return -1;
 	}
-
+    return 0;
     
-	if(getmac(g_mac) == 0)
-	{
-        sprintf(g_topicroot, "/%s/", g_mac);    
-	}
+}
+
+int main(int argc, char* argv[])
+{
+    pthread_t threads[NUM_THREADS];
+
+	sem_init(&g_devicestatussem, 0, 0);	
+    sem_init(&g_mqttconnetionsem, 0, 1); 
+
+    if(CreateMessageQueue() != 0)
+    {
+        printf("CreateMessageQueue failed!\n");
+        return -1;
+    }
 	constructSubTopics();
 	
-    pthread_create(&threads[0], NULL, MyMQTTClient, NULL);
+    pthread_create(&threads[0], NULL, MQTTClient, NULL);
     pthread_exit(NULL);
 
 	return 0;
