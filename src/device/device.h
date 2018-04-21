@@ -1,7 +1,10 @@
 #ifndef _DEVICE_INFO_
 #define _DEVICE_INFO_
 
-#include "zigbee.h"
+#include "../zigbee/zigbee.h"
+#define USERNAME_MAXLENGTH 50
+#define TOPIC_LENGTH 50
+#define MSG_LENGTH 200
 
 typedef enum
 {
@@ -21,12 +24,14 @@ typedef enum
 typedef struct
 {
 	int type;
-	char *condition;
+	char condition[50];
 
 }devicetask;
 
 typedef struct
 {
+	char username[USERNAME_MAXLENGTH];
+	char mqttid[16];
     zigbeeaddress address;
 	char devicename[125];
 	DEVICETYPE devicetype;
@@ -38,5 +43,18 @@ typedef struct
 {
 	long msgtype;
 	deviceoperation operation;
-};
+}deviceoperationmsg;
+
+typedef struct
+{
+	int qos;
+	char topic[TOPIC_LENGTH];
+	char msg[MSG_LENGTH];
+}mqttqueuemsg;
+
+typedef struct
+{
+	long msgtype;
+	mqttqueuemsg msg;
+}mqttmsg;
 #endif

@@ -3,11 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "MQTTAsync.h"
-#include "tools.h"
-#include <unistd.h>
+#include "tools/tools.h"
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <semaphore.h>
+#include "device/device.h"
+#include "cjson/cJSON.h"
 
 #define NUM_THREADS 1
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
@@ -18,11 +20,12 @@
 #define PASSWORD    "root"
 #define TOPICSNUM 5
 
+
 char g_topicroot[20] = "/00:00:00:00:00:00/";
 char g_mac[20] = {0};
 
-
 int g_operationflag = 0;
+sem_t g_operationsem;
 sem_t g_devicestatussem;
 sem_t g_mqttconnetionsem;
 //订阅g_topics对应的qos
@@ -50,33 +53,105 @@ void constructSubTopics()
 	}
 }
 
+void pubmsg(char* topic, char* message, int qos)
+{
+	key_t key;
+	int id;
+	size_t msglen;
+	mqttmsg msg = { 0 };
+	msg.msgtype = 0;
+	msg.msg.qos = qos;
+	strcpy(msg.msg.topic, topic);
+	strcpy(msg.msg.msg, message);
+	msglen = sizeof(mqttmsg);
+
+	printf("begin to open mqttqueue\n");
+	key = ftok("/etc", 'm');
+	id = msgget(key, IPC_CREAT | 0666);
+	if (msgsnd(id, &msg, msglen, 0) != 0)
+	{
+		printf("send mqttqueuemsg fail!\n");
+		return;
+	}
+
+	return;
+}
+
+void processoperationmsg(cJSON *root)
+{
+	printf("root = %p", root);
+	cJSON *device;
+	cJSON *devicechild;
+	deviceoperationmsg msg;
+	int devicenum = 0;
+	int i = 0;
+	key_t key;
+	int id;
+	int sendret;
+	size_t msglen;
+	key = ftok("/etc", 'd');
+	id = msgget(key, IPC_CREAT | 0666);
+	msglen = sizeof(deviceoperationmsg);
+	device = cJSON_GetObjectItem(root, "device");
+	devicenum = cJSON_GetArraySize(device);
+	for (; i < devicenum; i++)
+	{
+		devicechild = cJSON_GetArrayItem(device, i);
+		msg.msgtype = 0;
+		strcpy(msg.operation.address, cJSON_GetArrayItem(devicechild, 2)->valuestring);
+		strcpy(msg.operation.devicename, cJSON_GetArrayItem(devicechild, 0)->valuestring);
+		msg.operation.devicetype = cJSON_GetArrayItem(devicechild, 1)->valueint;
+
+		if (sendret = msgsnd(id, &msg, msglen, 0) != 0)
+		{
+			printf("sendret = %d", sendret);
+			perror("");
+			printf("send devicequeuemsg fail!\n");
+			return;
+		}
+	}
+	sem_post(&g_operationsem);
+}
+
 void onDisconnect(void* context, MQTTAsync_successData* response)
 {
 	printf("Successful disconnection\n");
 }
 
 
-
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *message)
 {
     int i;
-    char* payloadptr;
+	char* payloadptr;
+	cJSON *jsonroot;
+	char mqttid[16] = {0};
+	char topic[TOPIC_LENGTH] = { 0 };
 
     printf("Message arrived\n");
     printf("topic: %s\n", topicName);
 
-    payloadptr = message->payload;
+    payloadptr = (char*)message->payload;
+	printf("msg is %s\n", payloadptr);
 
 	if (strstr(topicName, "operation") != 0)
 	{
-		if (g_operationflag != 1)
+		if (g_operationflag)
 		{
-			printf("busy,wait a mement.\n");
+			strncpy(mqttid, payloadptr, 16);
+			sprintf(topic, "%s%s/result/%s", g_topicroot, g_topicthemes[0], mqttid);
+			char *msg = "The other user is using,please wait!";
+			pubmsg(topic, msg, 1);
 		}
-		printf("get an operation msg.\n");
-		g_operationflag = 1;
-		sleep(10);
+		else
+		{
+			g_operationflag = 1;
+			printf("get an operation msg.\n");
+			jsonroot = cJSON_Parse(payloadptr);
+			processoperationmsg(jsonroot);
+		}
+		sem_wait(&g_operationsem);
 		g_operationflag = 0;
+
 	}
 	else if(strstr(topicName, "update") != 0)
 	{
@@ -177,28 +252,23 @@ void *MQTTClient(void *argc)
     pthread_exit(NULL);
 }
 
-/*创建四个消息队列，分布用于订阅、发布、去订阅以及设备操作消息*/
+/*创建两个消息队列，分别用MQTT的订阅、发布、去订阅和存取设备操作消息*/
 int CreateMessageQueue()
 {
-   	int submsgid, pubmsgid, unsubmsgid, devicemsgid;     
+   	int mqttmsgid, devicemsgid;     
 
-	key_t subkey, pubkey, unsubkey, devicemsgkey;
-	subkey = ftok("/etc", 's');
-    pubkey = ftok("/etc", 'p');
-    unsubkey = ftok("/etc", 'u');
+	key_t mqttkey, devicemsgkey;
+	mqttkey = ftok("/etc", 'm');
     devicemsgkey = ftok("/etc", 'd');
     
-	submsgid = msgget(subkey, IPC_CREAT | 0666);
-    pubmsgid = msgget(pubkey, IPC_CREAT | 0666);
-    unsubmsgid = msgget(unsubkey, IPC_CREAT | 0666);
+	mqttmsgid = msgget(mqttkey, IPC_CREAT | 0666);
     devicemsgid = msgget(devicemsgkey, IPC_CREAT | 0666);
-	if (submsgid < 0 || pubmsgid < 0 || unsubmsgid < 0 || devicemsgid < 0)
+	if (mqttmsgid < 0 || devicemsgid < 0)
 	{
 		printf("get ipc_id error!\n");
 		return -1;
 	}
-    return 0;
-    
+    return 0;  
 }
 
 int main(int argc, char* argv[])
@@ -207,6 +277,7 @@ int main(int argc, char* argv[])
 
 	sem_init(&g_devicestatussem, 0, 0);	
     sem_init(&g_mqttconnetionsem, 0, 1); 
+	sem_init(&g_operationsem, 0, 0);
 
     if(CreateMessageQueue() != 0)
     {

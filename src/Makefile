@@ -32,7 +32,7 @@ END_GROUP = -Wl,--end-group
 
 CCFLAGS_SO = -g -fPIC $(CFLAGS) -Wall -fvisibility=hidden
 FLAGS_EXE = $(LDFLAGS) -I ${srcdir} -lpthread -L ${blddir}
-FLAGS_EXES = $(LDFLAGS) -I ${srcdir} -I ${cjsonsrcdir} ${START_GROUP} -lpthread -lssl -lcrypto ${END_GROUP} -L ${blddir} -I tools
+FLAGS_EXES = $(LDFLAGS) -I ${srcdir} -I ${cjsonsrcdir} ${START_GROUP} -lpthread -lssl -lcrypto ${END_GROUP} -L ${blddir}
 
 LDFLAGS_A = $(LDFLAGS) -shared -Wl,-init,$(MQTTASYNC_INIT) -lpthread
 
