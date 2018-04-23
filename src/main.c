@@ -11,7 +11,7 @@
 #include "device/device.h"
 #include "cjson/cJSON.h"
 
-#define NUM_THREADS 1
+#define NUM_THREADS 2
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
 #define CLIENTID    "todlee" //客户端ID
 #define TIMEOUT     10000L
@@ -19,6 +19,12 @@
 #define USERNAME    "root"
 #define PASSWORD    "root"
 #define TOPICSNUM 5
+
+typedef struct 
+{
+	long msgtype;
+	char data[500];
+}testmsg;
 
 
 char g_topicroot[20] = "/00:00:00:00:00:00/";
@@ -68,6 +74,10 @@ void pubmsg(char* topic, char* message, int qos)
 	printf("begin to open mqttqueue\n");
 	key = ftok("/etc", 'm');
 	id = msgget(key, IPC_CREAT | 0666);
+	if (id == -1)
+	{
+		perror("msgget fail!\n");
+	}
 	if (msgsnd(id, &msg, msglen, 0) != 0)
 	{
 		printf("send mqttqueuemsg fail!\n");
@@ -84,25 +94,35 @@ void processoperationmsg(cJSON *root)
 	cJSON *devicechild;
 	deviceoperationmsg msg;
 	int devicenum = 0;
-	int i = 0;
+	int i = 0, j =0;
 	key_t key;
 	int id;
 	int sendret;
-	size_t msglen;
+	size_t msglen = sizeof(deviceoperationmsg);
+	
+	for (;j<msglen;j++)
+	{
+		((char*)&msg)[j] = 0;
+	}
+
 	key = ftok("/etc", 'd');
 	id = msgget(key, IPC_CREAT | 0666);
-	msglen = sizeof(deviceoperationmsg);
+	if (id == -1)
+	{
+		perror("msgget fail!\n");
+	}
+
 	device = cJSON_GetObjectItem(root, "device");
 	devicenum = cJSON_GetArraySize(device);
 	for (; i < devicenum; i++)
 	{
 		devicechild = cJSON_GetArrayItem(device, i);
-		msg.msgtype = 0;
+		msg.msgtype = 1;
 		strcpy(msg.operation.address, cJSON_GetArrayItem(devicechild, 2)->valuestring);
 		strcpy(msg.operation.devicename, cJSON_GetArrayItem(devicechild, 0)->valuestring);
 		msg.operation.devicetype = cJSON_GetArrayItem(devicechild, 1)->valueint;
 
-		if (sendret = msgsnd(id, &msg, msglen, 0) != 0)
+		if (sendret = msgsnd(id, (void*)&msg, msglen, 0) != 0)
 		{
 			printf("sendret = %d", sendret);
 			perror("");
@@ -137,6 +157,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	{
 		if (g_operationflag)
 		{
+			/*如果有消息在处理，则返回忙碌错误*/
 			strncpy(mqttid, payloadptr, 16);
 			sprintf(topic, "%s%s/result/%s", g_topicroot, g_topicthemes[0], mqttid);
 			char *msg = "The other user is using,please wait!";
@@ -144,6 +165,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 		}
 		else
 		{
+			/*将操作消息丢入消息队列*/
 			g_operationflag = 1;
 			printf("get an operation msg.\n");
 			jsonroot = cJSON_Parse(payloadptr);
@@ -220,7 +242,7 @@ void connlost(void *context, char *cause)
     sem_post(&g_mqttconnetionsem);
 }
 
-void *MQTTClient(void *argc)
+void *mqttlient(void *argc)
 {  
 	MQTTAsync client;
 	MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
@@ -250,6 +272,11 @@ void *MQTTClient(void *argc)
 
     MQTTAsync_destroy(&client);   
     pthread_exit(NULL);
+}
+
+void devicemsgprocess(void *argc)
+{
+
 }
 
 /*创建两个消息队列，分别用MQTT的订阅、发布、去订阅和存取设备操作消息*/
@@ -286,7 +313,8 @@ int main(int argc, char* argv[])
     }
 	constructSubTopics();
 	
-    pthread_create(&threads[0], NULL, MQTTClient, NULL);
+    pthread_create(&threads[0], NULL, mqttlient, NULL);
+	pthread_create(&threads[1], NULL, devicemsgprocess, NULL);
     pthread_exit(NULL);
 
 	return 0;
