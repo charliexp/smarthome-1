@@ -50,13 +50,4 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
-.vs/ProjectSettings.json
-.vs/slnx.sqlite
-.vs/smarthome/v15/Browse.VC.db
-.vs/smarthome/v15/Browse.VC.opendb
-.vs/smarthome/v15/ipch/AutoPCH/f58cab842ca4dd9b/MAIN.ipch
-.vs/smarthome/v15/.suo
-.vs/smarthome/v15/ipch/AutoPCH/27d961f8bf15b23c/CJSON.ipch
-.vs/VSWorkspaceState.json
-.vs/smarthome/v15/.suo
-.vs/smarthome/v15/.suo
+.vs/
