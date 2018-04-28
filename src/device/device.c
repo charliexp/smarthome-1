@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "device.h"
 #include "cJSON.h"
 #include <string.h>
@@ -58,23 +59,28 @@ int sendzgbmsg(zgbaddress address, char *data, char length)
 	}
 	msg.check = sum % 256;
 
+	system("stty -F /dev/ttyS1 speed 57600 cs8 -parenb -cstopb  -echo")
 	fd = open("/dev/ttyS1", O_RDWR | O_NOCTTY | O_NDELAY);
+	if (fd < 3)
+	{
+		perror("error: open ttyS1");
+	}
 
-	if (tcgetattr(fd, &tio) != 0)
-	{
-		perror("error:SetupSerial 1\n");
-		return -1;
-	}
-	tio.c_cflag |= CLOCAL | CREAD;
-	tio.c_cflag &= ~CSIZE;
-	cfsetispeed(&tio, B57600);
-	cfsetospeed(&tio, B57600);
-	tcflush(fd, TCIFLUSH);
-	if (tcsetattr(fd, TCSANOW, &tio) != 0)
-	{
-		perror("com set error\n");
-		return -1;
-	}
+	//if (tcgetattr(fd, &tio) != 0)
+	//{
+	//	perror("error:SetupSerial 1\n");
+	//	return -1;
+	//}
+	//tio.c_cflag |= CLOCAL | CREAD;
+	//tio.c_cflag &= ~CSIZE;
+	//cfsetispeed(&tio, B57600);
+	//cfsetospeed(&tio, B57600);
+	//tcflush(fd, TCIFLUSH);
+	//if (tcsetattr(fd, TCSANOW, &tio) != 0)
+	//{
+	//	perror("com set error\n");
+	//	return -1;
+	//}
 	
 	if ( write(fd, (char *)&msg, (int)(msg.lenght + 4)) != (msg.lenght + 4))
 	{
