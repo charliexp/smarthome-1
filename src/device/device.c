@@ -59,7 +59,7 @@ int sendzgbmsg(zgbaddress address, char *data, char length)
 	}
 	msg.check = sum % 256;
 
-	system("stty -F /dev/ttyS1 speed 57600 cs8 -parenb -cstopb  -echo")
+	system("stty -F /dev/ttyS1 speed 57600 cs8 -parenb -cstopb  -echo");
 	fd = open("/dev/ttyS1", O_RDWR | O_NOCTTY | O_NDELAY);
 	if (fd < 3)
 	{
