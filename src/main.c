@@ -2,11 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 #include "MQTTAsync.h"
 #include "tools/tools.h"
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
 #include <semaphore.h>
 #include "device/device.h"
 #include "cjson/cJSON.h"
@@ -19,11 +20,12 @@
 #define QOS 1
 #define USERNAME    "root"
 #define PASSWORD    "root"
-#define TOPICSNUM 5
+#define TOPICSNUM   5
 
-char g_topicroot[20] = "/00:00:00:00:00:00/";
+char g_topicroot[20] = {0};
 char g_mac[20] = {0};
 ZGB_MSG_STATUS g_zgbmsg[20];
+cJSON* g_device;
 
 int g_operationflag = 0;
 sem_t g_operationsem;
@@ -142,7 +144,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 			/*将操作消息json链表的root封装消息丢入消息队列*/
 			g_operationflag = 1;
 			printf("get an operation msg.\n");
-			jsonroot = cJSON_Parse(payloadptr);
+			root = cJSON_Parse(payloadptr);
 
 			key = ftok("/etc/hosts", 'd');
 			id = msgget(key, IPC_CREAT | 0666);
@@ -158,9 +160,9 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 				printf("sendret = %d", sendret);
 				perror("");
 				printf("send devicequeuemsg fail!\n");
-				return;
+				return -1;
 			}
-			cJSON_Delete(jsonroot);
+			cJSON_Delete(root);
 		}
 	}
 	else if(strstr(topicName, "update") != 0)
@@ -339,7 +341,7 @@ void *mqttlient(void *argc)
 void* devicemsgprocess(void *argc)
 {
 	deviceoperationmsg msg;
-	cJSON *devices, *device, *root;
+	cJSON *devices, *device;
 	int devicenum = 0;
 	int i = 0;
 	key_t key;
@@ -365,8 +367,8 @@ void* devicemsgprocess(void *argc)
 			printf("recive devicequeuemsg fail!\n");
 			pthread_exit(NULL);
 		}
-		root = msg.p_operation_json;
-		devices = cJSON_GetObjectItem(root, "device");
+		g_device = msg.p_operation_json;
+		devices = cJSON_GetObjectItem(g_device, "device");
 		devicenum = cJSON_GetArraySize(device);
 		for (; i< devicenum; i++)
 		{
@@ -377,17 +379,21 @@ void* devicemsgprocess(void *argc)
 			}
 			packetid = getpacketid();
 			g_zgbmsg[i].packetid = packetid;
-			g_zgbmsg[i].over = FALSE;
+			g_zgbmsg[i].over = 0;
 
-			devicetype = cJSON_GetObjectItem(device, "type");
+			devicetype = cJSON_GetObjectItem(device, "type")->valueint;
 			if (device == NULL)
 			{
 				printf("error");
 			}
 			switch (devicetype)
 			{
-			DEV_SOCKET:
-
+			case DEV_SOCKET:
+				airconditioningcontrol(device);
+				break;
+			case DEV_AIR_CON:
+				airconcontrol(device);
+				break;
 			default:
 				break;
 			}

@@ -1,7 +1,8 @@
 #ifndef _DEVICE_INFO_
 #define _DEVICE_INFO_
 
-#include "cjson/cJSON.h"
+#include "cJSON.h"
+
 #define USERNAME_MAXLENGTH 50
 #define TOPIC_LENGTH 100
 #define MSG_LENGTH 200
@@ -24,8 +25,8 @@
 #define ZGB_RESPONSE 0x01 //响应报文
 #define ZGB_DEVICETYPE 0x11 //设备类型
 #define ZGB_HUMIDITY 0x21 //湿度调节
-//#define ZGB_HUMIDITY 0x22 //冷暖调节
-//#define ZGB_HUMIDITY 0x23 //空调三级风速
+#define ZGB_COLD_WARM_REGULATION 0x22 //冷暖调节
+#define ZGB_AIR_CONDITIONING_THREE_WIND_LEVEL 0x23 //空调三级风速
 //#define ZGB_HUMIDITY 0x24 //空调无级风速
 //#define ZGB_HUMIDITY 0x25 //新风三级风速
 //#define ZGB_HUMIDITY 0x26 //新风无级风速
@@ -55,8 +56,8 @@ typedef struct
 {
 	BYTES2 framecontrol;
 	char reserved0[6];
-	zgbaddress sourceaddress;
-	zgbaddress destionationaddress;
+	zgbaddress src;
+	zgbaddress dest;
 	char reserved1[2];
 	BYTES2 cmdid;
 	BYTES2 groupid;
@@ -68,6 +69,8 @@ typedef struct
 	char header;
 	char lenght;
 	Payload payload;
+	char check;
+	char footer;
 } zigbeemsg;
 
 typedef enum
@@ -119,10 +122,19 @@ typedef struct
 {
 	char packetid;
 	char result;
-	BOOL over;//判断该消息是否已收到回复
+	char over;//判断该消息是否已收到回复
 }ZGB_MSG_STATUS;
 
-
+/*分配zigbee报文的packetid*/
 char getpacketid(void);
+
+/*空调控制接口*/
+int airconditioningcontrol(cJSON *op);
+
+/*新风控制接口*/
+int airconcontrol(cJSON *op);
+
+/*zigbee消息发送接口*/
+int sendzgbmsg(zgbaddress address, char *data, char length);
 
 #endif
