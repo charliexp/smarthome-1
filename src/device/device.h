@@ -48,7 +48,7 @@ typedef struct
 	char sub;
 	char opt;
 	char length;
-	char *data;
+	char data[72];
 }ADF;
 
 

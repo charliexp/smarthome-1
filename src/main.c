@@ -369,7 +369,7 @@ void* devicemsgprocess(void *argc)
 		}
 		g_device = msg.p_operation_json;
 		devices = cJSON_GetObjectItem(g_device, "device");
-		devicenum = cJSON_GetArraySize(device);
+		devicenum = cJSON_GetArraySize(devices);
 		for (; i< devicenum; i++)
 		{
 			device = cJSON_GetArrayItem(devices, i);
