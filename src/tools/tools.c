@@ -4,19 +4,29 @@
  * by lipenghui 2018.04.10
  *******************************************************************************/
 
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "tools.h"
 
 int getmac(char *address)
 {
-	FILE *fp;
-	fp = popen("cat /sys/class/net/eth0/address", "r");
-	if (fgets(address, 20, fp))
+	int fd;
+	int ret;
+	fd = open("/sys/class/net/eth0/address", O_RDONLY);
+	if (fd == -1)
 	{
-		address[17] = '0'; //shell命令执行完输出最后带有\n,此处把\n去掉
-		return 0;
+		printf("get macaddress error!\n");
+		return -1;
 	}
-	return -1;	
+
+	ret = read(fd, address, 16);
+	if (ret == -1)
+	{
+		printf("get macaddress error!\n");
+		return -2;
+	}
+	return 0;	
 }
 

@@ -1,11 +1,14 @@
 #ifndef _DEVICE_INFO_
 #define _DEVICE_INFO_
 
-#include "cJSON.h"
+#include "../cjson/cJSON.h"
 
 #define USERNAME_MAXLENGTH 50
 #define TOPIC_LENGTH 100
 #define MSG_LENGTH 200
+#define MQTT_MSG_TYPE_PUB  1
+#define MQTT_MSG_TYPE_SUB  2
+#define MQTT_MSG_TYPE_UNSUB 3
 
 /*设备类型*/
 #define DEV_BOOT			0x00	// 空设备，特指Boot Loader
@@ -27,6 +30,11 @@
 #define ZGB_HUMIDITY 0x21 //湿度调节
 #define ZGB_COLD_WARM_REGULATION 0x22 //冷暖调节
 #define ZGB_AIR_CONDITIONING_THREE_WIND_LEVEL 0x23 //空调三级风速
+#define ZGB_SOCKET_CONTROL 0x30 //插座开关调节
+
+#define SOCKET_OPEN		0x01 // 插座断电
+#define SOCKET_CLOSE   	0x02// 插座上电
+
 //#define ZGB_HUMIDITY 0x24 //空调无级风速
 //#define ZGB_HUMIDITY 0x25 //新风三级风速
 //#define ZGB_HUMIDITY 0x26 //新风无级风速
@@ -42,13 +50,21 @@
 typedef char zgbaddress[8];
 typedef char BYTES2[2];
 
+typedef struct 
+{
+	char version;
+	char packetid;
+	char devicecmdid;
+	char data[69];
+}devicemsg;
+
 typedef struct
 {
 	BYTES2 index;
 	char sub;
 	char opt;
 	char length;
-	char data[72];
+	devicemsg devmsg;
 }ADF;
 
 
@@ -67,7 +83,7 @@ typedef struct
 typedef struct
 {
 	char header;
-	char lenght;
+	char msglength;
 	Payload payload;
 	char check;
 	char footer;
@@ -75,28 +91,10 @@ typedef struct
 
 typedef enum
 {
-    BOX = 1,
-	AIRCONDITIONING,
-	NEWTREND,
-	OTHERS,
-} DEVICETYPE;
-
-typedef enum
-{
 	ON,
     CLOSE,
     STANDBY,
 } DEVICESTATUS;
-
-typedef struct
-{
-	char username[USERNAME_MAXLENGTH];
-	char mqttid[16];
-    zgbaddress address;
-	char devicename[125];
-	DEVICETYPE devicetype;
-	char operation;
-} deviceoperation;
 
 typedef struct  
 {
@@ -108,8 +106,8 @@ typedef struct
 {
 	int qos;
 	int retained;
-	char topic[TOPIC_LENGTH];
-	char msg[MSG_LENGTH];
+	char* topic; //指针指向堆，消息处理后需要free
+	char* msgcontent; //指针指向堆，消息处理后需要free
 }mqttqueuemsg;
 
 typedef struct
@@ -125,16 +123,19 @@ typedef struct
 	char over;//判断该消息是否已收到回复
 }ZGB_MSG_STATUS;
 
-/*分配zigbee报文的packetid*/
+/*分配供zigbee报文使用的packetid*/
 char getpacketid(void);
 
 /*空调控制接口*/
-int airconditioningcontrol(cJSON *op);
+int airconcontrol(cJSON *device, char packetid);
 
 /*新风控制接口*/
-int airconcontrol(cJSON *op);
+int freshaircontrol(cJSON *device, char packetid);
 
+/*插座控制*/
+int socketcontrol(cJSON *device, char packetid);
 /*zigbee消息发送接口*/
 int sendzgbmsg(zgbaddress address, char *data, char length);
+
 
 #endif

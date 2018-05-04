@@ -4,15 +4,11 @@ SHELL = /bin/sh
 srcdir = paho
 blddir = ../lib
 bindir = ../output
-cjsonsrcdir = cjson
 
-SOURCE_FILES = $(wildcard $(srcdir)/*.c)
-SOURCE_FILES_A = $(filter-out $(srcdir)/MQTTClient.c $(srcdir)/MQTTVersion.c $(srcdir)/SSLSocket.c, $(SOURCE_FILES))
-CJSON_FILES = $(wildcard $(cjsonsrcdir)/*.c)
+SOURCE_FILES = main.c $(wildcard cjson/*.c) $(wildcard device/*.c) $(wildcard log/*.c) $(wildcard tools/*.c) $(wildcard mqttserver/*.c) 
+MQTT_FILES = $(filter-out $(srcdir)/MQTTClient.c $(srcdir)/MQTTVersion.c $(srcdir)/SSLSocket.c, $(wildcard paho/*.c))
 
 HEADERS = $(srcdir)/*.h
-HEADERS_C = $(filter-out $(srcdir)/MQTTAsync.h, $(HEADERS))
-HEADERS_A = $(HEADERS)
 
 MQTTLIB_A = paho-mqtt3a
 
@@ -32,31 +28,21 @@ END_GROUP = -Wl,--end-group
 
 CCFLAGS_SO = -g -fPIC $(CFLAGS) -Wall -fvisibility=hidden
 FLAGS_EXE = $(LDFLAGS) -I ${srcdir} -lpthread -L ${blddir}
-FLAGS_EXES = $(LDFLAGS) -I ${srcdir} -I ${cjsonsrcdir} ${START_GROUP} -lpthread -lssl -lcrypto ${END_GROUP} -L ${blddir}
-
+FLAGS_EXES = $(LDFLAGS) -I ${srcdir} ${START_GROUP} -lpthread -lssl -lcrypto ${END_GROUP} -L ${blddir}
 LDFLAGS_A = $(LDFLAGS) -shared -Wl,-init,$(MQTTASYNC_INIT) -lpthread
-
-EXTRA_LIB = -ldl
-
 LDFLAGS_A += -Wl,-soname,lib${MQTTLIB_A}.so
 
 
 all: build
 
-build: | ${MQTTLIB_A_TARGET} ${MQTTVERSION_TARGET} ${CJSON_TARGET} ${MAIN}
+build: | ${MQTTLIB_A_TARGET} ${MAIN}
 
 clean:
 	rm -rf ${blddir}/*
 	rm -rf ${bindir}/*
 	
-${CJSON_TARGET}: ${CJSON_FILES}
-	${CC} -shared -fPIC -g -o $@ ${CJSON_FILES} -lm
+${MQTTLIB_A_TARGET}: ${MQTT_FILES} ${HEADERS}
+	${CC} ${CCFLAGS_SO} -o $@ ${MQTT_FILES} ${LDFLAGS_A}
 	
-${MQTTLIB_A_TARGET}: ${SOURCE_FILES_A} ${HEADERS_A}
-	${CC} ${CCFLAGS_SO} -o $@ ${SOURCE_FILES_A} ${LDFLAGS_A}
-
-${MQTTVERSION_TARGET}: $(srcdir)/MQTTVersion.c $(srcdir)/MQTTAsync.h ${MQTTLIB_A_TARGET} $(MQTTLIB_CS_TARGET)
-	${CC} ${FLAGS_EXE} -o $@ -l${MQTTLIB_A} $(srcdir)/MQTTVersion.c -ldl
-	
-${MAIN}: main.c tools/tools.c device/device.c ${MQTTLIB_A_TARGET} ${MQTTVERSION_TARGET} ${CJSON_TARGET} 
-	${CC} -g -o $@ $<  tools/tools.c device/device.c -l${MQTTLIB_A} -lcjson ${FLAGS_EXES} -lm
+${MAIN}: ${SOURCE_FILES} ${MQTTLIB_A_TARGET}
+	${CC} -g -o $@ ${SOURCE_FILES} -l${MQTTLIB_A} ${FLAGS_EXES} -lm -std=c11
