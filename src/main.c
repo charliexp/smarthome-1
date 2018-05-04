@@ -5,6 +5,8 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <semaphore.h>
 
@@ -18,13 +20,12 @@
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
 #define CLIENTID    "todlee" //客户端ID
 #define CLIENTID1    "todlee_pub" //客户端ID
-#define TIMEOUT     10000L
 #define QOS 1
 #define USERNAME    "root"
 #define PASSWORD    "root"
 #define TOPICSNUM   5
 #define RESPONSE_WAIT 5000000 //消息响应等待时间5000000us = 5s
-#define TIMEOUT     10000L
+#define TIMEOUT     10000
 #define ZGB_ADDRESS_LENGTH 8
 
 char g_topicroot[20] = {0};
@@ -397,7 +398,7 @@ void* uartlisten(void *argc)
 
 	while (true)
 	{
-		fd = open("/dev/ttyS1", O_RDONLY | O_NOCTTY);
+		fd = open("/dev/ttyS1", O_RDONLY | O_NOCTTY, 0);
 		if (fd < 3)
 		{
 			perror("error: open ttyS1 fail!\n");
@@ -417,7 +418,7 @@ void* uartlisten(void *argc)
 				break;
 			}
 			//zgb消息提取
-			zgbmsginit(&msg);
+			zgbmsginit(&zgbmsg);
 			zgbmsg.header = 0x2A;
 			zgbmsg.msglength = msgbuf[i + 1];
 			zgbmsg.check = msgbuf[i + 1 + zgbmsg.msglength + 1];
