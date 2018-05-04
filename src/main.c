@@ -402,7 +402,6 @@ void* mqttqueueprocess(void *argc)
 	int result;
 
 	MQTTAsync_create(&client, ADDRESS, CLIENTID1, MQTTCLIENT_PERSISTENCE_NONE, NULL);
-
 	MQTTAsync_setCallbacks(client, client, connlost, msgarrvd, NULL);
 
 	conn_opts.keepAliveInterval = 20;
@@ -437,7 +436,7 @@ void* mqttqueueprocess(void *argc)
 		switch (msg.msgtype)
 		{
 		case MQTT_MSG_TYPE_PUB:
-			result = MQTTAsync_send(client, (const char*)&msg.msg.topic, strlen(msg.msg.msgcontent),
+			result = MQTTAsync_send(client, (const char*)msg.msg.topic, strlen(msg.msg.msgcontent),
 				(void *)msg.msg.msgcontent, msg.msg.qos, msg.msg.retained, &opts);
 			if (result != MQTTASYNC_SUCCESS)
 			{
@@ -445,12 +444,12 @@ void* mqttqueueprocess(void *argc)
 			}
 			break;
 		case MQTT_MSG_TYPE_SUB:
-			result = MQTTAsync_subscribe(client, (const char*)&msg.msg.topic, msg.msg.qos, &opts);
+			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, &opts);
 			if (result != MQTTASYNC_SUCCESS)
 				printf("MQTTAsync_subscribe fail!\n");
 			break;
 		case MQTT_MSG_TYPE_UNSUB:
-			result = MQTTAsync_unsubscribe(client, (const char*)&msg.msg.topic, &opts);
+			result = MQTTAsync_unsubscribe(client, (const char*)msg.msg.topic, &opts);
 			if (result != MQTTASYNC_SUCCESS)
 				printf("MQTTAsync_unsubscribe fail!\n");
 			break;
