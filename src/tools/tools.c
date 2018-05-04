@@ -30,6 +30,7 @@ int getmac(char *address)
 		close(fd);
 		return -2;
 	}
+	address[strlen(address) - 1] = 0;
 	close(fd);
 	return 0;	
 }
