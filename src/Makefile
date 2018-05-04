@@ -28,7 +28,7 @@ END_GROUP = -Wl,--end-group
 
 CCFLAGS_SO = -g -fPIC $(CFLAGS) -Wall -fvisibility=hidden
 FLAGS_EXE = $(LDFLAGS) -I ${srcdir} -lpthread -L ${blddir}
-FLAGS_EXES = $(LDFLAGS) -I ${srcdir} ${START_GROUP} -lpthread -lssl -lcrypto ${END_GROUP} -L ${blddir}
+FLAGS_EXES = $(LDFLAGS) -I ${srcdir} ${START_GROUP} -lpthread -lssl -lcrypto ${END_GROUP} -L ${blddir} -D_SVID_SOURCE
 LDFLAGS_A = $(LDFLAGS) -shared -Wl,-init,$(MQTTASYNC_INIT) -lpthread
 LDFLAGS_A += -Wl,-soname,lib${MQTTLIB_A}.so
 
