@@ -415,24 +415,23 @@ void* mqttqueueprocess(void *argc)
 	{
 		printf("MyMQTTClient: MQTT connect fail!\n");
 	}
+	printf("enter mqttqueueprocess pthread!\n");
+	key = ftok("/etc/hosts", 'm');
+	id = msgget(key, IPC_CREAT | 0666);
+	if (id == -1)
+	{
+		perror("msgget fail!\n");
+	}
 
 	/*处理mqtt消息队列*/
 	while (1)
 	{
-		printf("enter mqttqueueprocess pthread!\n");
-		key = ftok("/etc/hosts", 'm');
-		id = msgget(key, IPC_CREAT | 0666);
-		if (id == -1)
-		{
-			perror("msgget fail!\n");
-		}
-
 		ret = msgrcv(id, (void*)&msg, sizeof(mqttmsg), 0, 0);
 		if (ret == -1)
 		{
 			perror("read mqttmsg fail!\n");
 		}
-
+		printf("receive a msg:type:%d,topic:%s\n", msg.msgtype, msg.msg.topic);
 		switch (msg.msgtype)
 		{
 		case MQTT_MSG_TYPE_PUB:
