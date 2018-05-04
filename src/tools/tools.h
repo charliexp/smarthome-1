@@ -17,4 +17,8 @@ char getpacketid(void);
 */
 int getmac(char *address);
 
+
+/*睡眠msec毫秒*/
+void milliseconds_sleep(unsigned long msec);
+
 #endif

@@ -6,8 +6,6 @@
 
 #include "device.h"
 
-char g_current_packetid = 0;
-
 void zgbmsginit(zigbeemsg *msg)
 {
 	memset((char*)msg, 0, sizeof(zigbeemsg));

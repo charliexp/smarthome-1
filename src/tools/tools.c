@@ -9,9 +9,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/select.h>
 #include <string.h>
 #include "tools.h"
 
+char g_current_packetid = 0;
 
 char getpacketid(void)
 {
@@ -43,5 +45,17 @@ int getmac(char *address)
 	address[strlen(address) - 1] = 0;
 	close(fd);
 	return 0;	
+}
+
+/*Ë¯ÃßmsecºÁÃë*/
+void milliseconds_sleep(unsigned long msec) 
+{
+	if (msec < 0)
+		return;
+	struct timeval tv;
+	tv.tv_sec = msec / 1000;
+	tv.tv_usec = (msec % 1000) * 1000;
+	
+	select(0, NULL, NULL, NULL, &tv);
 }
 

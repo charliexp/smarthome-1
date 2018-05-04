@@ -25,7 +25,6 @@
 #define PASSWORD    "root"
 #define TOPICSNUM   5
 #define RESPONSE_WAIT 5000000 //消息响应等待时间5000000us = 5s
-#define TIMEOUT     10000
 #define ZGB_ADDRESS_LENGTH 8
 
 char g_topicroot[20] = {0};
@@ -364,7 +363,7 @@ void* devicemsgprocess(void *argc)
 			{
 				break;
 			}
-			usleep(50000);
+			milliseconds_sleep(50);
 		}
 
 		for (i=0; i<devicenum; i++)
@@ -437,11 +436,11 @@ void* uartlisten(void *argc)
 				continue;
 			}
 
-			strncpy((char *)zgbmsg.payload.src, msgbuf + 10， ZGB_ADDRESS_LENGTH);
-			zgbmsg.payload.adf.devmsg.packetid = msgbuf[i + &zgbmsg.payload.adf.devmsg.packetid - &zgbmsg];
-			zgbmsg.payload.adf.devmsg.devicecmdid = msgbuf[i + &zgbmsg.payload.adf.devmsg.packetid - &zgbmsg + 1];
-			zgbmsg.payload.adf.devmsg.data = malloc(zgbmsg.msglength - 38 + 1); //38为coo报文payload数据中除data数据外的字节数，1是用来赋值字符串结束符0
-			strncpy(zgbmsg.payload.adf.devmsg.data, msgbuf + 40， zgbmsg.msglength - 38);
+			strncpy((char *)zgbmsg.payload.src, msgbuf + 10, ZGB_ADDRESS_LENGTH);
+			zgbmsg.payload.adf.devmsg.packetid = msgbuf[i + (int)&zgbmsg.payload.adf.devmsg.packetid - (int)&zgbmsg];
+			zgbmsg.payload.adf.devmsg.devicecmdid = msgbuf[i + (int)&zgbmsg.payload.adf.devmsg.packetid - (int)&zgbmsg + 1];
+			//zgbmsg.payload.adf.devmsg.data = malloc(zgbmsg.msglength - 38 + 1); //38为coo报文payload数据中除data数据外的字节数，1是用来赋值字符串结束符0
+			strncpy(zgbmsg.payload.adf.devmsg.data, msgbuf + 40, zgbmsg.msglength - 38);
 			zgbmsg.payload.adf.devmsg.data[zgbmsg.msglength - 38] = 0;
 		}
 	}
