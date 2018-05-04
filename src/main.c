@@ -85,15 +85,15 @@ void mqttmsgqueue(long messagetype, char* topic, char* message, int qos, int ret
 	if (topic != NULL)
 	{
 		msg.msg.topic = malloc(strlen(topic)+1);
-		strcpy(msg.msg.topic, topic);
+		strncpy(msg.msg.topic, topic, strlen(topic));
 		msg.msg.topic[strlen(topic)] = 0;
 	}
 
 	if (message != NULL && messagetype == 1)
 	{
 		msg.msg.msgcontent = malloc(strlen(message) + 1);
-		strcpy(msg.msg.msgcontent, message);
-		msg.msg.msgcontent[strlen(message) + 1] = 0;
+		strncpy(msg.msg.msgcontent, message, strlen(message));
+		msg.msg.msgcontent[strlen(message)] = 0;
 	}
 
 	msglen = sizeof(mqttmsg);
@@ -460,7 +460,6 @@ void* mqttqueueprocess(void *argc)
 			{
 				printf("MQTTAsync_send fail! %d\n", result);
 			}
-
 			break;
 		case MQTT_MSG_TYPE_SUB:
 			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, &opts);
