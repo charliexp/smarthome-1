@@ -21,7 +21,7 @@ int getmac(char *address)
 		return -1;
 	}
 
-	ret = read(fd, address, 16);
+	ret = read(fd, address, 20);
 	if (ret == -1)
 	{
 		printf("get macaddress error!\n");
