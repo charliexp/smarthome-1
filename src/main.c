@@ -24,6 +24,7 @@
 #define PASSWORD    "root"
 #define TOPICSNUM   5
 #define RESPONSE_WAIT 5000000 //消息响应等待时间5000000us = 5s
+#define TIMEOUT     10000L
 
 char g_topicroot[20] = {0};
 char g_mac[20] = {0};
@@ -387,6 +388,20 @@ void* uartlisten(void *argc)
 	pthread_exit(NULL);
 }
 
+void mqttpub_onFailure(void* context, MQTTAsync_failureData* response)
+{
+	printf("pub msg fail!\n");
+	printf("The token:%d\n", response->token);
+	printf("The code:%d\n", response->code);
+	printf("The token:%s\n", response->message);
+}
+
+void mqtt_onSuccess(void* context, MQTTAsync_successData* response)
+{
+	printf("pub msg success!\n");
+}
+
+
 
 void* mqttqueueprocess(void *argc)
 {
@@ -410,6 +425,9 @@ void* mqttqueueprocess(void *argc)
 	conn_opts.password = "root";
 	conn_opts.onFailure = onConnectFailure;
 	conn_opts.context = client;
+
+	opts.onFailure = mqttpub_onFailure;
+	opts.onSuccess = mqtt_onSuccess;
 	rc = MQTTAsync_connect(client, &conn_opts);
 	if (rc != MQTTASYNC_SUCCESS)
 	{
@@ -431,16 +449,18 @@ void* mqttqueueprocess(void *argc)
 		{
 			perror("read mqttmsg fail!\n");
 		}
-		printf("receive a msg:type:%d,topic:%s\n", msg.msgtype, msg.msg.topic);
+
 		switch (msg.msgtype)
 		{
 		case MQTT_MSG_TYPE_PUB:
 			result = MQTTAsync_send(client, (const char*)msg.msg.topic, strlen(msg.msg.msgcontent),
 				(void *)msg.msg.msgcontent, msg.msg.qos, msg.msg.retained, &opts);
+			
 			if (result != MQTTASYNC_SUCCESS)
 			{
 				printf("MQTTAsync_send fail! %d\n", result);
 			}
+
 			break;
 		case MQTT_MSG_TYPE_SUB:
 			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, &opts);
