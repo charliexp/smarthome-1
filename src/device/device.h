@@ -123,8 +123,8 @@ typedef struct
 	char over;//判断该消息是否已收到回复
 }ZGB_MSG_STATUS;
 
-/*分配供zigbee报文使用的packetid*/
-char getpacketid(void);
+/*zgb消息初始化*/
+void zgbmsginit(zigbeemsg *msg);
 
 /*空调控制接口*/
 int airconcontrol(cJSON *device, char packetid);

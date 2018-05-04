@@ -19,11 +19,6 @@ void zgbmsginit(zigbeemsg *msg)
 	msg->footer = 0x23;
 }
 
-char getpacketid(void)
-{
-	return (g_current_packetid++) % 256;
-}
-
 int airconcontrol(cJSON *device, char packetid)
 {
 	zgbaddress address;

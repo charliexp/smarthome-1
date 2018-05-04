@@ -25,6 +25,7 @@
 #define TOPICSNUM   5
 #define RESPONSE_WAIT 5000000 //消息响应等待时间5000000us = 5s
 #define TIMEOUT     10000L
+#define ZGB_ADDRESS_LENGTH 8
 
 char g_topicroot[20] = {0};
 char g_mac[20] = {0};
@@ -244,6 +245,7 @@ void onConnect(void* context, MQTTAsync_successData* response)
 	return;
 }
 
+/*MQTT订阅消息处理消息的进程*/
 void *mqttlient(void *argc)
 {  
 	MQTTAsync client;
@@ -277,6 +279,7 @@ void *mqttlient(void *argc)
     pthread_exit(NULL);
 }
 
+/*设备消息的处理进程*/
 void* devicemsgprocess(void *argc)
 {
 	deviceoperationmsg msg;
@@ -382,9 +385,65 @@ void* devicemsgprocess(void *argc)
 	pthread_exit(NULL);
 }
 
+/*监听串口的进程，提取单片机上传的zgb消息*/
 void* uartlisten(void *argc)
 {
+	int fd;
+	char msgbuf[1024]; //暂时使用1024字节存储串口数据，后续测试读取时串口最大数据量
+	int nByte;
+	int bitflag;
+	zigbeemsg zgbmsg;
+	int i, j, sum;
 
+	while (true)
+	{
+		fd = open("/dev/ttyS1", O_RDONLY | O_NOCTTY);
+		if (fd < 3)
+		{
+			perror("error: open ttyS1 fail!\n");
+		}
+
+		nByte = read(fd, msgbuf, 1024);
+		for (i = 0; i < nByte; )
+		{
+			if (msgbuf[i] != 0x2A)
+			{
+				i++;
+				continue;
+			}
+			if (msgbuf[i + 1] > nByte - 4)
+			{
+				printf("Wrong format!\n");
+				break;
+			}
+			//zgb消息提取
+			zgbmsginit(&msg);
+			zgbmsg.header = 0x2A;
+			zgbmsg.msglength = msgbuf[i + 1];
+			zgbmsg.check = msgbuf[i + 1 + zgbmsg.msglength + 1];
+			zgbmsg.footer = msgbuf[i + 1 + zgbmsg.msglength + 2];
+			sum = 0;
+
+			//zgb消息的check校验
+			for (j = 0; j < zgbmsg.msglength; j++)
+			{
+				sum += msgbuf[j + 2];
+			}
+			if (sum%256 != zgbmsg.check)
+			{
+				printf("Wrong format!\n");
+				i++;
+				continue;
+			}
+
+			strncpy((char *)zgbmsg.payload.src, msgbuf + 10， ZGB_ADDRESS_LENGTH);
+			zgbmsg.payload.adf.devmsg.packetid = msgbuf[i + &zgbmsg.payload.adf.devmsg.packetid - &zgbmsg];
+			zgbmsg.payload.adf.devmsg.devicecmdid = msgbuf[i + &zgbmsg.payload.adf.devmsg.packetid - &zgbmsg + 1];
+			zgbmsg.payload.adf.devmsg.data = malloc(zgbmsg.msglength - 38 + 1); //38为coo报文payload数据中除data数据外的字节数，1是用来赋值字符串结束符0
+			strncpy(zgbmsg.payload.adf.devmsg.data, msgbuf + 40， zgbmsg.msglength - 38);
+			zgbmsg.payload.adf.devmsg.data[zgbmsg.msglength - 38] = 0;
+		}
+	}
 	pthread_exit(NULL);
 }
 
@@ -401,8 +460,7 @@ void mqtt_onSuccess(void* context, MQTTAsync_successData* response)
 	printf("pub msg success!\n");
 }
 
-
-
+/*MQTT消息队列的处理进程*/
 void* mqttqueueprocess(void *argc)
 {
 	MQTTAsync client;

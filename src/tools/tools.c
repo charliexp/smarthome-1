@@ -12,6 +12,15 @@
 #include <string.h>
 #include "tools.h"
 
+
+char getpacketid(void)
+{
+	char packetid;
+	packetid = (g_current_packetid++) % 256;
+
+	return packetid;
+}
+
 int getmac(char *address)
 {
 	int fd;
