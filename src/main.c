@@ -398,6 +398,7 @@ void* uartlisten(void *argc)
 	int i, j, sum;
 	key_t key;
 	int id;
+    int ret;
 
     key = ftok("/etc/hosts", 'z');
 	id = msgget(key, IPC_CREAT | 0666);
@@ -464,9 +465,9 @@ void* uartlisten(void *argc)
             {
                 if (j >= zmsg.payload.adf.length+37)
                 {
-                    printf("%x ", (char*)zmsg+sizeof(zmsg)-(zmsg.msglength+4-j));
+                    printf("%x ", *((char*)zmsg+sizeof(zmsg)-(zmsg.msglength+4-j)));
                 }
-                printf("%x ", (char*)zmsg+j)
+                printf("%x ", *((char*)zmsg+j));
             }
 		}
 	}

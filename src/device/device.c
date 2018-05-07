@@ -8,7 +8,7 @@
 
 void zgbmsginit(zgbmsg *msg)
 {
-	memset((char*)msg, 0, sizeof(zigbeemsg));
+	memset((char*)msg, 0, sizeof(zgbmsg));
 	msg->header = 0x2A;
 	msg->payload.framecontrol[0] = 0x41;
 	msg->payload.framecontrol[1] = 0x88;
