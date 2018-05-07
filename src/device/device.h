@@ -87,7 +87,13 @@ typedef struct
 	Payload payload;
 	char check;
 	char footer;
-} zigbeemsg;
+} zgbmsg;
+
+typedef struct
+{
+    long msgtype;
+    zigbeemsg msg;
+}zgbqueuemsg;
 
 typedef enum
 {
@@ -108,13 +114,13 @@ typedef struct
 	int retained;
 	char* topic; //指针指向堆，消息处理后需要free
 	char* msgcontent; //指针指向堆，消息处理后需要free
-}mqttqueuemsg;
+}mqttmsg;
 
 typedef struct
 {
 	long msgtype;
-	mqttqueuemsg msg;
-}mqttmsg;
+	mqttmsg msg;
+}mqttqueuemsg;
 
 typedef struct
 {

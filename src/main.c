@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <semaphore.h>
+#include <sqlite3.h> 
 
 #include "paho/MQTTAsync.h"
 #include "tools/tools.h"
@@ -34,8 +35,8 @@ int g_zgbmsgnum;
 cJSON* g_device;
 
 int g_operationflag = 0;
-sem_t g_operationsem;
-sem_t g_devicestatussem;
+//sem_t g_operationsem;
+//sem_t g_devicestatussem;
 sem_t g_mqttconnetionsem;
 //订阅g_topics对应的qos
 int g_qoss[TOPICSNUM] = {2, 1, 2, 1, 1};
@@ -79,7 +80,7 @@ void mqttmsgqueue(long messagetype, char* topic, char* message, int qos, int ret
 	int id;
 	int ret;
 	size_t msglen;
-	mqttmsg msg = { 0 };
+	mqttqueuemsg msg = { 0 };
 	msg.msgtype = 1;
 	msg.msg.qos = qos;
 	msg.msg.retained = 0;
@@ -392,8 +393,18 @@ void* uartlisten(void *argc)
 	char msgbuf[1024]; //暂时使用1024字节存储串口数据，后续测试读取时串口最大数据量
 	int nByte;
 	int bitflag;
-	zigbeemsg zgbmsg;
+	zgbmsg zmsg;
+    zgbqueuemsg zgbqmsg;
 	int i, j, sum;
+	key_t key;
+	int id;
+
+    key = ftok("/etc/hosts", 'z');
+	id = msgget(key, IPC_CREAT | 0666);
+	if (id == -1)
+	{
+		perror("msgget fail!\n");
+	}
 
 	while (true)
 	{
@@ -417,31 +428,46 @@ void* uartlisten(void *argc)
 				break;
 			}
 			//zgb消息提取
-			zgbmsginit(&zgbmsg);
-			zgbmsg.header = 0x2A;
-			zgbmsg.msglength = msgbuf[i + 1];
-			zgbmsg.check = msgbuf[i + 1 + zgbmsg.msglength + 1];
-			zgbmsg.footer = msgbuf[i + 1 + zgbmsg.msglength + 2];
+			zgbmsginit(&zmsg);
+			zmsg.header = 0x2A;
+			zmsg.msglength = msgbuf[i + 1];
+			zmsg.check = msgbuf[i + 1 + zmsg.msglength + 1];
+			zmsg.footer = msgbuf[i + 1 + zmsg.msglength + 2];
 			sum = 0;
 
 			//zgb消息的check校验
-			for (j = 0; j < zgbmsg.msglength; j++)
+			for (j = 0; j < zmsg.msglength; j++)
 			{
 				sum += msgbuf[j + 2];
 			}
-			if (sum%256 != zgbmsg.check)
+			if (sum%256 != zmsg.check)
 			{
 				printf("Wrong format!\n");
 				i++;
 				continue;
 			}
 
-			strncpy((char *)zgbmsg.payload.src, msgbuf + 10, ZGB_ADDRESS_LENGTH);
-			zgbmsg.payload.adf.devmsg.packetid = msgbuf[i + (int)&zgbmsg.payload.adf.devmsg.packetid - (int)&zgbmsg];
-			zgbmsg.payload.adf.devmsg.devicecmdid = msgbuf[i + (int)&zgbmsg.payload.adf.devmsg.packetid - (int)&zgbmsg + 1];
-			//zgbmsg.payload.adf.devmsg.data = malloc(zgbmsg.msglength - 38 + 1); //38为coo报文payload数据中除data数据外的字节数，1是用来赋值字符串结束符0
-			strncpy(zgbmsg.payload.adf.devmsg.data, msgbuf + 40, zgbmsg.msglength - 38);
-			zgbmsg.payload.adf.devmsg.data[zgbmsg.msglength - 38] = 0;
+			strncpy((char *)zmsg.payload.src, msgbuf + 10, ZGB_ADDRESS_LENGTH);
+			zmsg.payload.adf.devmsg.packetid = msgbuf[i + (int)&zmsg.payload.adf.devmsg.packetid - (int)&zmsg];
+			zmsg.payload.adf.devmsg.devicecmdid = msgbuf[i + (int)&zmsg.payload.adf.devmsg.packetid - (int)&zmsg + 1];
+			strncpy(zmsg.payload.adf.devmsg.data, msgbuf + 40, zmsg.msglength - 38);
+			zmsg.payload.adf.devmsg.data[zmsg.msglength - 38] = 0;
+
+            zgbqmsg.msgtype = 1;
+            zgbqmsg.msg = zmsg;
+          	if (ret = msgsnd(id, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
+        	{
+		        printf("send zgbqueuemsg fail!\n");
+	        }
+
+            for (j = 0; j < zmsg.msglength+4; ++j)
+            {
+                if (j >= zmsg.payload.adf.length+37)
+                {
+                    printf("%x ", (char*)zmsg+sizeof(zmsg)-(zmsg.msglength+4-j));
+                }
+                printf("%x ", (char*)zmsg+j)
+            }
 		}
 	}
 	pthread_exit(NULL);
@@ -468,7 +494,7 @@ void* mqttqueueprocess(void *argc)
 	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
 	int rc;
 
-	mqttmsg msg;
+	mqttqueuemsg msg;
 	ssize_t ret;
 	key_t key;
 	int id;
@@ -558,22 +584,58 @@ int createmessagequeue()
     return 0;  
 }
 
+/*创建需要的数据库表*/
+int sqlitedb_init()
+{
+    sqlite3 *db;
+    char *zErrMsg = 0;  
+    char sql[128];  
+    int rc;  
+    int len = 0; 
+
+    rc = sqlite3_open("mydb", &db);
+    if(rc != SQLITE_OK)  
+    {  
+        printf("zErrMsg = %s\n",zErrMsg);  
+        return -1;  
+    }
+    sprintf(sql,"create table device(address varchar(8),type char,status char,online char);");
+    rc = sqlite3_exec(db,sql,0,0,&zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        printf("zErrMsg = %s\n",zErrMsg);  
+        return -1;          
+    }
+    sprintf(sql,"create table airconditioning(address varchar(8),status char,mode char,temperature float, windspeed char);");
+    sqlite3_exec(db,sql,0,0,&zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        printf("zErrMsg = %s\n",zErrMsg);  
+        return -1;          
+    }
+    return 0;
+}
+
 int main(int argc, char* argv[])
 {
     pthread_t threads[NUM_THREADS];
 
 	system("stty -F /dev/ttyS1 speed 57600 cs8 -parenb -cstopb  -echo");
-	sem_init(&g_devicestatussem, 0, 0);	
     sem_init(&g_mqttconnetionsem, 0, 1); 
-	sem_init(&g_operationsem, 0, 0);
 
     if(createmessagequeue() != 0)
     {
         printf("CreateMessageQueue failed!\n");
         return -1;
     }
+
+    if(!sqlitedb_init())
+    {
+        printf("Create db failed!\n");
+        return -1;        
+    }
 	constructsubtopics();
-	
+    
 	pthread_create(&threads[0], NULL, mqttlient, NULL);
 	pthread_create(&threads[1], NULL, devicemsgprocess, NULL);
 	pthread_create(&threads[2], NULL, uartlisten, NULL);
