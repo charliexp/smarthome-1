@@ -6,7 +6,7 @@
 
 #include "device.h"
 
-void zgbmsginit(zigbeemsg *msg)
+void zgbmsginit(zgbmsg *msg)
 {
 	memset((char*)msg, 0, sizeof(zigbeemsg));
 	msg->header = 0x2A;

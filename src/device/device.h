@@ -92,7 +92,7 @@ typedef struct
 typedef struct
 {
     long msgtype;
-    zigbeemsg msg;
+    zgbmsg msg;
 }zgbqueuemsg;
 
 typedef enum
@@ -130,7 +130,7 @@ typedef struct
 }ZGB_MSG_STATUS;
 
 /*zgb消息初始化*/
-void zgbmsginit(zigbeemsg *msg);
+void zgbmsginit(zgbmsg *msg);
 
 /*空调控制接口*/
 int airconcontrol(cJSON *device, char packetid);
