@@ -436,7 +436,7 @@ void* uartlisten(void *argc)
     int ret;
     
     g_uartfd = open("/dev/ttyS1", O_RDONLY | O_NOCTTY | O_NDELAY, 0);
-	if (fd < 3)
+	if (g_uartfd < 3)
 	{
 		perror("error: open ttyS1 fail!\n");
 	}
