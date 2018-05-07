@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
+#include <sys/msg.h>
+#include <sys/stat.h>
+
 
 
 #include "device.h"
@@ -69,7 +72,7 @@ int socketcontrol(cJSON *device, char packetid)
 
 int sendzgbmsg(zgbaddress address, char *data, char packetid)
 {
-	int id;
+	int id, ret;
     key_t key;
 	zgbmsg msg;
     uartsendqueuemsg uartmsg;
