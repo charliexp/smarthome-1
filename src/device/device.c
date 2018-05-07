@@ -67,7 +67,7 @@ int socketcontrol(cJSON *device, char packetid)
 int sendzgbmsg(zgbaddress address, char *data, char packetid)
 {
 	int fd;
-	zigbeemsg msg;
+	zgbmsg msg;
 	struct termios tio;
 	int i = 0;
 	int sum = 0;
