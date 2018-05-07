@@ -124,6 +124,12 @@ typedef struct
 
 typedef struct
 {
+    long msgtype;
+    zgbmsg msg;
+}uartsendqueuemsg;
+
+typedef struct
+{
 	char packetid;
 	char result;
 	char over;//判断该消息是否已收到回复

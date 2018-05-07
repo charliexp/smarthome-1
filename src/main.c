@@ -33,6 +33,8 @@ char g_mac[20] = {0};
 ZGB_MSG_STATUS g_zgbmsg[20];
 int g_zgbmsgnum;
 cJSON* g_device;
+int g_uartfd;
+
 
 int g_operationflag = 0;
 //sem_t g_operationsem;
@@ -295,16 +297,16 @@ void* devicemsgprocess(void *argc)
 	char packetid;
 	char devicetype;
 	size_t msglen = sizeof(deviceoperationmsg);
+    
+    key = ftok("/etc/hosts", 'd');
+    id = msgget(key, IPC_CREAT | 0666);
+    if (id == -1)
+    {
+        perror("msgget fail!\n");
+    }
 
 	while(1)
 	{
-		key = ftok("/etc/hosts", 'd');
-		id = msgget(key, IPC_CREAT | 0666);
-		if (id == -1)
-		{
-			perror("msgget fail!\n");
-		}
-
 		if (rcvret = msgrcv(id, (void*)&msg, msglen, 0, 0) <= 0)
 		{
 			printf("rcvret = %d", rcvret);
@@ -386,11 +388,44 @@ void* devicemsgprocess(void *argc)
 	pthread_exit(NULL);
 }
 
+void* uartsend(void *argc)
+{
+	key_t key;
+    uartsendqueuemsg qmsg;
+	int id; 
+    int rcvret;
+
+    key = ftok("/etc/hosts", 'u');
+	id = msgget(key, IPC_CREAT | 0666);
+	if (id == -1)
+	{
+		perror("msgget fail!\n");
+	}
+    while(true)
+    {
+		if (rcvret = msgrcv(id, (void*)&qmsg, sizeof(qmsg), 0, 0) <= 0)
+		{
+			printf("rcvret = %d", rcvret);
+			perror("");
+			printf("recive uartsendmsg fail!\n");
+		}
+        if ( write(g_uartfd, (char *)&qmsg.msg, (int)(qmsg.msg.msglength + 2)) != (qmsg.msg.msglength + 2))
+	    {
+		    perror("com write error!\n");
+	    }
+	    if ( write(g_uartfd, (char *)&qmsg.msg+sizeof(qmsg.msg)-2, 2) != 2)//发送check和footer
+	    {
+		    perror("com write check and footer error!\n");
+	    }
+    }
+	pthread_exit(NULL);    
+}
+
 /*监听串口的进程，提取单片机上传的zgb消息*/
 void* uartlisten(void *argc)
 {
-	int fd;
 	char msgbuf[1024]; //暂时使用1024字节存储串口数据，后续测试读取时串口最大数据量
+	pthread_t threads[1];
 	int nByte;
 	int bitflag;
 	zgbmsg zmsg;
@@ -399,6 +434,12 @@ void* uartlisten(void *argc)
 	key_t key;
 	int id;
     int ret;
+    
+    g_uartfd = open("/dev/ttyS1", O_RDONLY | O_NOCTTY | O_NDELAY, 0);
+	if (fd < 3)
+	{
+		perror("error: open ttyS1 fail!\n");
+	}
 
     key = ftok("/etc/hosts", 'z');
 	id = msgget(key, IPC_CREAT | 0666);
@@ -407,15 +448,11 @@ void* uartlisten(void *argc)
 		perror("msgget fail!\n");
 	}
 
+    pthread_create(&threads[0], NULL, uartsend, NULL);
+    
 	while (true)
 	{
-		fd = open("/dev/ttyS1", O_RDONLY | O_NOCTTY, 0);
-		if (fd < 3)
-		{
-			perror("error: open ttyS1 fail!\n");
-		}
-
-		nByte = read(fd, msgbuf, 1024);
+		nByte = read(g_uartfd, msgbuf, 1024);
 		for (i = 0; i < nByte; )
 		{
 			if (msgbuf[i] != 0x2A)
@@ -465,9 +502,9 @@ void* uartlisten(void *argc)
             {
                 if (j >= zmsg.payload.adf.length+37)
                 {
-                    printf("%x ", *((char*)zmsg+sizeof(zmsg)-(zmsg.msglength+4-j)));
+                    printf("%d ", *((char*)&zmsg+sizeof(zmsg)-(zmsg.msglength+4-j)));
                 }
-                printf("%x ", *((char*)zmsg+j));
+                printf("%d ", *((char*)&zmsg+j));
             }
 		}
 	}
@@ -600,18 +637,18 @@ int sqlitedb_init()
         printf("zErrMsg = %s\n",zErrMsg);  
         return -1;  
     }
-    sprintf(sql,"create table device(address varchar(8),type char,status char,online char);");
+    sprintf(sql,"create table device(address varchar(8),type INTEGER,status INTEGER,online INTEGER);");
     rc = sqlite3_exec(db,sql,0,0,&zErrMsg);
     if (rc != SQLITE_OK)
     {
         printf("zErrMsg = %s\n",zErrMsg);  
         return -1;          
     }
-    sprintf(sql,"create table airconditioning(address varchar(8),status char,mode char,temperature float, windspeed char);");
+    sprintf(sql,"create table airconditioning(address varchar(8),status INTEGER,mode INTEGER,temperature float, windspeed INTEGER);");
     sqlite3_exec(db,sql,0,0,&zErrMsg);
     if (rc != SQLITE_OK)
     {
-        printf("zErrMsg = %s\n",zErrMsg);  
+        printf("zErrMsg = %s\n",zErrMsg);
         return -1;          
     }
     return 0;
@@ -629,12 +666,13 @@ int main(int argc, char* argv[])
         printf("CreateMessageQueue failed!\n");
         return -1;
     }
-
+/*
     if(!sqlitedb_init())
     {
         printf("Create db failed!\n");
         return -1;        
     }
+    */
 	constructsubtopics();
     
 	pthread_create(&threads[0], NULL, mqttlient, NULL);

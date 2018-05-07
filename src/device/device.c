@@ -66,8 +66,10 @@ int socketcontrol(cJSON *device, char packetid)
 
 int sendzgbmsg(zgbaddress address, char *data, char packetid)
 {
-	int fd;
+	int id;
+    key_t key;
 	zgbmsg msg;
+    uartsendqueuemsg uartmsg;
 	struct termios tio;
 	int i = 0;
 	int sum = 0;
@@ -96,22 +98,22 @@ int sendzgbmsg(zgbaddress address, char *data, char packetid)
 	}
 	msg.check = sum % 256;
 
-	fd = open("/dev/ttyS1", O_WRONLY | O_NOCTTY | O_NDELAY);
-	if (fd < 3)
+    uartmsg.msgtype = 1;
+    uartmsg.msg = msg;
+    
+    key = ftok("/etc/hosts", 'u');
+	id = msgget(key, IPC_CREAT | 0666);
+	if (id == -1)
 	{
-		perror("error: open ttyS1");
+		perror("msgget fail!\n");
 	}
 
-	if ( write(fd, (char *)&msg, (int)(msg.msglength + 2)) != (msg.msglength + 2))
-	{
-		perror("com write error!\n");
-		return -1;
+    if (ret = msgsnd(id, &uartmsg, sizeof(uartmsg), 0) != 0)
+    {
+		printf("send uartsendqueuemsg fail!\n");
+        return -1;
 	}
-	if (write(fd, (char *)&msg+sizeof(msg)-2, 2) != 2)//·¢ËÍcheckºÍfooter
-	{
-		perror("com write check and footer error!\n");
-		return -1;
-	}
+
 	return 0;
 }
 
