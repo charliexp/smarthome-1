@@ -401,6 +401,7 @@ void* uartsend(void *argc)
 	{
 		perror("msgget fail!\n");
 	}
+    
     while(true)
     {
 		if (rcvret = msgrcv(id, (void*)&qmsg, sizeof(qmsg), 0, 0) <= 0)
@@ -409,6 +410,7 @@ void* uartsend(void *argc)
 			perror("");
 			printf("recive uartsendmsg fail!\n");
 		}
+        printf("uart begin to send msg!\n");
         if ( write(g_uartfd, (char *)&qmsg.msg, (int)(qmsg.msg.msglength + 2)) != (qmsg.msg.msglength + 2))
 	    {
 		    perror("com write error!\n");
@@ -435,11 +437,13 @@ void* uartlisten(void *argc)
 	int id;
     int ret;
     
-    g_uartfd = open("/dev/ttyS1", O_RDONLY | O_NOCTTY | O_NDELAY, 0);
+    g_uartfd = open("/dev/ttyS1", O_RDWR | O_NOCTTY, 0);
 	if (g_uartfd < 3)
 	{
 		perror("error: open ttyS1 fail!\n");
 	}
+  
+    milliseconds_sleep(1000);
 
     key = ftok("/etc/hosts", 'z');
 	id = msgget(key, IPC_CREAT | 0666);
@@ -453,6 +457,7 @@ void* uartlisten(void *argc)
 	while (true)
 	{
 		nByte = read(g_uartfd, msgbuf, 1024);
+        printf("uart read %d byte!\n", nByte);
 		for (i = 0; i < nByte; )
 		{
 			if (msgbuf[i] != 0x2A)

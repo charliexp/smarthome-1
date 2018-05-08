@@ -81,11 +81,7 @@ int sendzgbmsg(zgbaddress address, char *data, char packetid)
 	int sum = 0;
 
 	zgbmsginit(&msg);
-	if (strlen(data) > 69)
-	{
-		printf("msg data is too big!\n");
-		return -1;
-	}
+
 	msg.msglength = 38 + strlen(data); //40为msg除了data以及head、length、check、footer的长度
 
 	strncpy((char*)msg.payload.dest, (char*)address, 8);//目标地址赋值
