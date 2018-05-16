@@ -716,7 +716,7 @@ int main(int argc, char* argv[])
 {
     pthread_t threads[NUM_THREADS];
     
-    init_uart();
+    init_uart("/dev/ttyS1");
     sem_init(&g_mqttconnetionsem, 0, 1); 
 
     if(createmessagequeue() == 0)
