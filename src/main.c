@@ -16,6 +16,8 @@
 #include "device/device.h"
 #include "cjson/cJSON.h"
 #include "tools/error.h"
+#include "tools/msg.h"
+
 
 #define NUM_THREADS 4
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
@@ -38,8 +40,7 @@ int g_uartfd;
 
 
 int g_operationflag = 0;
-//sem_t g_operationsem;
-//sem_t g_devicestatussem;
+int g_queueid;
 sem_t g_mqttconnetionsem;
 //订阅g_topics对应的qos
 int g_qoss[TOPICSNUM] = {2, 1, 2, 1, 1};
@@ -79,12 +80,10 @@ void constructsubtopics()
 /*messagetype: 1、发布 2、订阅 3、去订阅*/
 void mqttmsgqueue(long messagetype, char* topic, char* message, int qos, int retained)
 {
-	key_t key;
-	int id;
 	int ret;
 	size_t msglen;
 	mqttqueuemsg msg = { 0 };
-	msg.msgtype = 1;
+	msg.msgtype = QUEUE_MSG_MQTT;
 	msg.msg.qos = qos;
 	msg.msg.retained = 0;
 	if (topic != NULL)
@@ -102,13 +101,8 @@ void mqttmsgqueue(long messagetype, char* topic, char* message, int qos, int ret
 	}
 
 	msglen = sizeof(mqttmsg);
-	key = ftok("/etc/hosts", 'm');
-	id = msgget(key, IPC_CREAT | 0666);
-	if (id == -1)
-	{
-		perror("msgget fail!\n");
-	}
-	if (ret = msgsnd(id, &msg, msglen, 0) != 0)
+
+	if (ret = msgsnd(g_queueid, &msg, msglen, 0) != 0)
 	{
 		printf("send mqttqueuemsg fail!\n");
 		return;
@@ -130,8 +124,6 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	char* mqttid;
 	cJSON *root;
 	deviceoperationmsg msg;
-	key_t key;
-	int id;
 	int sendret;
 	size_t msglen = sizeof(deviceoperationmsg);
 	char topic[TOPIC_LENGTH] = { 0 };
@@ -163,16 +155,10 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 			g_operationflag = 1;
 			printf("get an operation msg.\n");
 
-			key = ftok("/etc/hosts", 'd');
-			id = msgget(key, IPC_CREAT | 0666);
-			if (id == -1)
-			{
-				perror("msgget fail!\n");
-			}
-			msg.msgtype = 1;
+			msg.msgtype = QUEUE_MSG_DEVIC;
 			msg.p_operation_json = cJSON_Duplicate(root, 1);
 
-			if (sendret = msgsnd(id, (void*)&msg, msglen, 0) != 0)
+			if (sendret = msgsnd(g_queueid, (void*)&msg, msglen, 0) != 0)
 			{
 				printf("sendret = %d", sendret);
 				perror("");
@@ -293,23 +279,15 @@ void* devicemsgprocess(void *argc)
 	cJSON *devices, *device;
 	int devicenum = 0;
 	int i = 0;
-	key_t key;
-	int id;
 	int rcvret;
 	char packetid;
 	char devicetype;
 	size_t msglen = sizeof(deviceoperationmsg);
     
-    key = ftok("/etc/hosts", 'd');
-    id = msgget(key, IPC_CREAT | 0666);
-    if (id == -1)
-    {
-        perror("msgget fail!\n");
-    }
 
 	while(1)
 	{
-		if (rcvret = msgrcv(id, (void*)&msg, msglen, 0, 0) <= 0)
+		if (rcvret = msgrcv(g_queueid, (void*)&msg, msglen, QUEUE_MSG_DEVIC, 0) <= 0)
 		{
 			printf("rcvret = %d", rcvret);
 			perror("");
@@ -322,7 +300,7 @@ void* devicemsgprocess(void *argc)
 		devices = cJSON_GetObjectItem(g_device, "device");
 		devicenum = cJSON_GetArraySize(devices);
 
-		for (; i< devicenum; i++)
+		for (i=0; i< devicenum; i++)
 		{
 			device = cJSON_GetArrayItem(devices, i);
 			if (device == NULL)
@@ -406,7 +384,7 @@ void* uartsend(void *argc)
     
     while(true)
     {
-		if ( rcvret = msgrcv(id, (void*)&qmsg, sizeof(qmsg), 0, 0) <= 0 )
+		if ( rcvret = msgrcv(g_queueid, (void*)&qmsg, sizeof(qmsg), QUEUE_MSG_UART, 0) <= 0 )
 		{
 			printf("rcvret = %d", rcvret);
 			perror("");
@@ -428,23 +406,13 @@ void* uartsend(void *argc)
 /*zgb消息处理*/
 void* zgbmsgprocess(void* argc)
 {
-	key_t key;
-	int id;
 	int rcvret;
     zgbqueuemsg qmsg;
     char packetid;
 
-    
-    key = ftok("/etc/hosts", 'z');
-    id = msgget(key, IPC_CREAT | 0666);
-    if (id == -1)
-    {
-        perror("msgget fail!\n");
-    }
-
 	while(1)
 	{
-		if (rcvret = msgrcv(id, (void*)&qmsg, sizeof(qmsg), 0, 0) <= 0)
+		if (rcvret = msgrcv(g_queueid, (void*)&qmsg, sizeof(qmsg), QUEUE_MSG_ZGB, 0) <= 0)
 		{
 			printf("rcvret = %d", rcvret);
 			perror("");
@@ -484,18 +452,8 @@ void* uartlisten(void *argc)
 	zgbmsg zmsg;
     zgbqueuemsg zgbqmsg;
 	int i, j, sum;
-	key_t key;
-	int id;
     int ret;
     
-    milliseconds_sleep(1000);
-
-    key = ftok("/etc/hosts", 'z');
-	id = msgget(key, IPC_CREAT | 0666);
-	if (id == -1)
-	{
-		perror("msgget fail!\n");
-	}
 
     pthread_create(&threads[0], NULL, uartsend, NULL);
     pthread_create(&threads[1], NULL, zgbmsgprocess, NULL);
@@ -542,9 +500,9 @@ void* uartlisten(void *argc)
 			strncpy(zmsg.payload.adf.devmsg.data, msgbuf + 40, zmsg.msglength - 38);
 			zmsg.payload.adf.devmsg.data[zmsg.msglength - 38] = 0;
 
-            zgbqmsg.msgtype = 1;
+            zgbqmsg.msgtype = QUEUE_MSG_ZGB;
             zgbqmsg.msg = zmsg;
-          	if (ret = msgsnd(id, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
+          	if (ret = msgsnd(g_queueid, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
         	{
 		        printf("send zgbqueuemsg fail!\n");
 	        }
@@ -585,8 +543,6 @@ void* mqttqueueprocess(void *argc)
 
 	mqttqueuemsg msg;
 	ssize_t ret;
-	key_t key;
-	int id;
 	int result;
 
 	MQTTAsync_create(&client, ADDRESS, CLIENTID1, MQTTCLIENT_PERSISTENCE_NONE, NULL);
@@ -607,22 +563,16 @@ void* mqttqueueprocess(void *argc)
 		printf("MyMQTTClient: MQTT connect fail!\n");
 	}
 	printf("enter mqttqueueprocess pthread!\n");
-	key = ftok("/etc/hosts", 'm');
-	id = msgget(key, IPC_CREAT | 0666);
-	if (id == -1)
-	{
-		perror("msgget fail!\n");
-	}
 
 	/*处理mqtt消息队列*/
 	while (1)
 	{
-		ret = msgrcv(id, (void*)&msg, sizeof(mqttmsg), 0, 0);
+		ret = msgrcv(g_queueid, (void*)&msg, sizeof(mqttmsg), QUEUE_MSG_MQTT, 0);
 		if (ret == -1)
 		{
 			perror("read mqttmsg fail!\n");
 		}
-
+loop:
 		switch (msg.msgtype)
 		{
 		case MQTT_MSG_TYPE_PUB:
@@ -631,18 +581,53 @@ void* mqttqueueprocess(void *argc)
 			
 			if (result != MQTTASYNC_SUCCESS)
 			{
-				printf("MQTTAsync_send fail! %d\n", result);
+                if (result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
+                {
+                    while(MQTTAsync_connect(client, &conn_opts) != MQTTASYNC_SUCCESS)
+                    {
+                        milliseconds_sleep(1000);
+                    }
+                    goto loop;
+                }
+                else
+                {
+				    printf("MQTTAsync_send fail! %d\n", result);
+                }
 			}
 			break;
 		case MQTT_MSG_TYPE_SUB:
 			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, &opts);
 			if (result != MQTTASYNC_SUCCESS)
-				printf("MQTTAsync_subscribe fail!\n");
+                if (result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
+                {
+                    while(MQTTAsync_connect(client, &conn_opts) != MQTTASYNC_SUCCESS)
+                    {
+                        milliseconds_sleep(1000);
+                    }
+                    goto loop;
+                }
+                else
+                {
+				    printf("MQTTAsync_subscribe fail! %d\n", result);
+                }
+
 			break;
 		case MQTT_MSG_TYPE_UNSUB:
 			result = MQTTAsync_unsubscribe(client, (const char*)msg.msg.topic, &opts);
 			if (result != MQTTASYNC_SUCCESS)
-				printf("MQTTAsync_unsubscribe fail!\n");
+                if (result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
+                {
+                    while(MQTTAsync_connect(client, &conn_opts) != MQTTASYNC_SUCCESS)
+                    {
+                        milliseconds_sleep(1000);
+                    }
+                    goto loop;
+                }
+                else
+                {
+				    printf("MQTTAsync_unsubscribe fail! %d\n", result);
+                }
+
 			break;
 		default:
 			printf("unknow msg!\n");
@@ -656,22 +641,19 @@ void* mqttqueueprocess(void *argc)
 	pthread_exit(NULL);
 }
 
-/*创建两个消息队列，分别用MQTT的订阅、发布、去订阅和存取设备操作消息*/
+/*创建程序需要用到的消息队列，用于MQTT的订阅、发布、去订阅和存取设备操作消息以及zgb消息的存储*/
 int createmessagequeue()
-{
-   	int mqttmsgid, devicemsgid;     
-	key_t mqttkey, devicemsgkey;
-	mqttkey = ftok("/etc/hosts", 'm');
-    devicemsgkey = ftok("/etc/hosts", 'd');
+{   
+	key_t key;
+	key = ftok("/", 0);
     
-	mqttmsgid = msgget(mqttkey, IPC_CREAT | 0666);
-    devicemsgid = msgget(devicemsgkey, IPC_CREAT | 0666);
-	if (mqttmsgid < 0 || devicemsgid < 0)
+	g_queueid = msgget(key, IPC_CREAT | 0644);
+	if (g_queueid < 0)
 	{
 		printf("get ipc_id error!\n");
-		return 0;
+		return -1;
 	}
-    return 1;  
+    return 0;  
 }
 
 /*创建需要的数据库表*/
@@ -687,23 +669,23 @@ int sqlitedb_init()
     if(rc != SQLITE_OK)  
     {  
         printf("zErrMsg = %s\n",zErrMsg);  
-        return 0;  
+        return -1;  
     }
     sprintf(sql,"create table device(address varchar(8),type INTEGER,status INTEGER,online INTEGER);");
     rc = sqlite3_exec(db,sql,0,0,&zErrMsg);
     if (rc != SQLITE_OK && rc != SQLITE_ERROR) //表重复会返回SQLITE_ERROR，该错误属于正常
     {
         printf("zErrMsg = %s rc =%d\n",zErrMsg, rc);  
-        return 0;          
+        return -1;          
     }
     sprintf(sql,"create table airconditioning(address varchar(8),status INTEGER,mode INTEGER,temperature float, windspeed INTEGER);");
     sqlite3_exec(db,sql,0,0,&zErrMsg);
     if (rc != SQLITE_OK && rc != SQLITE_ERROR)
     {
         printf("zErrMsg = %s\n",zErrMsg);
-        return 0;          
+        return -1;          
     }
-    return 1;
+    return 0;
 }
 
 int main(int argc, char* argv[])
@@ -713,12 +695,12 @@ int main(int argc, char* argv[])
     init_uart("/dev/ttyS1");
     sem_init(&g_mqttconnetionsem, 0, 1); 
 
-    if(createmessagequeue() == 0)
+    if(createmessagequeue() == -1)
     {
         printf("CreateMessageQueue failed!\n");
         return -1;
     }
-    if(sqlitedb_init() == 0)
+    if(sqlitedb_init() == -1)
     {
         printf("Create db failed!\n");
         return -1;        

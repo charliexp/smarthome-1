@@ -72,11 +72,9 @@ int socketcontrol(cJSON *device, char packetid)
 
 int sendzgbmsg(zgbaddress address, char *data, char packetid)
 {
-	int id, ret;
-    key_t key;
+	int ret;
 	zgbmsg msg;
     uartsendqueuemsg uartmsg;
-	struct termios tio;
 	int i = 0;
 	int sum = 0;
 
@@ -100,17 +98,10 @@ int sendzgbmsg(zgbaddress address, char *data, char packetid)
 	}
 	msg.check = sum % 256;
 
-    uartmsg.msgtype = 1;
+    uartmsg.msgtype = QUEUE_MSG_UART;
     uartmsg.msg = msg;
-    
-    key = ftok("/etc/hosts", 'u');
-	id = msgget(key, IPC_CREAT | 0666);
-	if (id == -1)
-	{
-		perror("msgget fail!\n");
-	}
 
-    if (ret = msgsnd(id, &uartmsg, sizeof(uartmsg), 0) != 0)
+    if (ret = msgsnd(g_queueid, &uartmsg, sizeof(uartmsg), 0) != 0)
     {
 		printf("send uartsendqueuemsg fail!\n");
         return -1;

@@ -77,13 +77,13 @@ int init_uart(char* port)
     if (g_uartfd < 3)    
     {    
         perror("Can't Open Serial Port");    
-        return 0;    
+        return -1;    
     }    
     //»Ö¸´´®¿ÚÎª×èÈû×´Ì¬                                   
     if(fcntl(g_uartfd, F_SETFL, 0) < 0)    
     {    
         printf("fcntl failed!\n");    
-        return 0;    
+        return -1;    
     }
 
     cfsetispeed(&options, B57600);     
@@ -113,9 +113,9 @@ int init_uart(char* port)
     if (tcsetattr(g_uartfd,TCSANOW,&options) != 0)      
     {    
         perror("uart set error!\n");      
-        return 0;     
+        return -1;     
     }    
-    return 1;    
+    return 0;    
 }
 
 
