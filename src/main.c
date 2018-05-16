@@ -693,12 +693,12 @@ int sqlitedb_init()
     rc = sqlite3_exec(db,sql,0,0,&zErrMsg);
     if (rc != SQLITE_OK && rc != SQLITE_ERROR) //表重复会返回SQLITE_ERROR，该错误属于正常
     {
-        printf("zErrMsg = %s\n",zErrMsg);  
+        printf("zErrMsg = %s rc =%d\n",zErrMsg, rc);  
         return 0;          
     }
     sprintf(sql,"create table airconditioning(address varchar(8),status INTEGER,mode INTEGER,temperature float, windspeed INTEGER);");
     sqlite3_exec(db,sql,0,0,&zErrMsg);
-    if (rc != SQLITE_OK)
+    if (rc != SQLITE_OK && rc != SQLITE_ERROR)
     {
         printf("zErrMsg = %s\n",zErrMsg);
         return 0;          
