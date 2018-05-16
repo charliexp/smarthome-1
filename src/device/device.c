@@ -8,8 +8,7 @@
 #include <sys/msg.h>
 #include <sys/stat.h>
 
-
-
+#include "../tools/msg.h"
 #include "device.h"
 
 void zgbmsginit(zgbmsg *msg)
