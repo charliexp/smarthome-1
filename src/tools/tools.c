@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <sys/select.h>
 #include <fcntl.h>      /*文件控制定义*/    
 #include <termios.h>    /*PPSIX 终端控制定义*/    
 #include <errno.h>      /*错误号定义*/   
