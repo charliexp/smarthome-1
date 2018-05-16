@@ -111,9 +111,9 @@ int init_uart(char* port)
     if (tcsetattr(fd,TCSANOW,&options) != 0)      
     {    
         perror("uart set error!\n");      
-        return (FALSE);     
+        return 0;     
     }    
-    return (TRUE);    
+    return 1;    
 }
 
 
