@@ -22,6 +22,6 @@ int getmac(char *address);
 void milliseconds_sleep(unsigned long msec);
 
 /*´®¿Ú³õÊ¼»¯*/
-int init_uart(char* port)
+int init_uart(char* port);
 
 #endif
