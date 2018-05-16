@@ -1,6 +1,8 @@
 #ifndef _TOOLS_H_
 #define _TOOLS_H_
 
+extern int g_uartfd;
+
 typedef enum bool
 {
 	false = 0,
