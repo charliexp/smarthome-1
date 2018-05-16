@@ -12,7 +12,7 @@ char getpacketid(void);
 
 
 /*获取设备mac地址
-* 得到的值如下:
+* 得到的值如�?
 * 00:0c:43:e1:76:28
 */
 int getmac(char *address);
@@ -20,5 +20,8 @@ int getmac(char *address);
 
 /*睡眠msec毫秒*/
 void milliseconds_sleep(unsigned long msec);
+
+/*���ڳ�ʼ��*/
+int init_uart(char* port)
 
 #endif

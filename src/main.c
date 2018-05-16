@@ -27,10 +27,11 @@
 #define TOPICSNUM   5
 #define RESPONSE_WAIT 5000000 //消息响应等待时间5000000us = 5s
 #define ZGB_ADDRESS_LENGTH 8
+#define ZGBMSG_MAX_NUM 20
 
 char g_topicroot[20] = {0};
 char g_mac[20] = {0};
-ZGB_MSG_STATUS g_zgbmsg[20];
+ZGB_MSG_STATUS g_zgbmsg[ZGBMSG_MAX_NUM];
 int g_zgbmsgnum;
 cJSON* g_device;
 int g_uartfd;
@@ -115,6 +116,7 @@ void mqttmsgqueue(long messagetype, char* topic, char* message, int qos, int ret
 
 	return;
 }
+
 void onDisconnect(void* context, MQTTAsync_successData* response)
 {
 	printf("Successful disconnection\n");
@@ -404,7 +406,7 @@ void* uartsend(void *argc)
     
     while(true)
     {
-		if (rcvret = msgrcv(id, (void*)&qmsg, sizeof(qmsg), 0, 0) <= 0)
+		if ( rcvret = msgrcv(id, (void*)&qmsg, sizeof(qmsg), 0, 0) <= 0 )
 		{
 			printf("rcvret = %d", rcvret);
 			perror("");
@@ -423,11 +425,60 @@ void* uartsend(void *argc)
 	pthread_exit(NULL);    
 }
 
+/*zgb消息处理*/
+void* zgbmsgprocess(void* argc)
+{
+	key_t key;
+	int id;
+	int rcvret;
+    zgbqueuemsg qmsg;
+    char packetid;
+
+    
+    key = ftok("/etc/hosts", 'z');
+    id = msgget(key, IPC_CREAT | 0666);
+    if (id == -1)
+    {
+        perror("msgget fail!\n");
+    }
+
+	while(1)
+	{
+		if (rcvret = msgrcv(id, (void*)&qmsg, sizeof(qmsg), 0, 0) <= 0)
+		{
+			printf("rcvret = %d", rcvret);
+			perror("");
+			printf("recive zgbqueuemsg fail!\n");
+		}
+		printf("zgbmsgprocess recive a msg\n");
+
+        if (qmsg.msg.payload.adf.devmsg.devicecmdid == DEV_RESPONSE)
+        {
+            packetid = qmsg.msg.payload.adf.devmsg.packetid;
+            for (int i = 0; i < ZGBMSG_MAX_NUM; ++i)
+            {
+                if (g_zgbmsg[i].packetid == packetid)
+                {
+                    g_zgbmsg[i].over = 1;
+                    g_zgbmsg[i].result = *((char*)qmsg.msg.payload.adf.devmsg.data + 1);
+                    break;
+                }
+            }
+        }
+        else if(qmsg.msg.payload.adf.devmsg.devicecmdid == DEV_READ_ALL)
+        {}
+	}
+    
+	pthread_exit(NULL);    
+    
+}
+
+
 /*监听串口的进程，提取单片机上传的zgb消息*/
 void* uartlisten(void *argc)
 {
 	char msgbuf[1024]; //暂时使用1024字节存储串口数据，后续测试读取时串口最大数据量
-	pthread_t threads[1];
+	pthread_t threads[2];
 	int nByte;
 	int bitflag;
 	zgbmsg zmsg;
@@ -453,6 +504,7 @@ void* uartlisten(void *argc)
 	}
 
     pthread_create(&threads[0], NULL, uartsend, NULL);
+    pthread_create(&threads[1], NULL, zgbmsgprocess, NULL);
     
 	while (true)
 	{
@@ -609,6 +661,7 @@ void* mqttqueueprocess(void *argc)
 	}
 	pthread_exit(NULL);
 }
+
 /*创建两个消息队列，分别用MQTT的订阅、发布、去订阅和存取设备操作消息*/
 int createmessagequeue()
 {
@@ -622,9 +675,9 @@ int createmessagequeue()
 	if (mqttmsgid < 0 || devicemsgid < 0)
 	{
 		printf("get ipc_id error!\n");
-		return -1;
+		return 0;
 	}
-    return 0;  
+    return 1;  
 }
 
 /*创建需要的数据库表*/
@@ -640,44 +693,43 @@ int sqlitedb_init()
     if(rc != SQLITE_OK)  
     {  
         printf("zErrMsg = %s\n",zErrMsg);  
-        return -1;  
+        return 0;  
     }
     sprintf(sql,"create table device(address varchar(8),type INTEGER,status INTEGER,online INTEGER);");
     rc = sqlite3_exec(db,sql,0,0,&zErrMsg);
     if (rc != SQLITE_OK)
     {
         printf("zErrMsg = %s\n",zErrMsg);  
-        return -1;          
+        return 0;          
     }
     sprintf(sql,"create table airconditioning(address varchar(8),status INTEGER,mode INTEGER,temperature float, windspeed INTEGER);");
     sqlite3_exec(db,sql,0,0,&zErrMsg);
     if (rc != SQLITE_OK)
     {
         printf("zErrMsg = %s\n",zErrMsg);
-        return -1;          
+        return 0;          
     }
-    return 0;
+    return 1;
 }
 
 int main(int argc, char* argv[])
 {
     pthread_t threads[NUM_THREADS];
-
-	system("stty -F /dev/ttyS1 speed 57600 cs8 -parenb -cstopb  -echo");
+    
+    init_uart();
     sem_init(&g_mqttconnetionsem, 0, 1); 
 
-    if(createmessagequeue() != 0)
+    if(createmessagequeue() == 0)
     {
         printf("CreateMessageQueue failed!\n");
         return -1;
     }
-/*
-    if(!sqlitedb_init())
+    if(sqlitedb_init() == 0)
     {
         printf("Create db failed!\n");
         return -1;        
     }
-    */
+    
 	constructsubtopics();
     
 	pthread_create(&threads[0], NULL, mqttlient, NULL);
@@ -686,8 +738,6 @@ int main(int argc, char* argv[])
 	pthread_create(&threads[3], NULL, mqttqueueprocess, NULL);
 
     pthread_exit(NULL);
-
-	return 0;
 }
 
 

@@ -21,8 +21,8 @@
 #define DEV_WATER_PURIF	    0x07	// 净水器
 #define DEV_WATER_HEAT	    0x08	// 热水器
 #define DEV_WATER_PUMP	    0x09	// 循环泵
-#define DEV_DUST_CLEAN	    0x0A // 除尘器
-#define DEV_MULTI_PANEL     0x0B // 多合一控制面板
+#define DEV_DUST_CLEAN	    0x0A    // 除尘器
+#define DEV_MULTI_PANEL     0x0B    // 多合一控制面板
 
 /*操作类型*/
 #define ZGB_RESPONSE 0x01 //响应报文
@@ -31,6 +31,12 @@
 #define ZGB_COLD_WARM_REGULATION 0x22 //冷暖调节
 #define ZGB_AIR_CONDITIONING_THREE_WIND_LEVEL 0x23 //空调三级风速
 #define ZGB_SOCKET_CONTROL 0x30 //插座开关调节
+
+/*Packetid 类型*/
+#define DEV_READ_ALL 0x00
+#define DEV_READ_ONE 0x01
+#define DEV_WRITE    0x02
+#define DEV_RESPONSE 0x03
 
 #define SOCKET_OPEN		0x01 // 插座断电
 #define SOCKET_CLOSE   	0x02// 插座上电
