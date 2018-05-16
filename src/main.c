@@ -691,7 +691,7 @@ int sqlitedb_init()
     }
     sprintf(sql,"create table device(address varchar(8),type INTEGER,status INTEGER,online INTEGER);");
     rc = sqlite3_exec(db,sql,0,0,&zErrMsg);
-    if (rc != SQLITE_OK || rc != SQLITE_ERROR) //表重复会返回SQLITE_ERROR，该错误属于正常
+    if (rc != SQLITE_OK && rc != SQLITE_ERROR) //表重复会返回SQLITE_ERROR，该错误属于正常
     {
         printf("zErrMsg = %s\n",zErrMsg);  
         return 0;          
