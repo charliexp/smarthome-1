@@ -145,7 +145,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	if (root == NULL)
 	{
 		perror("Wrong msg!\n");
-		return -1;
+		return 0;
 	}
 
 	if (strstr(topicName, "operation") != 0)
@@ -177,7 +177,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 				printf("sendret = %d", sendret);
 				perror("");
 				printf("send devicequeuemsg fail!\n");
-				return -1;
+				return 0;
 			}
 			cJSON_Delete(root);
 		}
@@ -488,12 +488,6 @@ void* uartlisten(void *argc)
 	int id;
     int ret;
     
-    g_uartfd = open("/dev/ttyS1", O_RDWR | O_NOCTTY, 0);
-	if (g_uartfd < 3)
-	{
-		perror("error: open ttyS1 fail!\n");
-	}
-  
     milliseconds_sleep(1000);
 
     key = ftok("/etc/hosts", 'z');
@@ -697,7 +691,7 @@ int sqlitedb_init()
     }
     sprintf(sql,"create table device(address varchar(8),type INTEGER,status INTEGER,online INTEGER);");
     rc = sqlite3_exec(db,sql,0,0,&zErrMsg);
-    if (rc != SQLITE_OK)
+    if (rc != SQLITE_OK || rc != SQLITE_ERROR) //表重复会返回SQLITE_ERROR，该错误属于正常
     {
         printf("zErrMsg = %s\n",zErrMsg);  
         return 0;          

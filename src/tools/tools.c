@@ -73,14 +73,14 @@ void milliseconds_sleep(unsigned long msec)
 int init_uart(char* port)
 {
     struct termios options;
-    int fd = open( port, O_RDWR|O_NOCTTY|O_NDELAY);    
-    if (false == fd)    
+    g_uartfd = open( port, O_RDWR|O_NOCTTY|O_NDELAY);    
+    if (g_uartfd < 3)    
     {    
         perror("Can't Open Serial Port");    
         return 0;    
     }    
     //恢复串口为阻塞状态                                   
-    if(fcntl(fd, F_SETFL, 0) < 0)    
+    if(fcntl(g_uartfd, F_SETFL, 0) < 0)    
     {    
         printf("fcntl failed!\n");    
         return 0;    
@@ -107,10 +107,10 @@ int init_uart(char* port)
     options.c_cc[VMIN] = 1; /* 读取字符的最少个数为1 */    
        
     //如果发生数据溢出，接收数据，但是不再读取 刷新收到的数据但是不读    
-    tcflush(fd,TCIFLUSH);    
+    tcflush(g_uartfd,TCIFLUSH);    
        
     //激活配置 (将修改后的termios数据设置到串口中）    
-    if (tcsetattr(fd,TCSANOW,&options) != 0)      
+    if (tcsetattr(g_uartfd,TCSANOW,&options) != 0)      
     {    
         perror("uart set error!\n");      
         return 0;     
