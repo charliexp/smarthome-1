@@ -11,6 +11,8 @@
 #include "../tools/msg.h"
 #include "device.h"
 
+extern int g_queueid;
+
 void zgbmsginit(zgbmsg *msg)
 {
 	memset((char*)msg, 0, sizeof(zgbmsg));
