@@ -8,7 +8,7 @@
 #include <sys/msg.h>
 #include <sys/stat.h>
 
-#include "../tools/msg.h"
+#include "../utils/utils.h"
 #include "device.h"
 
 extern int g_queueid;
@@ -21,12 +21,13 @@ void zgbmsginit(zgbmsg *msg)
 	msg->payload.framecontrol[1] = 0x88;
 	msg->payload.cmdid[0] = 0x25;
 	msg->payload.cmdid[1] = 0x00;
+    msg->payload.adf.data.magicnum = 0xAA;
 	msg->footer = 0x23;
 }
 
 int airconcontrol(cJSON *device, char packetid)
 {
-	zgbaddress address;
+	ZGBADDRESS address;
 	char data[69] = {0};
 	char devicetype;
 	char op;
@@ -71,7 +72,7 @@ int socketcontrol(cJSON *device, char packetid)
 	return 0;
 }
 
-int sendzgbmsg(zgbaddress address, char *data, char packetid)
+int sendzgbmsg(ZGBADDRESS address, char *data, char packetid)
 {
 	int ret;
 	zgbmsg msg;
@@ -88,10 +89,10 @@ int sendzgbmsg(zgbaddress address, char *data, char packetid)
 	msg.payload.adf.index[0] = 0xA0;
 	msg.payload.adf.index[1] = 0x0F;
 	msg.payload.adf.length = strlen(data) + 3;
-	msg.payload.adf.devmsg.version = 0x10;
-	msg.payload.adf.devmsg.packetid = packetid;
-	msg.payload.adf.devmsg.devicecmdid = 0x03;
-	strncpy((char*)msg.payload.adf.devmsg.data, (char*)data, strlen(data));
+	msg.payload.adf.data.version = 0x10;
+	msg.payload.adf.data.packetid = packetid;
+	msg.payload.adf.data.devicecmdid = 0x03;
+	strncpy((char*)msg.payload.adf.data.tlv, (char*)data, strlen(data));
 
 	for (;i < msg.msglength; i++)
 	{
@@ -111,4 +112,4 @@ int sendzgbmsg(zgbaddress address, char *data, char packetid)
 	return 0;
 }
 
-
+void zgbtodevice

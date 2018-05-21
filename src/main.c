@@ -12,24 +12,10 @@
 #include <sqlite3.h> 
 
 #include "paho/MQTTAsync.h"
-#include "tools/tools.h"
+#include "utils/utils.h"
 #include "device/device.h"
 #include "cjson/cJSON.h"
-#include "tools/error.h"
-#include "tools/msg.h"
 
-
-#define NUM_THREADS 4
-#define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
-#define CLIENTID    "todlee" //客户端ID
-#define CLIENTID1    "todlee_pub" //客户端ID
-#define QOS 1
-#define USERNAME    "root"
-#define PASSWORD    "root"
-#define TOPICSNUM   5
-#define RESPONSE_WAIT 5000000 //消息响应等待时间5000000us = 5s
-#define ZGB_ADDRESS_LENGTH 8
-#define ZGBMSG_MAX_NUM 20
 
 char g_topicroot[20] = {0};
 char g_mac[20] = {0};
@@ -53,7 +39,7 @@ struct operation_results
 	int msgid;
 	struct operation
 	{ 
-		zgbaddress address;
+		ZGBADDRESS address;
 		char op;
 		char result;
 	} operation;
@@ -123,9 +109,9 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	char* payloadptr;
 	char* mqttid;
 	cJSON *root;
-	deviceoperationmsg msg;
+	devicequeuemsg msg;
 	int sendret;
-	size_t msglen = sizeof(deviceoperationmsg);
+	size_t msglen = sizeof(devicequeuemsg);
 	char topic[TOPIC_LENGTH] = { 0 };
 
     printf("Message arrived\n");
@@ -273,7 +259,7 @@ void *mqttlient(void *argc)
 /*设备消息的处理进程*/
 void* devicemsgprocess(void *argc)
 {
-	deviceoperationmsg msg;
+	devicequeuemsg msg;
 	char topic[TOPIC_LENGTH] = { 0 };
 	char mqttid[16] = {0};
 	cJSON *devices, *device;
@@ -282,7 +268,7 @@ void* devicemsgprocess(void *argc)
 	int rcvret;
 	char packetid;
 	char devicetype;
-	size_t msglen = sizeof(deviceoperationmsg);
+	size_t msglen = sizeof(devicequeuemsg);
     
 
 	while(1)
@@ -369,18 +355,9 @@ void* devicemsgprocess(void *argc)
 }
 
 void* uartsend(void *argc)
-{
-	key_t key;
-    uartsendqueuemsg qmsg;
-	int id; 
+{    
+    uartsendqueuemsg qmsg;    
     int rcvret;
-
-    key = ftok("/etc/hosts", 'u');
-	id = msgget(key, IPC_CREAT | 0666);
-	if (id == -1)
-	{
-		perror("msgget fail!\n");
-	}
     
     while(true)
     {
@@ -420,21 +397,22 @@ void* zgbmsgprocess(void* argc)
 		}
 		printf("zgbmsgprocess recive a msg\n");
 
-        if (qmsg.msg.payload.adf.devmsg.devicecmdid == DEV_RESPONSE)
+        if (qmsg.msg.payload.adf.data.devicecmdid == DEV_RESPONSE)
         {
-            packetid = qmsg.msg.payload.adf.devmsg.packetid;
+            packetid = qmsg.msg.payload.adf.data.packetid;
             for (int i = 0; i < ZGBMSG_MAX_NUM; ++i)
             {
                 if (g_zgbmsg[i].packetid == packetid)
                 {
                     g_zgbmsg[i].over = 1;
-                    g_zgbmsg[i].result = *((char*)qmsg.msg.payload.adf.devmsg.data + 1);
+                    g_zgbmsg[i].result = *((char*)qmsg.msg.payload.adf.data.tlv + 1);
                     break;
                 }
             }
         }
-        else if(qmsg.msg.payload.adf.devmsg.devicecmdid == DEV_READ_ALL)
-        {}
+        else if(qmsg.msg.payload.adf.data.devicecmdid == DEV_READ_ALL)
+        {
+            }
 	}
     
 	pthread_exit(NULL);    
@@ -453,7 +431,6 @@ void* uartlisten(void *argc)
     zgbqueuemsg zgbqmsg;
 	int i, j, sum;
     int ret;
-    
 
     pthread_create(&threads[0], NULL, uartsend, NULL);
     pthread_create(&threads[1], NULL, zgbmsgprocess, NULL);
@@ -495,10 +472,10 @@ void* uartlisten(void *argc)
 			}
 
 			strncpy((char *)zmsg.payload.src, msgbuf + 10, ZGB_ADDRESS_LENGTH);
-			zmsg.payload.adf.devmsg.packetid = msgbuf[i + (int)&zmsg.payload.adf.devmsg.packetid - (int)&zmsg];
-			zmsg.payload.adf.devmsg.devicecmdid = msgbuf[i + (int)&zmsg.payload.adf.devmsg.packetid - (int)&zmsg + 1];
-			strncpy(zmsg.payload.adf.devmsg.data, msgbuf + 40, zmsg.msglength - 38);
-			zmsg.payload.adf.devmsg.data[zmsg.msglength - 38] = 0;
+			zmsg.payload.adf.data.packetid = msgbuf[i + (int)&zmsg.payload.adf.data.packetid - (int)&zmsg];
+			zmsg.payload.adf.data.devicecmdid = msgbuf[i + (int)&zmsg.payload.adf.data.packetid - (int)&zmsg + 1];
+			strncpy(zmsg.payload.adf.data.tlv, msgbuf + 40, zmsg.msglength - 38);
+			zmsg.payload.adf.data.tlv[zmsg.msglength - 38] = 0;
 
             zgbqmsg.msgtype = QUEUE_MSG_ZGB;
             zgbqmsg.msg = zmsg;
@@ -634,7 +611,7 @@ loop:
 		}
 		if (msg.msgtype == MQTT_MSG_TYPE_PUB)
 		{
-			free(msg.msg.msgcontent);
+			free(msg.msg.msgcontent); //如果是PUB消息需要把内容指针释放
 		}
 		free(msg.msg.topic);
 	}
