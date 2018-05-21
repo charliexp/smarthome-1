@@ -1,7 +1,7 @@
-#ifndef _MSG_H_
-#define _MSG_H_
+#ifndef _TYPE_H_
+#define _TYPE_H_
 
-#include "cjson/cJSon.h"
+#include "../cjson/cJSon.h"
 
 typedef unsigned char BYTE;
 typedef BYTE ZGBADDRESS[8];
