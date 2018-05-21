@@ -40,7 +40,7 @@ clean:
 	rm -rf ${bindir}/*
 	
 ${MQTTLIB_SO}: ${MQTT_FILES} ${MQTT_HEADERS}
-	${CC} ${CCFLAGS_SO} -o $@ ${MQTT_FILES} ${LDFLAGS}
+	${CC} ${CCFLAGS_SO} -o $@ ${MQTT_FILES} ${LDFLAGS_A}
 	
 ${MAIN}: ${SOURCE_FILES} ${HEADERS} ${MQTTLIB_SO} 
 	${CC} -g -o $@ ${SOURCE_FILES} -l${MQTTLIB_SO} ${FLAGS_EXE} -lm -std=c11
