@@ -2,6 +2,7 @@ SHELL = /bin/sh
 .PHONY: clean
  
 srcdir = paho
+mainsrc = utils log device mqttserver cjson
 blddir = ../lib
 bindir = ../output
  
@@ -9,6 +10,7 @@ SOURCE_FILES = main.c $(wildcard cjson/*.c) $(wildcard device/*.c) $(wildcard lo
 MQTT_FILES = $(filter-out $(srcdir)/MQTTClient.c $(srcdir)/MQTTVersion.c $(srcdir)/SSLSocket.c, $(wildcard paho/*.c))
  
 HEADERS = $(srcdir)/*.h
+MAINHEADERS = utils/*.h log/*.h device/*.h mqttserver/*.h cjson/*.h
  
 MQTTLIB_A = paho-mqtt3a
  
@@ -26,7 +28,7 @@ END_GROUP = -Wl,--end-group
  
 CCFLAGS_SO = -g -fPIC $(CFLAGS) -Wall -fvisibility=hidden
 FLAGS_EXE = $(LDFLAGS) -I ${srcdir} -lpthread -L ${blddir}
-FLAGS_EXES = $(LDFLAGS) -I ${srcdir} ${START_GROUP} -lpthread -lssl -lcrypto ${END_GROUP} -L ${blddir} -D_SVID_SOURCE -lsqlite3
+FLAGS_EXES = $(LDFLAGS) -I ${srcdir} -I $(mainsrc) ${START_GROUP} -lpthread -lssl -lcrypto ${END_GROUP} -L ${blddir} -D_SVID_SOURCE -lsqlite3
 LDFLAGS_A = $(LDFLAGS) -shared -Wl,-init,$(MQTTASYNC_INIT) -lpthread
 LDFLAGS_A += -Wl,-soname,lib${MQTTLIB_A}.so
  
@@ -41,5 +43,5 @@ clean:
 ${MQTTLIB_A_TARGET}: ${MQTT_FILES} ${HEADERS}
 	${CC} ${CCFLAGS_SO} -o $@ ${MQTT_FILES} ${LDFLAGS_A}
  	
-${MAIN}: ${SOURCE_FILES} ${MQTTLIB_A_TARGET}
+${MAIN}: ${SOURCE_FILES} $(MAINHEADERS) ${MQTTLIB_A_TARGET}
 	${CC} -g -o $@ ${SOURCE_FILES} -l${MQTTLIB_A} ${FLAGS_EXES} -lm -std=c11

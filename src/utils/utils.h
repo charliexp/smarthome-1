@@ -31,9 +31,9 @@ void milliseconds_sleep(unsigned long msec);
 int init_uart(char* port);
 
 /*base64±àÂë*/
-int base64_encode(const unsigned char * sourcedata, char * base64)£»
+int base64_encode(const unsigned char * sourcedata, char * base64);
 
 /*base64½âÂë*/
-int base64_decode(const char * base64, unsigned char * dedata)£»
+int base64_decode(const char * base64, unsigned char * dedata);
 
 #endif

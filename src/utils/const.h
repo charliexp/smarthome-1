@@ -88,7 +88,7 @@
 #define TLV_VALUE_SOCKET_OFF  0x00 //插座断电
 #define TLV_VALUE_SOCKET_ON   0x01 //插座上电
 /*插座数据上报*/
-#define TLV_TYPE_SOCKET_STATUS 0x11
+#define TLV_TYPE_SOCKET_READ 0x11
 
 #define TLV_VALUE_SOCKET_E   0x01 //插座电量上报(半小时)
 #define TLV_VALUE_SOCKET_P   0x02 //插座功率上报

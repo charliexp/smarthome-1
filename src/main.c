@@ -14,7 +14,7 @@
 #include "paho/MQTTAsync.h"
 #include "utils/utils.h"
 #include "device/device.h"
-#include "cJSON/cJSON.h"
+#include "cjson/cJSON.h"
 
 
 char g_topicroot[20] = {0};
