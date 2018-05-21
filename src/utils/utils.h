@@ -1,9 +1,9 @@
 #ifndef _TOOLS_H_
 #define _TOOLS_H_
 
-#include "../utils/type.h"
-#include "../utils/error.h"
-#include "../utils/const.h"
+#include "type.h"
+#include "error.h"
+#include "const.h"
 
 extern int g_uartfd;
 

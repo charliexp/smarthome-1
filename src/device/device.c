@@ -8,7 +8,7 @@
 #include <sys/msg.h>
 #include <sys/stat.h>
 
-#include "../utils/utils.h"
+#include "utils.h"
 #include "device.h"
 
 extern int g_queueid;

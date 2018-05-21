@@ -11,10 +11,10 @@
 #include <semaphore.h>
 #include <sqlite3.h> 
 
-#include "paho/MQTTAsync.h"
-#include "utils/utils.h"
-#include "device/device.h"
-#include "cjson/cJSON.h"
+#include "MQTTAsync.h"
+#include "utils.h"
+#include "device.h"
+#include "cJSON.h"
 
 
 char g_topicroot[20] = {0};

@@ -1,7 +1,7 @@
 SHELL = /bin/sh
 .PHONY: clean
 
-srcdir = paho
+srcdir = paho utils device log cjson mqttserver
 blddir = ../lib
 bindir = ../output
 
@@ -44,5 +44,5 @@ clean:
 ${MQTTLIB_A_TARGET}: ${MQTT_FILES} ${HEADERS}
 	${CC} ${CCFLAGS_SO} -o $@ ${MQTT_FILES} ${LDFLAGS_A}
 	
-${MAIN}: ${SOURCE_FILES} ${MQTTLIB_A_TARGET}
+${MAIN}: ${SOURCE_FILES} ${MQTTLIB_A_TARGET} ${HEADERS}
 	${CC} -g -o $@ ${SOURCE_FILES} -l${MQTTLIB_A} ${FLAGS_EXES} -lm -std=c11
