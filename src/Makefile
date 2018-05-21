@@ -5,7 +5,7 @@ srcdir = paho
 blddir = ../lib
 bindir = ../output
 
-SOURCE_FILES = main.c $(wildcard cjson/*.c) $(wildcard device/*.c) $(wildcard log/*.c) $(wildcard tools/*.c) $(wildcard mqttserver/*.c) 
+SOURCE_FILES = main.c $(wildcard cjson/*.c) $(wildcard device/*.c) $(wildcard log/*.c) $(wildcard utils/*.c) $(wildcard mqttserver/*.c) 
 MQTT_FILES = $(filter-out $(srcdir)/MQTTClient.c $(srcdir)/MQTTVersion.c $(srcdir)/SSLSocket.c, $(wildcard paho/*.c))
 
 HEADERS = $(srcdir)/*.h
