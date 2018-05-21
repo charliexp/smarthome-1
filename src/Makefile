@@ -1,7 +1,8 @@
 SHELL = /bin/sh
 .PHONY: clean
 
-srcdir = paho utils device log cjson mqttserver
+srcdir = paho
+mainsrcdir = utils device log cjson mqttserver
 blddir = ../lib
 bindir = ../output
 
@@ -9,6 +10,7 @@ SOURCE_FILES = main.c $(wildcard cjson/*.c) $(wildcard device/*.c) $(wildcard lo
 MQTT_FILES = $(filter-out $(srcdir)/MQTTClient.c $(srcdir)/MQTTVersion.c $(srcdir)/SSLSocket.c, $(wildcard paho/*.c))
 
 HEADERS = $(srcdir)/*.h
+MAINHEADERS = $(srcdir)/*.h
 
 MQTTLIB_A = paho-mqtt3a
 
@@ -44,5 +46,5 @@ clean:
 ${MQTTLIB_A_TARGET}: ${MQTT_FILES} ${HEADERS}
 	${CC} ${CCFLAGS_SO} -o $@ ${MQTT_FILES} ${LDFLAGS_A}
 	
-${MAIN}: ${SOURCE_FILES} ${MQTTLIB_A_TARGET} ${HEADERS}
+${MAIN}: ${SOURCE_FILES} ${MQTTLIB_A_TARGET} ${MAINHEADERS}
 	${CC} -g -o $@ ${SOURCE_FILES} -l${MQTTLIB_A} ${FLAGS_EXES} -lm -std=c11
