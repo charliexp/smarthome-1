@@ -1,7 +1,7 @@
 #ifndef _TYPE_H_
 #define _TYPE_H_
 
-#include "../cjson/cJSon.h"
+#include "../cjson/cJSON.h"
 
 typedef unsigned char BYTE;
 typedef BYTE ZGBADDRESS[8];

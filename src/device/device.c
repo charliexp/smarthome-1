@@ -53,8 +53,8 @@ int freshaircontrol(cJSON *device, char packetid)
 
 int socketcontrol(cJSON *device, char packetid)
 {
-	zgbaddress address;
-	char data[69] = { 0 };
+	ZGBADDRESS address;
+	BYTE data[65] = { 0 };
 	char devicetype;
 	char op;
 	char* destaddress;
@@ -63,16 +63,16 @@ int socketcontrol(cJSON *device, char packetid)
 	devicetype = 0x02;
 	op = cJSON_GetObjectItem(device, "operation")->valueint;
 
-	data[0] = 0x11;
-	data[1] = devicetype;
-	data[2] = ZGB_SOCKET_CONTROL;
+	data[0] = TLV_TYPE_SOCKET_STATUS;
+	data[1] = 0x01;
+	data[2] = TLV_VALUE_SOCKET_ON;
 	data[3] = op;
 
 	sendzgbmsg(address, data, packetid);
 	return 0;
 }
 
-int sendzgbmsg(ZGBADDRESS address, char *data, char packetid)
+int sendzgbmsg(ZGBADDRESS address, BYTE *data, char packetid)
 {
 	int ret;
 	zgbmsg msg;
@@ -91,8 +91,8 @@ int sendzgbmsg(ZGBADDRESS address, char *data, char packetid)
 	msg.payload.adf.length = strlen(data) + 3;
 	msg.payload.adf.data.version = 0x10;
 	msg.payload.adf.data.packetid = packetid;
-	msg.payload.adf.data.devicecmdid = 0x03;
-	strncpy((char*)msg.payload.adf.data.tlv, (char*)data, strlen(data));
+	msg.payload.adf.data.msgtype = 0x03;
+	strncpy((char*)msg.payload.adf.data.pdu, (char*)data, strlen(data));
 
 	for (;i < msg.msglength; i++)
 	{

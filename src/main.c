@@ -397,7 +397,7 @@ void* zgbmsgprocess(void* argc)
 		}
 		printf("zgbmsgprocess recive a msg\n");
 
-        if (qmsg.msg.payload.adf.data.devicecmdid == DEV_RESPONSE)
+        if (qmsg.msg.payload.adf.data.msgtype == ZGB_MSGTYPE_DEVICE_OPERATION_RESULT)
         {
             packetid = qmsg.msg.payload.adf.data.packetid;
             for (int i = 0; i < ZGBMSG_MAX_NUM; ++i)
@@ -405,12 +405,12 @@ void* zgbmsgprocess(void* argc)
                 if (g_zgbmsg[i].packetid == packetid)
                 {
                     g_zgbmsg[i].over = 1;
-                    g_zgbmsg[i].result = *((char*)qmsg.msg.payload.adf.data.tlv + 1);
+                    g_zgbmsg[i].result = *((char*)qmsg.msg.payload.adf.data.pdu + 1);
                     break;
                 }
             }
         }
-        else if(qmsg.msg.payload.adf.data.devicecmdid == DEV_READ_ALL)
+        else if(qmsg.msg.payload.adf.data.msgtype == )
         {
             }
 	}
@@ -453,10 +453,8 @@ void* uartlisten(void *argc)
 			}
 			//zgb消息提取
 			zgbmsginit(&zmsg);
-			zmsg.header = 0x2A;
 			zmsg.msglength = msgbuf[i + 1];
 			zmsg.check = msgbuf[i + 1 + zmsg.msglength + 1];
-			zmsg.footer = msgbuf[i + 1 + zmsg.msglength + 2];
 			sum = 0;
 
 			//zgb消息的check校验
@@ -467,15 +465,17 @@ void* uartlisten(void *argc)
 			if (sum%256 != zmsg.check)
 			{
 				printf("Wrong format!\n");
-				i++;
+				i = i + zmsg.msglength + 4;
 				continue;
 			}
 
 			strncpy((char *)zmsg.payload.src, msgbuf + 10, ZGB_ADDRESS_LENGTH);
+            zmsg.payload.adf.data.devicetype = msgbuf[i + (int)&zmsg.payload.adf.data.devicetype - (int)&zmsg];
+            zmsg.payload.adf.data.deviceindex = msgbuf[i + (int)&zmsg.payload.adf.data.deviceindex - (int)&zmsg];
 			zmsg.payload.adf.data.packetid = msgbuf[i + (int)&zmsg.payload.adf.data.packetid - (int)&zmsg];
-			zmsg.payload.adf.data.devicecmdid = msgbuf[i + (int)&zmsg.payload.adf.data.packetid - (int)&zmsg + 1];
-			strncpy(zmsg.payload.adf.data.tlv, msgbuf + 40, zmsg.msglength - 38);
-			zmsg.payload.adf.data.tlv[zmsg.msglength - 38] = 0;
+			zmsg.payload.adf.data.msgtype = msgbuf[i + (int)&zmsg.payload.adf.data.msgtype - (int)&zmsg];
+			strncpy(zmsg.payload.adf.data.pdu, msgbuf + 40, zmsg.msglength - 38);
+			zmsg.payload.adf.data.pdu[zmsg.msglength - 38] = 0;
 
             zgbqmsg.msgtype = QUEUE_MSG_ZGB;
             zgbqmsg.msg = zmsg;
@@ -483,15 +483,6 @@ void* uartlisten(void *argc)
         	{
 		        printf("send zgbqueuemsg fail!\n");
 	        }
-
-            for (j = 0; j < zmsg.msglength+4; ++j)
-            {
-                if (j >= zmsg.payload.adf.length+37)
-                {
-                    printf("%d ", *((char*)&zmsg+sizeof(zmsg)-(zmsg.msglength+4-j)));
-                }
-                printf("%d ", *((char*)&zmsg+j));
-            }
 		}
 	}
 	pthread_exit(NULL);
