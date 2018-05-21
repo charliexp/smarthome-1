@@ -36,10 +36,10 @@ build: | ${MQTTLIB_A_TARGET} ${MAIN}
  
 clean:
 	rm -rf ${blddir}/*
- 	rm -rf ${bindir}/*
+	rm -rf ${bindir}/*
  	
 ${MQTTLIB_A_TARGET}: ${MQTT_FILES} ${HEADERS}
- 	${CC} ${CCFLAGS_SO} -o $@ ${MQTT_FILES} ${LDFLAGS_A}
+	${CC} ${CCFLAGS_SO} -o $@ ${MQTT_FILES} ${LDFLAGS_A}
  	
 ${MAIN}: ${SOURCE_FILES} ${MQTTLIB_A_TARGET}
- 	${CC} -g -o $@ ${SOURCE_FILES} -l${MQTTLIB_A} ${FLAGS_EXES} -lm -std=c11
+	${CC} -g -o $@ ${SOURCE_FILES} -l${MQTTLIB_A} ${FLAGS_EXES} -lm -std=c11
