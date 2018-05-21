@@ -7,10 +7,10 @@ blddir = ../lib
 bindir = ../output
 
 SOURCE_FILES = main.c $(wildcard cjson/*.c) $(wildcard device/*.c) $(wildcard log/*.c) $(wildcard utils/*.c) $(wildcard mqttserver/*.c) 
-MQTT_FILES = $(filter-out $(srcdir)/MQTTClient.c $(srcdir)/MQTTVersion.c $(srcdir)/SSLSocket.c, $(wildcard paho/*.c))
+MQTT_FILES = $(filter-out $(srcdir)/MQTTClient.c $(srcdir)/SSLSocket.c, $(wildcard paho/*.c))
 
-HEADERS = $(srcdir)/*.h
-MAINHEADERS = $(srcdir)/*.h
+MQTT_HEADERS = paho/*.h
+HEADERS = $(SOURCE_FILES)/*.h
 
 MQTTLIB_A = paho-mqtt3a
 
@@ -43,8 +43,8 @@ clean:
 	rm -rf ${blddir}/*
 	rm -rf ${bindir}/*
 	
-${MQTTLIB_A_TARGET}: ${MQTT_FILES} ${HEADERS}
+${MQTTLIB_A_TARGET}: ${MQTT_FILES} ${MQTT_HEADERS}
 	${CC} ${CCFLAGS_SO} -o $@ ${MQTT_FILES} ${LDFLAGS_A}
 	
-${MAIN}: ${SOURCE_FILES} ${MQTTLIB_A_TARGET} ${MAINHEADERS}
+${MAIN}: ${SOURCE_FILES} ${HEADERS} ${MQTTLIB_A_TARGET} 
 	${CC} -g -o $@ ${SOURCE_FILES} -l${MQTTLIB_A} ${FLAGS_EXES} -lm -std=c11
