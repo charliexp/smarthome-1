@@ -1,7 +1,7 @@
 #ifndef _DEVICE_INFO_
 #define _DEVICE_INFO_
 
-#include "cJSON.h"
+#include "cJson/cJSON.h"
 
 /*zgb消息初始化*/
 void zgbmsginit(zgbmsg *msg);
