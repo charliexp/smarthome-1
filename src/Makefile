@@ -18,7 +18,7 @@ CFLAGS += -I /home/ubuntu/work/code/openssl-1.1.0h/install/include -ldl
 LDFLAGS += -L /home/ubuntu/work/code/openssl-1.1.0h/install/lib -ldl
 
 CJSON_TARGET = ${blddir}/libcjson.so
-MQTTLIB = ${blddir}/lib${MQTTLIB}.so
+MQTTLIB_SO = ${blddir}/lib${MQTTLIB}.so
 MAIN = ${bindir}/smarthome
 
 MQTTASYNC_INIT = MQTTAsync_init
@@ -28,7 +28,7 @@ END_GROUP = -Wl,--end-group
 CCFLAGS_SO = -g -fPIC $(CFLAGS) -Wall -fvisibility=hidden
 FLAGS_EXE = $(LDFLAGS) -I paho ${START_GROUP} -lpthread -lssl -lcrypto ${END_GROUP} -L ${blddir} -D_SVID_SOURCE -lsqlite3
 LDFLAGS_A = $(LDFLAGS) -shared -Wl,-init,$(MQTTASYNC_INIT) -lpthread
-LDFLAGS_A += -Wl,-soname,lib${MQTTLIB_A}.so
+LDFLAGS_A += -Wl,-soname,lib${MQTTLIB}.so
 
 
 all: build
@@ -39,8 +39,8 @@ clean:
 	rm -rf ${blddir}/*
 	rm -rf ${bindir}/*
 	
-${MQTTLIB_A}: ${MQTT_FILES} ${MQTT_HEADERS}
+${MQTTLIB_SO}: ${MQTT_FILES} ${MQTT_HEADERS}
 	${CC} ${CCFLAGS_SO} -o $@ ${MQTT_FILES} ${LDFLAGS}
 	
-${MAIN}: ${SOURCE_FILES} ${HEADERS} ${MQTTLIB} 
-	${CC} -g -o $@ ${SOURCE_FILES} -l${MQTTLIB} ${FLAGS_EXE} -lm -std=c11
+${MAIN}: ${SOURCE_FILES} ${HEADERS} ${MQTTLIB_SO} 
+	${CC} -g -o $@ ${SOURCE_FILES} -l${MQTTLIB_SO} ${FLAGS_EXE} -lm -std=c11
