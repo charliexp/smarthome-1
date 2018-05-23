@@ -90,7 +90,7 @@ void mqttmsgqueue(long messagetype, char* topic, char* message, int qos, int ret
 
 	if (ret = msgsnd(g_queueid, &msg, msglen, 0) != 0)
 	{
-		printf("send mqttqueuemsg fail!\n");
+		MYLOG_ERROR("send mqttqueuemsg fail!");
 		return;
 	}
 
@@ -99,7 +99,7 @@ void mqttmsgqueue(long messagetype, char* topic, char* message, int qos, int ret
 
 void onDisconnect(void* context, MQTTAsync_successData* response)
 {
-	printf("Successful disconnection\n");
+	MYLOG_ERROR("Successful disconnection");
 }
 
 
@@ -114,15 +114,15 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	size_t msglen = sizeof(devicequeuemsg);
 	char topic[TOPIC_LENGTH] = { 0 };
 
-    MYLOG_INFO("Message arrived\n");
-    MYLOG_INFO("topic: %s\n", topicName);
+    MYLOG_INFO("Message arrived");
+    MYLOG_INFO("topic: %s", topicName);
 
     payloadptr = (char*)message->payload;
 	root = cJSON_Parse(payloadptr);
 
 	if (root == NULL)
 	{
-		perror("Wrong msg!\n");
+		MYLOG_ERROR("Wrong msg!");
 		return 0;
 	}
 
@@ -139,7 +139,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 		{
 			/*将操作消息json链表的root封装消息丢入消息队列*/
 			g_operationflag = 1;
-			printf("get an operation msg.\n");
+			MYLOG_INFO("get an operation msg.\n");
 
 			msg.msgtype = QUEUE_MSG_DEVIC;
 			msg.p_operation_json = cJSON_Duplicate(root, 1);
@@ -172,14 +172,14 @@ void onSend(void* context, MQTTAsync_successData* response)
 	MQTTAsync_disconnectOptions opts = MQTTAsync_disconnectOptions_initializer;
 	int rc;
 
-	printf("Message with token value %d delivery confirmed\n", response->token);
+	MYLOG_INFO("Message with token value %d delivery confirmed", response->token);
 
 	opts.onSuccess = onDisconnect;
 	opts.context = client;
 
 	if ((rc = MQTTAsync_disconnect(client, &opts)) != MQTTASYNC_SUCCESS)
 	{
-		MYLOG_ERROR("Failed to start sendMessage, return code %d\n", rc);
+		MYLOG_ERROR("Failed to start sendMessage, return code %d", rc);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -215,7 +215,7 @@ void onConnect(void* context, MQTTAsync_successData* response)
 	rc = MQTTAsync_subscribeMany(client, TOPICSNUM, g_topics, g_qoss, &opts);
 	if (rc != MQTTASYNC_SUCCESS)
 	{
-		MYLOG_ERROR("sub error!\n");
+		MYLOG_ERROR("sub error!");
 	}
 
 	return;
@@ -275,7 +275,7 @@ void* devicemsgprocess(void *argc)
 		if (rcvret = msgrcv(g_queueid, (void*)&msg, msglen, QUEUE_MSG_DEVIC, 0) <= 0)
 		{
 			MYLOG_ERROR("rcvret = %d", rcvret);
-			MYLOG_ERROR("recive devicequeuemsg fail!\n");
+			MYLOG_ERROR("recive devicequeuemsg fail!");
 			pthread_exit(NULL);
 		}
 		MYLOG_INFO("devicemsgprocess recive a msg");
@@ -357,7 +357,7 @@ void* uartsend(void *argc)
     uartsendqueuemsg qmsg;    
     int rcvret;
     
-    LOG_DEBUG("Enter pthread uartsend");
+    MYLOG_DEBUG("Enter pthread uartsend");
     while(true)
     {
 		if ( rcvret = msgrcv(g_queueid, (void*)&qmsg, sizeof(qmsg), QUEUE_MSG_UART, 0) <= 0 )
@@ -365,7 +365,7 @@ void* uartsend(void *argc)
 			MYLOG_ERROR("rcvret = %d", rcvret);
 			MYLOG_ERROR("recive uartsendmsg fail!");
 		}
-        printf("uart begin to send msg!");
+        MYLOG_INFO("uart begin to send msg!");
         if ( write(g_uartfd, (char *)&qmsg.msg, (int)(qmsg.msg.msglength + 2)) != (qmsg.msg.msglength + 2))
 	    {
 		    MYLOG_ERROR("com write error!");
@@ -434,7 +434,7 @@ void* uartlisten(void *argc)
     pthread_create(&threads[0], NULL, uartsend, NULL);
     pthread_create(&threads[1], NULL, zgbmsgprocess, NULL);
 
-    LOG_DEBUG("Enter pthread uartlisten");
+    MYLOG_DEBUG("Enter pthread uartlisten");
 	while (true)
 	{
 		nByte = read(g_uartfd, msgbuf, 1024);
@@ -492,15 +492,15 @@ void* uartlisten(void *argc)
 
 void mqttpub_onFailure(void* context, MQTTAsync_failureData* response)
 {
-	MYLOG_ERROR("pub msg fail!\n");
-	MYLOG_ERROR("The token:%d\n", response->token);
-	MYLOG_ERROR("The code:%d\n", response->code);
-	MYLOG_ERROR("The token:%s\n", response->message);
+	MYLOG_ERROR("pub msg fail!");
+	MYLOG_ERROR("The token:%d", response->token);
+	MYLOG_ERROR("The code:%d", response->code);
+	MYLOG_ERROR("The token:%s", response->message);
 }
 
 void mqtt_onSuccess(void* context, MQTTAsync_successData* response)
 {
-	printf("pub msg success!\n");
+	MYLOG_INFO("pub msg success!");
 }
 
 /*MQTT消息队列的处理进程*/
@@ -532,7 +532,7 @@ void* mqttqueueprocess(void *argc)
 	{
 		MYLOG_ERROR("MyMQTTClient: MQTT connect fail!");
 	}
-	MYLOG_DEBUG("enter mqttqueueprocess pthread!\n");
+	MYLOG_DEBUG("enter mqttqueueprocess pthread!");
 
 	/*处理mqtt消息队列*/
 	while (1)
@@ -561,7 +561,7 @@ loop:
                 }
                 else
                 {
-				    printf("MQTTAsync_send fail! %d\n", result);
+				    MYLOG_ERROR("MQTTAsync_send fail! %d", result);
                 }
 			}
 			break;
@@ -578,7 +578,7 @@ loop:
                 }
                 else
                 {
-				    printf("MQTTAsync_subscribe fail! %d\n", result);
+				    MYLOG_ERROR("MQTTAsync_subscribe fail! %d", result);
                 }
 
 			break;
@@ -595,12 +595,12 @@ loop:
                 }
                 else
                 {
-				    printf("MQTTAsync_unsubscribe fail! %d\n", result);
+				    MYLOG_ERROR("MQTTAsync_unsubscribe fail! %d\n", result);
                 }
 
 			break;
 		default:
-			printf("unknow msg!\n");
+			MYLOG_INFO("unknow msg!\n");
 		}
 		if (msg.msgtype == MQTT_MSG_TYPE_PUB)
 		{
