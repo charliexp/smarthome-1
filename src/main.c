@@ -146,8 +146,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 
 			if (sendret = msgsnd(g_queueid, (void*)&msg, msglen, 0) != 0)
 			{
-				LOG_ERROR("sendret = %d", sendret);
-				LOG_ERROR("send devicequeuemsg fail!");
+				MYLOG_ERROR("sendret = %d", sendret);
+				MYLOG_ERROR("send devicequeuemsg fail!");
 				return 0;
 			}
 			cJSON_Delete(root);
@@ -186,7 +186,7 @@ void onSend(void* context, MQTTAsync_successData* response)
 
 void onConnectFailure(void* context, MQTTAsync_failureData* response)
 {
-	LOG_ERROR("Connect failed, rc %d", response ? response->code : 0);
+	MYLOG_ERROR("Connect failed, rc %d", response ? response->code : 0);
     sem_post(&g_mqttconnetionsem);
 }
 
@@ -196,9 +196,9 @@ void connlost(void *context, char *cause)
 	MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
 	int rc;
 
-	LOG_ERROR("Connection lost");
-	LOG_ERROR("cause: %s", cause);
-	LOG_ERROR("Reconnecting");
+	MYLOG_ERROR("Connection lost");
+	MYLOG_ERROR("cause: %s", cause);
+	MYLOG_ERROR("Reconnecting");
 
 	sem_post(&g_mqttconnetionsem);
 }
@@ -215,7 +215,7 @@ void onConnect(void* context, MQTTAsync_successData* response)
 	rc = MQTTAsync_subscribeMany(client, TOPICSNUM, g_topics, g_qoss, &opts);
 	if (rc != MQTTASYNC_SUCCESS)
 	{
-		LOG_ERROR("sub error!\n");
+		MYLOG_ERROR("sub error!\n");
 	}
 
 	return;
@@ -290,7 +290,7 @@ void* devicemsgprocess(void *argc)
 			device = cJSON_GetArrayItem(devices, i);
 			if (device == NULL)
 			{
-				LOG_ERROR("error");
+				MYLOG_ERROR("error");
 			}
 			packetid = getpacketid();
 			g_zgbmsg[i].packetid = packetid;
@@ -300,7 +300,7 @@ void* devicemsgprocess(void *argc)
 			devicetype = cJSON_GetObjectItem(device, "type")->valueint;
 			if (device == NULL)
 			{
-				LOG_ERROR("error");
+				MYLOG_ERROR("error");
 			}
 
 			switch (devicetype)
@@ -339,7 +339,7 @@ void* devicemsgprocess(void *argc)
 			device = cJSON_GetArrayItem(devices, i);
 			if (device == NULL)
 			{
-				LOG_ERROR("error");
+				MYLOG_ERROR("error");
 				continue;
 			}
 			cJSON_AddNumberToObject(device, "result", g_zgbmsg[i].result);
@@ -363,17 +363,17 @@ void* uartsend(void *argc)
     {
 		if ( rcvret = msgrcv(g_queueid, (void*)&qmsg, sizeof(qmsg), QUEUE_MSG_UART, 0) <= 0 )
 		{
-			LOG_ERROR("rcvret = %d", rcvret);
-			LOG_ERROR("recive uartsendmsg fail!");
+			MYLOG_ERROR("rcvret = %d", rcvret);
+			MYLOG_ERROR("recive uartsendmsg fail!");
 		}
         printf("uart begin to send msg!");
         if ( write(g_uartfd, (char *)&qmsg.msg, (int)(qmsg.msg.msglength + 2)) != (qmsg.msg.msglength + 2))
 	    {
-		    LOG_ERROR("com write error!");
+		    MYLOG_ERROR("com write error!");
 	    }
 	    if ( write(g_uartfd, (char *)&qmsg.msg+sizeof(qmsg.msg)-2, 2) != 2)//发送check和footer
 	    {
-		    LOG_ERROR("com write check and footer error!");
+		    MYLOG_ERROR("com write check and footer error!");
 	    }
     }
 	pthread_exit(NULL);    
@@ -391,8 +391,8 @@ void* zgbmsgprocess(void* argc)
 	{
 		if (rcvret = msgrcv(g_queueid, (void*)&qmsg, sizeof(qmsg), QUEUE_MSG_ZGB, 0) <= 0)
 		{
-                LOG_ERROR("recive zgbqueuemsg fail!");
-                LOG_ERROR("rcvret = %d", rcvret);
+                MYLOG_ERROR("recive zgbqueuemsg fail!");
+                MYLOG_ERROR("rcvret = %d", rcvret);
 		}
 		LOG_INFO("zgbmsgprocess recive a msg");
 
@@ -450,7 +450,7 @@ void* uartlisten(void *argc)
 			}
 			if (msgbuf[i + 1] > nByte - 4)
 			{
-				LOG_ERROR("[uartlisten]Wrong format!");
+				MYLOG_ERROR("[uartlisten]Wrong format!");
 				break;
 			}
 			//zgb消息提取
@@ -466,7 +466,7 @@ void* uartlisten(void *argc)
 			}
 			if (sum%256 != zmsg.check)
 			{
-				LOG_ERROR("[uartlisten]Wrong format!");
+				MYLOG_ERROR("[uartlisten]Wrong format!");
 				i = i + zmsg.msglength + 4;
 				continue;
 			}
@@ -483,7 +483,7 @@ void* uartlisten(void *argc)
             zgbqmsg.msg = zmsg;
           	if (ret = msgsnd(g_queueid, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
         	{
-		        LOG_ERROR("send zgbqueuemsg fail!");
+		        MYLOG_ERROR("send zgbqueuemsg fail!");
 	        }
             i = i + zmsg.msglength + 4;
 		}
@@ -662,22 +662,23 @@ int sqlitedb_init()
 int main(int argc, char* argv[])
 {
     pthread_t threads[NUM_THREADS];
+    MYLOG_DEBUG("Process begin")；
     
     log_init();
     if(init_uart("/dev/ttyS1") == -1)
     {
-        LOG_ERROR("init_uart fail!");
+        MYLOG_ERROR("init_uart fail!");
     }
     sem_init(&g_mqttconnetionsem, 0, 1); 
 
     if(createmessagequeue() == -1)
     {
-        LOG_ERROR("CreateMessageQueue failed!");
+        MYLOG_ERROR("CreateMessageQueue failed!");
         return -1;
     }
     if(sqlitedb_init() == -1)
     {
-        LOG_ERROR("Create db failed!");
+        MYLOG_ERROR("Create db failed!");
         return -1;        
     }
     
