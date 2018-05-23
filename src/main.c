@@ -114,8 +114,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	size_t msglen = sizeof(devicequeuemsg);
 	char topic[TOPIC_LENGTH] = { 0 };
 
-    printf("Message arrived\n");
-    printf("topic: %s\n", topicName);
+    MYLOG_INFO("Message arrived\n");
+    MYLOG_INFO("topic: %s\n", topicName);
 
     payloadptr = (char*)message->payload;
 	root = cJSON_Parse(payloadptr);
@@ -247,7 +247,7 @@ void *mqttlient(void *argc)
         rc = MQTTAsync_connect(client, &conn_opts);
         if (rc != MQTTASYNC_SUCCESS)
         {
-            LOG_ERROR("MyMQTTClient: MQTT connect fail!");
+            MYLOG_ERROR("MyMQTTClient: MQTT connect fail!");
         }
 	}
 
@@ -274,13 +274,12 @@ void* devicemsgprocess(void *argc)
 	{
 		if (rcvret = msgrcv(g_queueid, (void*)&msg, msglen, QUEUE_MSG_DEVIC, 0) <= 0)
 		{
-			printf("rcvret = %d", rcvret);
-			perror("");
-			printf("recive devicequeuemsg fail!\n");
+			MYLOG_ERROR("rcvret = %d", rcvret);
+			MYLOG_ERROR("recive devicequeuemsg fail!\n");
 			pthread_exit(NULL);
 		}
-		LOG_INFO("devicemsgprocess recive a msg");
-		LOG_INFO("the msg is %s", cJSON_PrintUnformatted(msg.p_operation_json));
+		MYLOG_INFO("devicemsgprocess recive a msg");
+		MYLOG_INFO("the msg is %s", cJSON_PrintUnformatted(msg.p_operation_json));
 		g_device = msg.p_operation_json;
 		devices = cJSON_GetObjectItem(g_device, "device");
 		devicenum = cJSON_GetArraySize(devices);
@@ -386,7 +385,7 @@ void* zgbmsgprocess(void* argc)
     zgbqueuemsg qmsg;
     char packetid;
 
-    LOG_DEBUG("Enter pthread zgbmsgprocess");
+    MYLOG_DEBUG("Enter pthread zgbmsgprocess");
 	while(1)
 	{
 		if (rcvret = msgrcv(g_queueid, (void*)&qmsg, sizeof(qmsg), QUEUE_MSG_ZGB, 0) <= 0)
@@ -394,7 +393,7 @@ void* zgbmsgprocess(void* argc)
                 MYLOG_ERROR("recive zgbqueuemsg fail!");
                 MYLOG_ERROR("rcvret = %d", rcvret);
 		}
-		LOG_INFO("zgbmsgprocess recive a msg");
+		MYLOG_INFO("zgbmsgprocess recive a msg");
 
         if (qmsg.msg.payload.adf.data.msgtype == ZGB_MSGTYPE_DEVICE_OPERATION_RESULT)
         {
@@ -439,7 +438,7 @@ void* uartlisten(void *argc)
 	while (true)
 	{
 		nByte = read(g_uartfd, msgbuf, 1024);
-        LOG_INFO("Uart recv %d byte", nByte);
+        MYLOG_INFO("Uart recv %d byte", nByte);
         
 		for (i = 0; i < nByte; )
 		{
@@ -493,10 +492,10 @@ void* uartlisten(void *argc)
 
 void mqttpub_onFailure(void* context, MQTTAsync_failureData* response)
 {
-	printf("pub msg fail!\n");
-	printf("The token:%d\n", response->token);
-	printf("The code:%d\n", response->code);
-	printf("The token:%s\n", response->message);
+	MYLOG_ERROR("pub msg fail!\n");
+	MYLOG_ERROR("The token:%d\n", response->token);
+	MYLOG_ERROR("The code:%d\n", response->code);
+	MYLOG_ERROR("The token:%s\n", response->message);
 }
 
 void mqtt_onSuccess(void* context, MQTTAsync_successData* response)
@@ -531,9 +530,9 @@ void* mqttqueueprocess(void *argc)
 	rc = MQTTAsync_connect(client, &conn_opts);
 	if (rc != MQTTASYNC_SUCCESS)
 	{
-		printf("MyMQTTClient: MQTT connect fail!\n");
+		MYLOG_ERROR("MyMQTTClient: MQTT connect fail!");
 	}
-	printf("enter mqttqueueprocess pthread!\n");
+	MYLOG_DEBUG("enter mqttqueueprocess pthread!\n");
 
 	/*处理mqtt消息队列*/
 	while (1)
@@ -541,7 +540,7 @@ void* mqttqueueprocess(void *argc)
 		ret = msgrcv(g_queueid, (void*)&msg, sizeof(mqttmsg), QUEUE_MSG_MQTT, 0);
 		if (ret == -1)
 		{
-			perror("read mqttmsg fail!\n");
+			MYLOG_ERROR("read mqttmsg fail!");
 		}
 loop:
 		switch (msg.msgtype)
@@ -621,7 +620,7 @@ int createmessagequeue()
 	g_queueid = msgget(key, IPC_CREAT | 0644);
 	if (g_queueid < 0)
 	{
-		printf("get ipc_id error!\n");
+		MYLOG_ERROR("get ipc_id error!");
 		return -1;
 	}
     return 0;  
@@ -639,21 +638,21 @@ int sqlitedb_init()
     rc = sqlite3_open("mydb", &db);
     if(rc != SQLITE_OK)  
     {  
-        printf("zErrMsg = %s\n",zErrMsg);  
+        MYLOG_ERROR("zErrMsg = %s\n",zErrMsg);  
         return -1;  
     }
     sprintf(sql,"create table device(address varchar(8),type INTEGER,status INTEGER,online INTEGER);");
     rc = sqlite3_exec(db,sql,0,0,&zErrMsg);
     if (rc != SQLITE_OK && rc != SQLITE_ERROR) //表重复会返回SQLITE_ERROR，该错误属于正常
     {
-        printf("zErrMsg = %s rc =%d\n",zErrMsg, rc);  
+        MYLOG_ERROR("zErrMsg = %s rc =%d\n",zErrMsg, rc);  
         return -1;          
     }
     sprintf(sql,"create table airconditioning(address varchar(8),status INTEGER,mode INTEGER,temperature float, windspeed INTEGER);");
     sqlite3_exec(db,sql,0,0,&zErrMsg);
     if (rc != SQLITE_OK && rc != SQLITE_ERROR)
     {
-        printf("zErrMsg = %s\n",zErrMsg);
+        MYLOG_ERROR("zErrMsg = %s\n",zErrMsg);
         return -1;          
     }
     return 0;
@@ -662,7 +661,7 @@ int sqlitedb_init()
 int main(int argc, char* argv[])
 {
     pthread_t threads[NUM_THREADS];
-    MYLOG_DEBUG("Process begin")；
+    MYLOG_DEBUG("Process begin");
     
     log_init();
     if(init_uart("/dev/ttyS1") == -1)
