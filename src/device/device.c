@@ -112,4 +112,3 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char packetid)
 	return 0;
 }
 
-void zgbtodevice

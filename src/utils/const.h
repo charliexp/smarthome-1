@@ -1,32 +1,36 @@
 #ifndef _CONST_H_
 #define _CONST_H_
 
+#define LOG_FILE "smarthomelog.log"
+#define LOG_LEVEL_DEBUG 0
+#define LOG_LEVEL_INFO 1
+#define LOG_LEVEL_ERROR 2
 
 #define NUM_THREADS 4
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
 #define CLIENTID    "todlee"                   //客户端ID
-#define CLIENTID1    "todlee_pub"              //客户端ID
-#define QOS 1
+#define CLIENTID1   "todlee_pub"              //客户端ID
+#define QOS                1
 #define USERNAME    "root"
 #define PASSWORD    "root"
-#define TOPICSNUM   5
-#define RESPONSE_WAIT 5000000 //消息响应等待时间5000000us = 5s
+#define TOPICSNUM          5
+#define RESPONSE_WAIT      5000000 //消息响应等待时间5000000us = 5s
 #define ZGB_ADDRESS_LENGTH 8
-#define ZGBMSG_MAX_NUM 20
+#define ZGBMSG_MAX_NUM     20
 
 
-#define QUEUE_MSG_MQTT 0x01
-#define QUEUE_MSG_ZGB 0x02
+#define QUEUE_MSG_MQTT  0x01
+#define QUEUE_MSG_ZGB   0x02
 #define QUEUE_MSG_DEVIC 0x03
-#define QUEUE_MSG_UART 0x04
+#define QUEUE_MSG_UART  0x04
 
 
-#define TOPIC_LENGTH 100
+#define TOPIC_LENGTH       100
 #define MQTT_MSG_TYPE_PUB  1
 #define MQTT_MSG_TYPE_SUB  2
 #define MQTT_MSG_TYPE_UNSUB 3
 
-#define ZGB_MAGIC_NUM 0xAA
+#define ZGB_MAGIC_NUM  0xAA
 #define ZGB_VERSION_10 0x10
 
 /*设备类型*/
@@ -78,7 +82,7 @@
 /*故障上报*/
 #define TLV_TYPE_FAULT_REPORT 0x01 
 
-#define TLV_VALUE_FAULT_SOCKET  0x01 //插座保险丝损坏
+#define TLV_VALUE_FAULT_SOCKET    0x01 //插座保险丝损坏
 #define TLV_VALUE_FAULT_PURIFIER  0x02 //净水器滤芯更换
 
 /*插座操作 0x10~0x1f*/

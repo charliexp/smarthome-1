@@ -4,6 +4,7 @@
 #include "type.h"
 #include "error.h"
 #include "const.h"
+#include "../log/log.h"
 
 extern int g_uartfd;
 
