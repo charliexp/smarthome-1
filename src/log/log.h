@@ -2,6 +2,7 @@
 #define _LOG_H_
 
 extern int g_log_level;
+
 void my_log(const char *format, ...);
 
 int log_init();
