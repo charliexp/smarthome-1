@@ -6,7 +6,6 @@
 #include "../utils/const.h"
 #include "log.h"
 
-int g_debug_level = 0;
 FILE* g_fp;
 
 static pthread_mutex_t fileMutex = PTHREAD_MUTEX_INITIALIZER;
