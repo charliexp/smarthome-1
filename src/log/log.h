@@ -3,6 +3,8 @@
 
 int g_debug_level = 0;
 
+void my_log(const char *format, ...);
+
 #define MYLOG_DEBUG(format...) if(g_debug_level == 0) my_log(format);\
     else do{}while(0);
 

@@ -179,7 +179,7 @@ void onSend(void* context, MQTTAsync_successData* response)
 
 	if ((rc = MQTTAsync_disconnect(client, &opts)) != MQTTASYNC_SUCCESS)
 	{
-		LOG_ERROR("Failed to start sendMessage, return code %d\n", rc);
+		MYLOG_ERROR("Failed to start sendMessage, return code %d\n", rc);
 		exit(EXIT_FAILURE);
 	}
 }
@@ -210,7 +210,7 @@ void onConnect(void* context, MQTTAsync_successData* response)
 	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
 	pthread_t pthread;
 	int rc;
-	LOG_DEBUG("Successful connection");
+	MYLOG_DEBUG("Successful connection");
 
 	rc = MQTTAsync_subscribeMany(client, TOPICSNUM, g_topics, g_qoss, &opts);
 	if (rc != MQTTASYNC_SUCCESS)
