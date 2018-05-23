@@ -15,6 +15,7 @@
 #include "utils/utils.h"
 #include "device/device.h"
 #include "cjson/cJSON.h"
+#include "log/log.h"
 
 
 char g_topicroot[20] = {0};
