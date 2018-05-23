@@ -1,6 +1,8 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
+int g_debug_level = 0;
+
 #define LOG_DEBUG(format...) if(g_debug_level == 0) my_log(##format);\
     else do{}while(0);
 
