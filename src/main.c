@@ -386,6 +386,7 @@ void* zgbmsgprocess(void* argc)
 	int rcvret;
     ZGBADDRESS src;
     zgbqueuemsg qmsg;
+    unsigned __int64 db_zgbaddress;
     char msgtype,devicetype,deviceindex,packetid;
     zgbmsg responsemsg;
     char topic[TOPIC_LENGTH] = { 0 };
@@ -410,13 +411,14 @@ void* zgbmsgprocess(void* argc)
         deviceindex = qmsg.msg.payload.adf.data.deviceindex;
         packetid = qmsg.msg.payload.adf.data.packetid;
         memcpy(src, qmsg.msg.payload.src, 8);
+        db_zgbaddress = zgbaddresstodbaddress(src);
 
         if(qmsg.msg.payload.cmdid[0] == 0x20 && qmsg.msg.payload.cmdid[1] == 0x98) //设备入网消息
         {
             int nrow = 0, ncolumn = 0;
 	        char **dbresult; 
-            long long db_zgbaddress;
-            db_zgbaddress = zgbaddresstodbaddress(src);
+            
+            
 
             sprintf(sql,"SELECT * FROM devices WHERE zgbaddress = %llu;", db_zgbaddress);
             MYLOG_INFO(sql);
@@ -433,13 +435,11 @@ void* zgbmsgprocess(void* argc)
 
         if(msgtype == ZGB_MSGTYPE_DEVICEREGISTER_RESPONSE) //要求设备注册的响应消息
         {
-            long long db_zgbaddress;
             cJSON* root = cJSON_CreateObject();
             int nrow = 0, ncolumn = 0;
             char **azResult; 
 
-            db_zgbaddress = zgbaddresstodbaddress(src);
-            
+           
             sprintf(sql, "insert into devices values(%llu, %d, %d, null);",db_zgbaddress, devicetype, deviceindex);
             MYLOG_INFO(sql);
             rc = sqlite3_exec(g_db, sql, 0, 0, &zErrMsg);

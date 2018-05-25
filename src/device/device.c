@@ -10,16 +10,22 @@
 
 #include "../utils/utils.h"
 #include "device.h"
+#include "../log/log.h"
 
 extern int g_queueid;
 
 
 
-long long zgbaddresstodbaddress(ZGBADDRESS addr)
+unsigned __int64 zgbaddresstodbaddress(ZGBADDRESS addr)
 {
-    long long dbaddress = 0;
-    dbaddress = addr[0] + addr[1]*256 + addr[2]*256*256 + addr[3]*256*256*256 + addr[4]*256*256*256*256
-        + addr[5]*256*256*256*256*256 + addr[6]*256*256*256*256*256*256 + addr[7]*256*256*256*256*256*256*256;
+    unsigned __int64 dbaddress = 0;
+    dbaddress = (unsigned long long)addr[0] + (unsigned long long)addr[1] * 256 + (unsigned long long)addr[2] * 256 * 256 + 
+        (unsigned long long)addr[3] * 256 * 256 * 256 + 
+        (unsigned long long)addr[4] * 256 * 256 * 256 * 256 + 
+        (unsigned long long)addr[5] * 256 * 256 * 256 * 256 * 256 + 
+        (unsigned long long)addr[6] * 256 * 256 * 256 * 256 * 256 * 256 + 
+        (unsigned long long)addr[7] * 256 * 256 * 256 * 256 * 256 * 256 * 256;
+    return dbaddress;
 }
 
 
