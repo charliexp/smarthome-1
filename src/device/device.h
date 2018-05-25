@@ -19,7 +19,7 @@ int freshaircontrol(cJSON *device, char packetid);
 int socketcontrol(cJSON *device, char packetid);
 
 /*zigbee消息发送接口*/
-int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char devicetype, char deviceindex, char packetid)
+int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char devicetype, char deviceindex, char packetid);
 
 
 
