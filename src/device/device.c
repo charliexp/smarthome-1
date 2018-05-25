@@ -13,6 +13,16 @@
 
 extern int g_queueid;
 
+
+
+long long zgbaddresstodbaddress(ZGBADDRESS addr)
+{
+    long long dbaddress = 0;
+    dbaddress = addr[0] + addr[1]*256 + addr[2]*256*256 + addr[3]*256*256*256 + addr[4]*256*256*256*256
+        + addr[5]*256*256*256*256*256 + addr[6]*256*256*256*256*256*256 + addr[7]*256*256*256*256*256*256*256;
+}
+
+
 void zgbmsginit(zgbmsg *msg)
 {
 	memset((char*)msg, 0, sizeof(zgbmsg));
@@ -23,6 +33,11 @@ void zgbmsginit(zgbmsg *msg)
 	msg->payload.cmdid[1] = 0x00;
     msg->payload.adf.data.magicnum = 0xAA;
 	msg->footer = 0x23;
+}
+
+void deviceneedregister(ZGBADDRESS addr)
+{
+    
 }
 
 int airconcontrol(cJSON *device, char packetid)
@@ -42,7 +57,7 @@ int airconcontrol(cJSON *device, char packetid)
 	data[2] = 0x23;
 	data[3] = op;
 	
-	sendzgbmsg(address, data, packetid);
+	sendzgbmsg(address, data, 0x04, 0x03, 0x01, packetid);
 	return 0;
 }
 
@@ -68,31 +83,31 @@ int socketcontrol(cJSON *device, char packetid)
 	data[2] = TLV_VALUE_SOCKET_ON;
 	data[3] = op;
 
-	sendzgbmsg(address, data, packetid);
+	sendzgbmsg(address, data, 0x04, 0x03, 0x01, packetid);
 	return 0;
 }
 
-int sendzgbmsg(ZGBADDRESS address, BYTE *data, char packetid)
+int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char devicetype, char deviceindex, char packetid)
 {
 	int ret;
-	zgbmsg msg;
+    zgbmsg msg;
     uartsendqueuemsg uartmsg;
 	int i = 0;
 	int sum = 0;
 
-	zgbmsginit(&msg);
-
-	msg.msglength = 38 + strlen(data); //40为msg除了data以及head、length、check、footer的长度
-
-	strncpy((char*)msg.payload.dest, (char*)address, 8);//目标地址赋值
-	msg.payload.adf.length = strlen(data) + 3; //data + version + packetid + cmdid
+    zgbmsginit(msg);
+    msg.msglength = 46 + length;
+	memcpy((char*)msg.payload.dest, (char*)address, 8);//目标地址赋值
 	msg.payload.adf.index[0] = 0xA0;
 	msg.payload.adf.index[1] = 0x0F;
-	msg.payload.adf.length = strlen(data) + 3;
-	msg.payload.adf.data.version = 0x10;
+	msg.payload.adf.length = length + 7;
+    msg.payload.adf.data.length = length;
+	msg.payload.adf.data.version = ZGB_VERSION_10;
 	msg.payload.adf.data.packetid = packetid;
-	msg.payload.adf.data.msgtype = 0x03;
-	strncpy((char*)msg.payload.adf.data.pdu, (char*)data, strlen(data));
+	msg.payload.adf.data.msgtype = msgtype;
+    msg.payload.adf.data.devicetype = devicetype;
+    msg.payload.adf.data.deviceindex = deviceindex;
+	mepcpy((char*)msg.payload.adf.data.pdu, (char*)data, length);
 
 	for (;i < msg.msglength; i++)
 	{
@@ -105,7 +120,7 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char packetid)
 
     if (ret = msgsnd(g_queueid, &uartmsg, sizeof(uartmsg), 0) != 0)
     {
-		printf("send uartsendqueuemsg fail!\n");
+		MYLOG_ERROR("send uartsendqueuemsg fail!");
         return -1;
 	}
 

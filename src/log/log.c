@@ -20,7 +20,7 @@ int log_init()
     return 0;
 }
 
-void my_log(const char *format, ...)
+void my_log(char* file, int line, char* function, const char *format, ...)
 {
     va_list arg;  
     int done;  
@@ -30,10 +30,11 @@ void my_log(const char *format, ...)
   
     time_t time_log = time(NULL);  
     struct tm* tm_log = localtime(&time_log);  
-    fprintf(g_fp, "[%04d-%02d-%02d %02d:%02d:%02d]%s(%d): ", tm_log->tm_year + 1900, tm_log->tm_mon + 1, tm_log->tm_mday, 
-        tm_log->tm_hour, tm_log->tm_min, tm_log->tm_sec,__FILE__, __LINE__);  
+    fprintf(g_fp, "[%04d-%02d-%02d %02d:%02d:%02d]%s(%d)-%s(): ", tm_log->tm_year + 1900, tm_log->tm_mon + 1, tm_log->tm_mday, 
+        tm_log->tm_hour, tm_log->tm_min, tm_log->tm_sec,file, line, function);  
   
-    vfprintf(g_fp, format, arg);  
+    vfprintf(g_fp, format, arg); 
+    fprintf(g_fp, "\n"); 
     va_end(arg);  
 
     fflush(g_fp);

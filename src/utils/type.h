@@ -11,10 +11,10 @@ typedef struct
     BYTE magicnum;
     BYTE length;
 	BYTE version;
+   	BYTE msgtype;
     BYTE devicetype;
     BYTE deviceindex;
     BYTE packetid;
-	BYTE msgtype;
 	BYTE pdu[69];
 }DATA;
 

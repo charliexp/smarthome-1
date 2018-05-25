@@ -18,6 +18,12 @@
 #define ZGB_ADDRESS_LENGTH 8
 #define ZGBMSG_MAX_NUM     20
 
+#define TOPIC_NEWDEVICE "newdevice"
+
+#define QOS_LEVEL_0 0
+#define QOS_LEVEL_1 1
+#define QOS_LEVEL_2 2
+
 
 #define QUEUE_MSG_MQTT  0x01
 #define QUEUE_MSG_ZGB   0x02
@@ -55,6 +61,7 @@
 #define ZGB_MSGTYPE_DEVICE_OFFNET           0x02 //要求设备离网
 #define ZGB_MSGTYPE_DEVICE_OPERATION        0x03 //设备操作
 #define ZGB_MSGTYPE_DEVICE_OPERATION_RESULT 0x04 //设备操作结果
+#define ZGB_MSGTYPE_GATEWAY_RESPONSE        0x05 //网关响应报文
 #define ZGB_MSGTYPE_UPDATE                  0x10 //软件升级提示
 #define ZGB_MSGTYPE_UPDATE_RESPONSE         0x11 //软件升级响应
 #define ZGB_MSGTYPE_UPDATE_PAYLOAD          0x12 //升级报文

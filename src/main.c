@@ -28,6 +28,7 @@ int g_log_level = 0;
 
 int g_operationflag = 0;
 int g_queueid;
+sqlite3* g_db;
 sem_t g_mqttconnetionsem;
 //订阅g_topics对应的qos
 int g_qoss[TOPICSNUM] = {2, 1, 2, 1, 1};
@@ -134,7 +135,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 			/*如果有消息在处理，则返回忙碌错误*/
 			mqttid = cJSON_GetObjectItem(root, "mqttid")->valuestring;
 			sprintf(topic, "%s%s/result/%s", g_topicroot, g_topicthemes[0], mqttid);
-			mqttmsgqueue(MQTT_MSG_TYPE_PUB, topic, MQTT_MSG_SYSTEM_BUSY, 2, 0);
+			mqttmsgqueue(MQTT_MSG_TYPE_PUB, topic, MQTT_MSG_SYSTEM_BUSY, QOS_LEVEL_2, 0);
 		}
 		else
 		{
@@ -346,7 +347,7 @@ void* devicemsgprocess(void *argc)
 		}
 		strncpy(mqttid, cJSON_GetObjectItem(msg.p_operation_json, "mqttid")->valuestring, 16);
 		sprintf(topic, "%s%s/result/%s", g_topicroot, g_topicthemes[0], mqttid);
-		mqttmsgqueue(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(msg.p_operation_json), 2, 0);
+		mqttmsgqueue(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(msg.p_operation_json), QOS_LEVEL_2, 0);
 		cJSON_Delete(msg.p_operation_json);
 		g_operationflag = 0;
 	}
@@ -383,22 +384,92 @@ void* uartsend(void *argc)
 void* zgbmsgprocess(void* argc)
 {
 	int rcvret;
+    ZGBADDRESS src;
     zgbqueuemsg qmsg;
-    char packetid;
+    char msgtype,devicetype,deviceindex,packetid;
+    zgbmsg responsemsg;
+    char topic[TOPIC_LENGTH] = { 0 };
+    char *zErrMsg = 0;  
+    char sql[512]; 
+    BYTE data[72];
+    int rc;  
+    int len = 0; 
 
     MYLOG_DEBUG("Enter pthread zgbmsgprocess");
+
 	while(1)
 	{
-		if (rcvret = msgrcv(g_queueid, (void*)&qmsg, sizeof(qmsg), QUEUE_MSG_ZGB, 0) <= 0)
+		if (rcvret = msgrcv(g_queueid , (void*)&qmsg, sizeof(qmsg), QUEUE_MSG_ZGB, 0) <= 0)
 		{
                 MYLOG_ERROR("recive zgbqueuemsg fail!");
                 MYLOG_ERROR("rcvret = %d", rcvret);
 		}
 		MYLOG_INFO("zgbmsgprocess recive a msg");
+        msgtype = qmsg.msg.payload.adf.data.msgtype;
+        devicetype = qmsg.msg.payload.adf.data.devicetype;
+        deviceindex = qmsg.msg.payload.adf.data.deviceindex;
+        packetid = qmsg.msg.payload.adf.data.packetid;
+        memcpy(src, qmsg.msg.payload.src, 8);
 
-        if (qmsg.msg.payload.adf.data.msgtype == ZGB_MSGTYPE_DEVICE_OPERATION_RESULT)
+        if(qmsg.msg.payload.cmdid[0] == 0x20 && qmsg.msg.payload.cmdid[1] == 0x98) //设备入网消息
         {
-            packetid = qmsg.msg.payload.adf.data.packetid;
+            int nrow = 0, ncolumn = 0;
+	        char **dbresult; 
+            long long db_zgbaddress;
+            db_zgbaddress = zgbaddresstodbaddress(src);
+
+            sprintf(sql,"SELECT * FROM devices WHERE zgbaddress = %llu;", db_zgbaddress);
+            MYLOG_INFO(sql);
+            
+            sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+            if(nrow != 0) //数据库中已经有该设备
+            {
+                continue;
+            }
+            
+            sendzgbmsg(src, data, 0, ZGB_MSGTYPE_DEVICEREGISTER, 0, 0, getpacketid());//要求设备注册
+            continue；
+        }
+
+        if(msgtype == ZGB_MSGTYPE_DEVICEREGISTER_RESPONSE) //要求设备注册的响应消息
+        {
+            long long db_zgbaddress;
+            cJSON* root = cJSON_CreateObject();
+            int nrow = 0, ncolumn = 0;
+            char **azResult; 
+
+            db_zgbaddress = zgbaddresstodbaddress(src);
+            
+            sprintf(sql, "insert into devices values(%llu, %d, %d, null);",db_zgbaddress, devicetype, deviceindex);
+            MYLOG_INFO(sql);
+            rc = sqlite3_exec(g_db, sql, 0, 0, &zErrMsg);
+            if(rc != SQLITE_OK)
+            {
+                MYLOG_ERROR(zErrMsg);
+            }
+
+            sprintf(sql, "select deviceid from devices where zgbaddress = %llu and devicetype = %d and deviceindex = %d",
+                db_zgbaddress, devicetype, deviceindex);
+            MYLOG_INFO(sql);
+            rc = sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
+            if(rc != SQLITE_OK)
+            {
+                MYLOG_ERROR(zErrMsg);
+            }
+            
+            data[0] = TLV_TYPE_RESPONSE;
+            data[2] = 1;            
+            data[1] = TLV_VALUE_RTN_OK;
+            sendzgbmsg(src, data, 3, ZGB_MSGTYPE_GATEWAY_RESPONSE, devicetype, deviceindex, packetid);//设备注册的网关响应
+            sprintf(topic, "%s%s/", g_topicroot, TOPIC_NEWDEVICE);
+            cJSON_AddNumberToObject(root, "deviceid", azResult[1]);
+            cJSON_AddNumberToObject(root, "devicetype", devicetype);
+            mqttmsgqueue(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
+            continue；            
+        }
+
+        if(msgtype == ZGB_MSGTYPE_DEVICE_OPERATION_RESULT)
+        {
             for (int i = 0; i < ZGBMSG_MAX_NUM; ++i)
             {
                 if (g_zgbmsg[i].packetid == packetid)
@@ -408,13 +479,15 @@ void* zgbmsgprocess(void* argc)
                     break;
                 }
             }
+            continue;
         }
-        else if(qmsg.msg.payload.adf.data.msgtype == ZGB_MSGTYPE_DEVICEREGISTER_RESPONSE)
+
+        if(msgtype == ZGB_MSGTYPE_DEVICEREGISTER_RESPONSE)
         {
             
         }
 	}
-    
+    sqlite3_close(db);
 	pthread_exit(NULL);    
     
 }
@@ -630,27 +703,26 @@ int createmessagequeue()
 /*创建需要的数据库表*/
 int sqlitedb_init()
 {
-    sqlite3 *db;
     char *zErrMsg = 0;  
-    char sql[128];  
+    char sql[512];  
     int rc;  
     int len = 0; 
 
-    rc = sqlite3_open("mydb", &db);
+    rc = sqlite3_open("mydb", &g_db);
     if(rc != SQLITE_OK)  
     {  
-        MYLOG_ERROR("zErrMsg = %s\n",zErrMsg);  
+        MYLOG_ERROR("open mydb error!");  
         return -1;  
     }
-    sprintf(sql,"create table device(address varchar(8),type INTEGER,status INTEGER,online INTEGER);");
-    rc = sqlite3_exec(db,sql,0,0,&zErrMsg);
+    sprintf(sql,"CREATE TABLE devices (deviceid INTEGER PRIMARY KEY autoincrement, zgbaddress INT64(1) DEFAULT 0xFFFFFFFFFFFFFFFF, devicetype CHAR(1), deviceindex CHAR(1), online CHAR(1));");
+    rc = sqlite3_exec(g_db,sql,0,0,&zErrMsg);
     if (rc != SQLITE_OK && rc != SQLITE_ERROR) //表重复会返回SQLITE_ERROR，该错误属于正常
     {
         MYLOG_ERROR("zErrMsg = %s rc =%d\n",zErrMsg, rc);  
         return -1;          
     }
-    sprintf(sql,"create table airconditioning(address varchar(8),status INTEGER,mode INTEGER,temperature float, windspeed INTEGER);");
-    sqlite3_exec(db,sql,0,0,&zErrMsg);
+    sprintf(sql,"create table airconditioning(deviceid INTEGER PRIMARY KEY, status INTEGER,mode INTEGER,temperature float, windspeed INTEGER);");
+    sqlite3_exec(g_db,sql,0,0,&zErrMsg);
     if (rc != SQLITE_OK && rc != SQLITE_ERROR)
     {
         MYLOG_ERROR("zErrMsg = %s\n",zErrMsg);
@@ -662,7 +734,6 @@ int sqlitedb_init()
 int main(int argc, char* argv[])
 {
     pthread_t threads[NUM_THREADS];
-    MYLOG_DEBUG("Process begin");
     
     log_init();
     if(init_uart("/dev/ttyS1") == -1)
