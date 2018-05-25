@@ -4,7 +4,7 @@
 #include "../cjson/cJSON.h"
 
 /*设备zgb地址转成数据库zgb地址*/
-unsigned __int64 zgbaddresstodbaddress(ZGBADDRESS addr);
+unsigned long long zgbaddresstodbaddress(ZGBADDRESS addr);
 
 /*zgb消息初始化*/
 void zgbmsginit(zgbmsg *msg);

@@ -386,7 +386,7 @@ void* zgbmsgprocess(void* argc)
 	int rcvret;
     ZGBADDRESS src;
     zgbqueuemsg qmsg;
-    unsigned __int64 db_zgbaddress;
+    unsigned long long db_zgbaddress;
     char msgtype,devicetype,deviceindex,packetid;
     zgbmsg responsemsg;
     char topic[TOPIC_LENGTH] = { 0 };
