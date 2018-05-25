@@ -28,6 +28,21 @@ unsigned long long zgbaddresstodbaddress(ZGBADDRESS addr)
     return dbaddress;
 }
 
+ZGBADDRESS dbaddresstozgbaddress(unsigned long long addr)
+{
+    ZGBADDRESS zgbaddress = {0x0};
+    zgbaddress[0] = (BYTE)addr;
+    zgbaddress[1] = (BYTE)addr>>8;
+    zgbaddress[2] = (BYTE)addr>>16;
+    zgbaddress[3] = (BYTE)addr>>24;
+    zgbaddress[4] = (BYTE)addr>>32;
+    zgbaddress[5] = (BYTE)addr>>40;
+    zgbaddress[6] = (BYTE)addr>>48;
+    zgbaddress[7] = (BYTE)addr>>56;
+
+    return zgbaddress;
+}
+
 
 void zgbmsginit(zgbmsg *msg)
 {
