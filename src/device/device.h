@@ -6,6 +6,10 @@
 /*设备zgb地址转成数据库zgb地址*/
 unsigned long long zgbaddresstodbaddress(ZGBADDRESS addr);
 
+/*数据库zgb地址转成设备zgb地址*/
+void dbaddresstozgbaddress(unsigned long long addr, ZGBADDRESS zgbaddress);
+
+
 /*zgb消息初始化*/
 void zgbmsginit(zgbmsg *msg);
 

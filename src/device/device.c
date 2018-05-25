@@ -28,9 +28,8 @@ unsigned long long zgbaddresstodbaddress(ZGBADDRESS addr)
     return dbaddress;
 }
 
-ZGBADDRESS dbaddresstozgbaddress(unsigned long long addr)
+void dbaddresstozgbaddress(unsigned long long addr, ZGBADDRESS zgbaddress)
 {
-    ZGBADDRESS zgbaddress = {0x0};
     zgbaddress[0] = (BYTE)addr;
     zgbaddress[1] = (BYTE)(addr>>8);
     zgbaddress[2] = (BYTE)(addr>>16);
@@ -40,7 +39,7 @@ ZGBADDRESS dbaddresstozgbaddress(unsigned long long addr)
     zgbaddress[6] = (BYTE)(addr>>48);
     zgbaddress[7] = (BYTE)(addr>>56);
 
-    return zgbaddress;
+    return;
 }
 
 
