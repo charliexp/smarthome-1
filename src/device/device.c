@@ -57,7 +57,7 @@ int airconcontrol(cJSON *device, char packetid)
 	data[2] = 0x23;
 	data[3] = op;
 	
-	sendzgbmsg(address, data, 0x04, 0x03, 0x01, packetid);
+	sendzgbmsg(address, data, 0x04, 0x03, 0x01, 0x01, packetid);
 	return 0;
 }
 
@@ -83,7 +83,7 @@ int socketcontrol(cJSON *device, char packetid)
 	data[2] = TLV_VALUE_SOCKET_ON;
 	data[3] = op;
 
-	sendzgbmsg(address, data, 0x04, 0x03, 0x01, packetid);
+	sendzgbmsg(address, data, 0x04, 0x03, 0x01, 0x01, packetid);
 	return 0;
 }
 
@@ -95,7 +95,7 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
 	int i = 0;
 	int sum = 0;
 
-    zgbmsginit(msg);
+    zgbmsginit(&msg);
     msg.msglength = 46 + length;
 	memcpy((char*)msg.payload.dest, (char*)address, 8);//目标地址赋值
 	msg.payload.adf.index[0] = 0xA0;
@@ -107,7 +107,7 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
 	msg.payload.adf.data.msgtype = msgtype;
     msg.payload.adf.data.devicetype = devicetype;
     msg.payload.adf.data.deviceindex = deviceindex;
-	mepcpy((char*)msg.payload.adf.data.pdu, (char*)data, length);
+	memcpy((char*)msg.payload.adf.data.pdu, (char*)data, length);
 
 	for (;i < msg.msglength; i++)
 	{
