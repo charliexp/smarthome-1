@@ -428,7 +428,7 @@ void* zgbmsgprocess(void* argc)
             }
             
             sendzgbmsg(src, data, 0, ZGB_MSGTYPE_DEVICEREGISTER, 0, 0, getpacketid());//要求设备注册
-            continue；
+            continue;
         }
 
         if(msgtype == ZGB_MSGTYPE_DEVICEREGISTER_RESPONSE) //要求设备注册的响应消息
@@ -462,10 +462,11 @@ void* zgbmsgprocess(void* argc)
             data[1] = TLV_VALUE_RTN_OK;
             sendzgbmsg(src, data, 3, ZGB_MSGTYPE_GATEWAY_RESPONSE, devicetype, deviceindex, packetid);//设备注册的网关响应
             sprintf(topic, "%s%s/", g_topicroot, TOPIC_NEWDEVICE);
-            cJSON_AddNumberToObject(root, "deviceid", azResult[1]);
+            double deviceid = strtoul(azResult[1], NULL, 10);  
+            cJSON_AddNumberToObject(root, "deviceid", deviceid);
             cJSON_AddNumberToObject(root, "devicetype", devicetype);
             mqttmsgqueue(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
-            continue；            
+            continue;      
         }
 
         if(msgtype == ZGB_MSGTYPE_DEVICE_OPERATION_RESULT)
@@ -487,7 +488,6 @@ void* zgbmsgprocess(void* argc)
             
         }
 	}
-    sqlite3_close(db);
 	pthread_exit(NULL);    
     
 }

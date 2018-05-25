@@ -3,6 +3,9 @@
 
 #include "../cjson/cJSON.h"
 
+/*设备zgb地址转成数据库zgb地址*/
+long long zgbaddresstodbaddress(ZGBADDRESS addr);
+
 /*zgb消息初始化*/
 void zgbmsginit(zgbmsg *msg);
 
@@ -16,7 +19,8 @@ int freshaircontrol(cJSON *device, char packetid);
 int socketcontrol(cJSON *device, char packetid);
 
 /*zigbee消息发送接口*/
-int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length);
+int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char devicetype, char deviceindex, char packetid)
+
 
 
 #endif
