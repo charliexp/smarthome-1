@@ -66,7 +66,7 @@ void constructsubtopics()
 }
 
 /*messagetype: 1、发布 2、订阅 3、去订阅*/
-void mqttmsg(long messagetype, char* topic, char* message, int qos, int retained)
+void sendmqttmsg(long messagetype, char* topic, char* message, int qos, int retained)
 {
 	int ret;
 	size_t msglen;
@@ -135,7 +135,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 			/*如果有消息在处理，则返回忙碌错误*/
 			mqttid = cJSON_GetObjectItem(root, "mqttid")->valuestring;
 			sprintf(topic, "%s%s/result/%s", g_topicroot, g_topicthemes[0], mqttid);
-			mqttmsg(MQTT_MSG_TYPE_PUB, topic, MQTT_MSG_SYSTEM_BUSY, QOS_LEVEL_2, 0);
+			sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, MQTT_MSG_SYSTEM_BUSY, QOS_LEVEL_2, 0);
 		}
 		else
 		{
@@ -420,7 +420,7 @@ response:
 
 		mqttid = cJSON_GetObjectItem(msg.p_operation_json, "mqttid")->valueint;
 		sprintf(topic, "%s%s/result/%d", g_topicroot, g_topicthemes[0], mqttid);
-		mqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(msg.p_operation_json), QOS_LEVEL_2, 0);
+		sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(msg.p_operation_json), QOS_LEVEL_2, 0);
 		cJSON_Delete(msg.p_operation_json);
         g_zgbmsgnum = 0;
 		g_operationflag = 0;
@@ -540,7 +540,7 @@ void* zgbmsgprocess(void* argc)
             double deviceid = strtoul(azResult[1], NULL, 10);  
             cJSON_AddNumberToObject(root, "deviceid", deviceid);
             cJSON_AddNumberToObject(root, "devicetype", devicetype);
-            mqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
+            sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
             continue;      
         }
 
