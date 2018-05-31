@@ -5,6 +5,7 @@
 
 #include "../utils/const.h"
 #include "log.h"
+#include "../utils/type.h"
 
 FILE* g_fp;
 

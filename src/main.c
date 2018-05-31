@@ -582,7 +582,7 @@ void* uartlisten(void *argc)
 	{
 		nByte = read(g_uartfd, msgbuf, 1024);
         MYLOG_INFO("Uart recv %d byte:", nByte);
-        MYLOG_BYTE(msgbuf, nByte)
+        MYLOG_BYTE(msgbuf, nByte);
         
 		for (i = 0; i < nByte; )
 		{
