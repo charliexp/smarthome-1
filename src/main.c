@@ -294,7 +294,7 @@ void* devicemsgprocess(void *argc)
 		MYLOG_INFO("devicemsgprocess recive a msg");
 		MYLOG_INFO("the msg is %s", cJSON_PrintUnformatted(msg.p_operation_json));
 		g_device = msg.p_operation_json;
-		devices = cJSON_GetObjectItem(g_device, "device");
+		devices = cJSON_GetObjectItem(g_device, "devices");
 		if (devices == NULL)
 		{
 			MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
