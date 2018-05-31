@@ -42,3 +42,15 @@ void my_log(char* file, int line, char* function, const char *format, ...)
     return;      
 }
 
+
+void printBYTE(BYTE* p, int num)
+{
+    int i = 0;
+    for(; i<num; i++)
+    {
+        fprintf(g_fp, "%X", p[i]);
+    }
+    fprintf(g_fp, "\n");
+
+    return;
+}

@@ -565,7 +565,7 @@ void* zgbmsgprocess(void* argc)
 /*监听串口的进程，提取单片机上传的zgb消息*/
 void* uartlisten(void *argc)
 {
-	char msgbuf[1024]; //暂时使用1024字节存储串口数据，后续测试读取时串口最大数据量
+	BYTE msgbuf[1024]; //暂时使用1024字节存储串口数据，后续测试读取时串口最大数据量
 	pthread_t threads[2];
 	int nByte;
 	int bitflag;
@@ -581,7 +581,8 @@ void* uartlisten(void *argc)
 	while (true)
 	{
 		nByte = read(g_uartfd, msgbuf, 1024);
-        MYLOG_INFO("Uart recv %d byte", nByte);
+        MYLOG_INFO("Uart recv %d byte:", nByte);
+        MYLOG_BYTE(msgbuf, nByte)
         
 		for (i = 0; i < nByte; )
 		{
@@ -598,6 +599,14 @@ void* uartlisten(void *argc)
 			//zgb消息提取
 			zgbmsginit(&zmsg);
 			zmsg.msglength = msgbuf[i + 1];
+            if(zmsg.msglength+4 > nByte-i+1)
+            {
+                int needbyte = (zmsg.msglength + 4) -  (nByte - i + 1);
+                int externbyte = read(g_uartfd, msgbuf+nByte, needbyte);
+                MYLOG_INFO("Uart extern recv %d byte", externbyte);
+                MYLOG_BYTE(msgbuf+nByte, externbyte);
+                nByte += externbyte;
+            }
 			zmsg.check = msgbuf[i + zmsg.msglength + 2];
 			sum = 0;
 
@@ -628,6 +637,7 @@ void* uartlisten(void *argc)
 		        MYLOG_ERROR("send zgbqueuemsg fail!");
 	        }
             i = i + zmsg.msglength + 4;
+            memset(msgbuf, 0, 1024);
 		}
 	}
 	pthread_exit(NULL);

@@ -115,8 +115,8 @@ int init_uart(char* port)
     options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);       
        
     //设置等待时间和最小接收字符    
-    options.c_cc[VTIME] = 0; /* 读取一个字符等待1*(1/10)s */      
-    options.c_cc[VMIN] = 40; /* 读取字符的最少个数为1 */    
+    options.c_cc[VTIME] = 1; /* 读取一个字符等待1*(1/10)s */      
+    options.c_cc[VMIN] = 1; /* 读取字符的最少个数为1 */    
        
     //如果发生数据溢出，接收数据，但是不再读取 刷新收到的数据但是不读    
     tcflush(g_uartfd,TCIFLUSH);    
