@@ -321,13 +321,7 @@ void* devicemsgprocess(void *argc)
 			}                
             
 			deviceid = tmp->valueint;
-			if (deviceid == NULL)
-			{
-                MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                cJSON_AddStringToObject(g_device, "result", MQTT_MSG_FORMAT_ERROR);
-                goto response;
-			}
-            
+
             if (deviceid == 0) //需要操作COO模块
             {
                 int actiontype;
@@ -343,22 +337,22 @@ void* devicemsgprocess(void *argc)
                 switch (actiontype)
                 {
                     case TYPE_CREATE_NETWORK:
-                        send(g_uartfd, AT_CREATE_NETWORK, strlen(AT_CREATE_NETWORK));
+                        write(g_uartfd, AT_CREATE_NETWORK, strlen(AT_CREATE_NETWORK));
                         break;
                     case TYPE_OEPN_NETWORK:
-                        send(g_uartfd, AT_OEPN_NETWORK, strlen(AT_OEPN_NETWORK));
+                        write(g_uartfd, AT_OEPN_NETWORK, strlen(AT_OEPN_NETWORK));
                         break;
                     case TYPE_DEVICE_LIST:
-                        send(g_uartfd, AT_DEVICE_LIST, strlen(AT_DEVICE_LIST));
+                        write(g_uartfd, AT_DEVICE_LIST, strlen(AT_DEVICE_LIST));
                         break;   
                     case TYPE_NETWORK_NOCLOSE:
-                        send(g_uartfd, AT_NETWORK_NOCLOSE, strlen(AT_NETWORK_NOCLOSE));
+                        write(g_uartfd, AT_NETWORK_NOCLOSE, strlen(AT_NETWORK_NOCLOSE));
                         break;
                     case TYPE_CLOSE_NETWORK:
-                        send(g_uartfd, AT_CLOSE_NETWORK, strlen(AT_CLOSE_NETWORK));
+                        write(g_uartfd, AT_CLOSE_NETWORK, strlen(AT_CLOSE_NETWORK));
                         break;
                     case TYPE_NETWORK_INFO:
-                        send(g_uartfd, AT_NETWORK_INFO, strlen(AT_NETWORK_INFO));
+                        write(g_uartfd, AT_NETWORK_INFO, strlen(AT_NETWORK_INFO));
                         break;   
                     default:
                         MYLOG_ERROR("Unknow actiontype!");
@@ -391,7 +385,7 @@ void* devicemsgprocess(void *argc)
                 goto response;
 		    }        
 		    operationnum = cJSON_GetArraySize(operations);
-            MYLOG("the operationnum = %d", operationnum);
+            MYLOG_INFO("the operationnum = %d", operationnum);
             
 		}
 
