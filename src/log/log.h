@@ -1,6 +1,8 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
+#include "../utils/type.h"
+
 extern int g_log_level;
 
 void my_log(char* file, int line, char* function, const char *format, ...);
