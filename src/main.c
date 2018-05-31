@@ -591,11 +591,7 @@ void* uartlisten(void *argc)
 				i++;
 				continue;
 			}
-			if (msgbuf[i + 1] > nByte - 4)
-			{
-				MYLOG_ERROR("[uartlisten]Wrong format!");
-				break;
-			}
+
 			//zgb消息提取
 			zgbmsginit(&zmsg);
 			zmsg.msglength = msgbuf[i + 1];
