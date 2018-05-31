@@ -5,7 +5,7 @@ extern int g_log_level;
 
 void my_log(char* file, int line, char* function, const char *format, ...);
 
-void printBYTE(BYTE* p, int num)
+void printBYTE(BYTE* p, int num);
     
 int log_init();
 
