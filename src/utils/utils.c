@@ -101,17 +101,22 @@ int init_uart(char* port)
     options.c_cflag |= CREAD; 
     options.c_cflag &= ~CRTSCTS;//不使用流控制 
     options.c_cflag &= ~PARENB;     
-    options.c_iflag &= ~INPCK; 
+    options.c_cflag &= ~CSTOPB;
     options.c_cflag &= ~CSIZE;
     options.c_cflag |= CS8;
+    
     //修改输出模式，原始数据输出    
-    options.c_oflag &= ~OPOST;    
-    options.c_cflag &= ~CSTOPB;
+    options.c_oflag &= ~OPOST;
+    options.c_oflag &= ~(ONLCR | OCRNL);
+    
+    options.c_iflag &= ~(ICRNL | INLCR);
+    options.c_iflag &= ~(IXON | IXOFF | IXANY);  
+    
     options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);       
        
     //设置等待时间和最小接收字符    
-    options.c_cc[VTIME] = 1; /* 读取一个字符等待1*(1/10)s */      
-    options.c_cc[VMIN] = 1; /* 读取字符的最少个数为1 */    
+    options.c_cc[VTIME] = 0; /* 读取一个字符等待1*(1/10)s */      
+    options.c_cc[VMIN] = 40; /* 读取字符的最少个数为1 */    
        
     //如果发生数据溢出，接收数据，但是不再读取 刷新收到的数据但是不读    
     tcflush(g_uartfd,TCIFLUSH);    
