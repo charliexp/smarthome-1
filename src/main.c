@@ -24,7 +24,7 @@ ZGB_MSG_STATUS g_zgbmsg[ZGBMSG_MAX_NUM];
 int g_zgbmsgnum;
 cJSON* g_device;
 int g_uartfd;
-int g_log_level = 0;
+int g_log_level = 3;
 
 int g_operationflag = 0;
 int g_queueid;
