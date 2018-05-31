@@ -14,33 +14,62 @@
 
 extern int g_queueid;
 
-
-
-unsigned long long zgbaddresstodbaddress(ZGBADDRESS addr)
+void zgbaddresstodbaddress(ZGBADDRESS addr, char* db_address)
 {
-    unsigned long long dbaddress = 0;
-    dbaddress = (unsigned long long)addr[0] + (unsigned long long)addr[1] * 256 + (unsigned long long)addr[2] * 256 * 256 + 
-        (unsigned long long)addr[3] * 256 * 256 * 256 + 
-        (unsigned long long)addr[4] * 256 * 256 * 256 * 256 + 
-        (unsigned long long)addr[5] * 256 * 256 * 256 * 256 * 256 + 
-        (unsigned long long)addr[6] * 256 * 256 * 256 * 256 * 256 * 256 + 
-        (unsigned long long)addr[7] * 256 * 256 * 256 * 256 * 256 * 256 * 256;
-    return dbaddress;
+	int i = 0;
+
+	for (; i < sizeof(ZGBADDRESS); i++)
+	{
+		if (addr[i] / 16 < 10)
+		{
+			db_address[2*i] = addr[i] / 16 + 48;
+		}
+		else
+		{
+			db_address[2*i] = addr[i] / 16 + 55;
+		}
+
+		if (addr[i] % 16 < 10)
+		{
+			db_address[2*i + 1] = addr[i] % 16 + 48;
+		}
+		else
+		{
+			db_address[2*i + 1] = addr[i] % 16 + 55;
+		}
+
+	}
+	return;
 }
 
-void dbaddresstozgbaddress(unsigned long long addr, ZGBADDRESS zgbaddress)
+void dbaddresstozgbaddress(char* db_address, ZGBADDRESS addr)
 {
-    zgbaddress[0] = (BYTE)addr;
-    zgbaddress[1] = (BYTE)(addr>>8);
-    zgbaddress[2] = (BYTE)(addr>>16);
-    zgbaddress[3] = (BYTE)(addr>>24);
-    zgbaddress[4] = (BYTE)(addr>>32);
-    zgbaddress[5] = (BYTE)(addr>>40);
-    zgbaddress[6] = (BYTE)(addr>>48);
-    zgbaddress[7] = (BYTE)(addr>>56);
+	int i = 0;
 
-    return;
+	for (; i < 16; i = i + 2)
+	{
+		if (db_address[i] < 58)
+		{
+			addr[i / 2] = db_address[i] - 48;
+		}
+		else
+		{
+			addr[i / 2] = db_address[i] - 55;
+		}
+
+		if (db_address[i + 1] < 58)
+		{
+			addr[i / 2] = addr[i / 2] * 16 + db_address[i + 1] - 48;
+		}
+		else
+		{
+			addr[i / 2] = addr[i / 2] * 16 + db_address[i + 1] - 55;
+		}
+	}
+
+	return;
 }
+
 
 
 void zgbmsginit(zgbmsg *msg)
@@ -58,53 +87,6 @@ void zgbmsginit(zgbmsg *msg)
 void deviceneedregister(ZGBADDRESS addr)
 {
     
-}
-
-int airconcontrol(cJSON *device, char packetid)
-{
-	ZGBADDRESS address;
-	char data[69] = {0};
-	char devicetype;
-	char op;
-	char* destaddress;
-	destaddress = cJSON_GetObjectItem(device, "address")->valuestring;
-	strncpy((char *)&address, destaddress, 8);
-	devicetype = 0x02;
-	op = cJSON_GetObjectItem(device, "operation")->valueint;
-
-	data[0] = 0x11;
-	data[1] = devicetype;
-	data[2] = 0x23;
-	data[3] = op;
-	
-	sendzgbmsg(address, data, 0x04, 0x03, 0x01, 0x01, packetid);
-	return 0;
-}
-
-int freshaircontrol(cJSON *device, char packetid)
-{
-	return 0;
-}
-
-int socketcontrol(cJSON *device, char packetid)
-{
-	ZGBADDRESS address;
-	BYTE data[65] = { 0 };
-	char devicetype;
-	char op;
-	char* destaddress;
-	destaddress = cJSON_GetObjectItem(device, "address")->valuestring;
-	strncpy((char *)&address, destaddress, 8);
-	devicetype = 0x02;
-	op = cJSON_GetObjectItem(device, "operation")->valueint;
-
-	data[0] = TLV_TYPE_SOCKET_STATUS;
-	data[1] = 0x01;
-	data[2] = TLV_VALUE_SOCKET_ON;
-	data[3] = op;
-
-	sendzgbmsg(address, data, 0x04, 0x03, 0x01, 0x01, packetid);
-	return 0;
 }
 
 int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char devicetype, char deviceindex, char packetid)

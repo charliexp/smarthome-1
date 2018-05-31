@@ -1,6 +1,23 @@
 #ifndef _CONST_H_
 #define _CONST_H_
 
+/*COO AT√¸¡Ó*/
+#define AT_CREATE_NETWORK       "AT+FORM=02"
+#define AT_OEPN_NETWORK         "AT+PERMITJOIN=30"
+#define AT_DEVICE_LIST          "AT+LIST"
+#define AT_NETWORK_NOCLOSE      "AT+PERMITJOIN=FF"
+#define AT_CLOSE_NETWORK        "AT+PERMITJOIN=00"
+#define AT_NETWORK_INFO         "AT+GETINFO"
+
+#define TYPE_CREATE_NETWORK       0x01
+#define TYPE_OEPN_NETWORK         0x02
+#define TYPE_DEVICE_LIST          0x03
+#define TYPE_NETWORK_NOCLOSE      0x04
+#define TYPE_CLOSE_NETWORK        0x05
+#define TYPE_NETWORK_INFO         0x06
+
+
+
 #define LOG_FILE "smarthomelog.log"
 #define LOG_LEVEL_DEBUG 0
 #define LOG_LEVEL_INFO 1
