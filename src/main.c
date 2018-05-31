@@ -567,8 +567,7 @@ void* uartlisten(void *argc)
 {
 	BYTE msgbuf[1024]; //暂时使用1024字节存储串口数据，后续测试读取时串口最大数据量
 	pthread_t threads[2];
-	int nByte;
-	int bitflag;
+	int nbyte=0, bitflag=0;
 	zgbmsg zmsg;
     zgbqueuemsg zgbqmsg;
 	int i, j, sum;
@@ -580,11 +579,11 @@ void* uartlisten(void *argc)
     MYLOG_DEBUG("Enter pthread uartlisten");
 	while (true)
 	{
-		nByte = read(g_uartfd, msgbuf, 1024);
-        MYLOG_INFO("Uart recv %d byte:", nByte);
-        MYLOG_BYTE(msgbuf, nByte);
-        
-		for (i = 0; i < nByte; )
+		nbyte = read(g_uartfd, msgbuf, 1024);
+        MYLOG_INFO("Uart recv %d byte:", nbyte);
+        MYLOG_BYTE(msgbuf, nbyte);
+        bitflag = nbyte;
+		for (i = 0; i < bitflag; )
 		{
 			if (msgbuf[i] != 0x2A)
 			{
@@ -595,13 +594,27 @@ void* uartlisten(void *argc)
 			//zgb消息提取
 			zgbmsginit(&zmsg);
 			zmsg.msglength = msgbuf[i + 1];
-            if(zmsg.msglength+4 > nByte-i+1)
+            if(zmsg.msglength+4 > bitflag-i+1)
             {
-                int needbyte = (zmsg.msglength + 4) -  (nByte - i + 1);
-                int externbyte = read(g_uartfd, msgbuf+nByte, needbyte);
-                MYLOG_INFO("Uart extern recv %d byte", externbyte);
-                MYLOG_BYTE(msgbuf+nByte, externbyte);
-                nByte += externbyte;
+                int needbyte = (zmsg.msglength + 4) -  (bitflag - i + 1);
+                
+                MYLOG_DEBUG("Need %d byte!", needbyte);
+                
+                nbyte = read(g_uartfd, msgbuf+bitflag, needbyte);
+                    
+                MYLOG_INFO("Uart extern recv %d byte", nbyte);
+                MYLOG_BYTE(msgbuf+bitflag, nbyte);
+                bitflag = bitflag + nbyte;
+                
+                while(needbyte != nbyte)
+                {
+                    needbyte = needbyte - nbyte;
+                    MYLOG_DEBUG("Need %d byte!", needbyte);
+                    nbyte = read(g_uartfd, msgbuf+bitflag, needbyte);
+                    MYLOG_INFO("Uart extern recv %d byte", nbyte);
+                    MYLOG_BYTE(msgbuf+bitflag, nbyte); 
+                    bitflag = bitflag + nbyte;
+                }
             }
 			zmsg.check = msgbuf[i + zmsg.msglength + 2];
 			sum = 0;
