@@ -34,7 +34,7 @@ sem_t g_mqttconnetionsem;
 int g_qoss[TOPICSNUM] = {2, 1, 2, 1, 1};
 //程序启动后申请堆存放需要订阅的topic
 char* g_topics[TOPICSNUM] ={0x0, 0x0, 0x0, 0x0, 0x0};
-char g_topicthemes[TOPICSNUM][10] = {{"operation"}, {"update"}, {"device"}, {"config"}, {"warning"}, {"gateway"}};
+char g_topicthemes[TOPICSNUM][10] = {{"devices"}, {"gateway"}};
 
 struct operation_results
 {
@@ -167,12 +167,12 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             int ret = gatewayregister();
             if (ret == 0)
             {
-                MYLOG_INFO("Register gateway success!")
+                MYLOG_INFO("Register gateway success!");
                 cJSON_AddStringToObject(root, "result", "ok");           
             }
             else
             {
-                MYLOG_INFO("Register gateway failed!")
+                MYLOG_INFO("Register gateway failed!");
                 cJSON_AddStringToObject(root, "result", "fail");                
             }
             sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);

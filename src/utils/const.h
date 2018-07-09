@@ -30,7 +30,7 @@
 #define QOS                1
 #define USERNAME    "root"
 #define PASSWORD    "root"
-#define TOPICSNUM          5
+#define TOPICSNUM          2
 #define RESPONSE_WAIT      3000000 //消息响应等待时间5000000us = 5s
 #define ZGB_ADDRESS_LENGTH 8
 #define ZGBMSG_MAX_NUM     20
