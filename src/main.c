@@ -635,7 +635,7 @@ void* uartlisten(void *argc)
     
 	while(true)
 	{
-		nbyte = read(g_uartfd, msgbuf, 1024);
+		nbyte = read(g_uartfd, msgbuf, 110);
         MYLOG_INFO("Uart recv %d byte:", nbyte);
         MYLOG_BYTE(msgbuf, nbyte);
         bitnum = nbyte;
@@ -685,7 +685,7 @@ void* uartlisten(void *argc)
 			if (sum%256 != zmsg.check)
 			{
                 MYLOG_DEBUG("The zmsg.check is %d", zmsg.check);
-                MYLOG_DEBUG("The sum is %d,the sum/256 = ", sum, sum%256);
+                MYLOG_DEBUG("The sum is %d,the sum/256 = %d", sum, sum%256);
 				MYLOG_ERROR("Wrong format!");
 				//i = i + zmsg.msglength + 4;
 				i++;
