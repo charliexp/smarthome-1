@@ -31,9 +31,9 @@ int g_queueid;
 sqlite3* g_db;
 sem_t g_mqttconnetionsem;
 //订阅g_topics对应的qos
-int g_qoss[TOPICSNUM] = {2, 1, 2, 1, 1};
+int g_qoss[TOPICSNUM] = {2, 1};
 //程序启动后申请堆存放需要订阅的topic
-char* g_topics[TOPICSNUM] ={0x0, 0x0, 0x0, 0x0, 0x0};
+char* g_topics[TOPICSNUM] ={0x0, 0x0};
 char g_topicthemes[TOPICSNUM][10] = {{"devices"}, {"gateway"}};
 
 struct operation_results

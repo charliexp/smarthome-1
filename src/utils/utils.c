@@ -20,6 +20,8 @@
 #include "const.h"
 #include "type.h"
 #include "error.h"
+#include "log/log.h"
+
 
 extern int g_uartfd;
 extern char g_mac[20];
