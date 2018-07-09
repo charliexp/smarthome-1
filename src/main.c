@@ -650,9 +650,9 @@ void* uartlisten(void *argc)
 			/*开始提取ZGB消息*/
 			zgbmsginit(&zmsg);
 			zmsg.msglength = msgbuf[i + 1];
-            if(zmsg.msglength+4 > bitnum-i+1) //如果ZGB消息长度大于接受到字节剩余长度说明还要接受后续字节
+            if(zmsg.msglength+4 > bitnum-i) //如果ZGB消息长度大于接受到字节剩余长度说明还要接受后续字节
             {
-                int needbyte = (zmsg.msglength + 4) -  (bitnum - i + 1);//构造当前报文还需接收的字节数
+                int needbyte = (zmsg.msglength + 4) -  (bitnum - i);//构造当前报文还需接收的字节数
                 
                 MYLOG_DEBUG("Need %d byte to construct a message!", needbyte);
                 
@@ -694,10 +694,13 @@ void* uartlisten(void *argc)
     		if(addresszero(zmsg.payload.src) == 0)//不是ROT发来的报文
     		{
                 //移除前一个报文
-                memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
-                bitnum = bitnum - (i + zmsg.msglength + 4);
-                i = 0;
-                continue;
+                if((i + zmsg.msglength + 4)!= (bitnum -1))
+                {
+                    memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
+                    bitnum = bitnum - (i + zmsg.msglength + 4);
+                    i = 0;
+                    continue;                    
+                }
             }
 
             zmsg.payload.cmdid[0] = msgbuf[i + (int)&zmsg.payload.cmdid - (int)&zmsg];
@@ -709,10 +712,13 @@ void* uartlisten(void *argc)
             if(zmsg.payload.cmdid[0] != 0x20 && zmsg.payload.cmdid[1] == 0x98)//不是ROT发来的透传报文
             {
                 //移除前一个报文
-                memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
-                bitnum = bitnum - (i + zmsg.msglength + 4);
-                i = 0;
-                continue;                
+                if((i + zmsg.msglength + 4)!= (bitnum -1))
+                {
+                    memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
+                    bitnum = bitnum - (i + zmsg.msglength + 4);
+                    i = 0;
+                    continue;                    
+                }            
             }
 
             if(zmsg.payload.adf.index[0] == 0xA0 && zmsg.payload.adf.index[1] == 0x0F)
@@ -732,9 +738,13 @@ void* uartlisten(void *argc)
 		        MYLOG_ERROR("send zgbqueuemsg fail!");
 	        }
             //移除前一个报文
-            memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
-            bitnum = bitnum - (i + zmsg.msglength + 4);
-            i = 0;      
+            if((i + zmsg.msglength + 4)!= (bitnum -1))
+            {
+                memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
+                bitnum = bitnum - (i + zmsg.msglength + 4);
+                i = 0;
+                continue;                    
+            }  
 		}
 	}
 	pthread_exit(NULL);
