@@ -14,6 +14,7 @@
 #include <fcntl.h>      /*文件控制定义*/    
 #include <termios.h>    /*PPSIX 终端控制定义*/    
 #include <errno.h>      /*错误号定义*/   
+#include <curl/curl.h>
 
 #include "utils.h"
 #include "const.h"
@@ -71,6 +72,21 @@ void milliseconds_sleep(unsigned long msec)
 }
 
 
+
+int addresszero(const void* src)
+{
+    int i = 0;
+    for(; i<8; i++)
+    {
+        if(*((char*)src+i) == 0)
+            continue;
+        else
+            return -1;
+    }
+    return 0;
+}
+
+
 /*******************************************************************  
 * 名称：                  init_uart  
 * 功能： 初始化串口（一般是初始化UART1）  
@@ -83,13 +99,13 @@ int init_uart(char* port)
     g_uartfd = open( port, O_RDWR|O_NOCTTY|O_NDELAY);    
     if (g_uartfd < 3)    
     {    
-        perror("Can't Open Serial Port");    
+        MYLOG_ERROR("Can't Open Serial Port");    
         return -1;    
     }    
     //恢复串口为阻塞状态                                   
     if(fcntl(g_uartfd, F_SETFL, 0) < 0)    
     {    
-        printf("fcntl failed!\n");    
+        MYLOG_ERROR("fcntl failed!");    
         return -1;    
     }
 
@@ -124,7 +140,7 @@ int init_uart(char* port)
     //激活配置 (将修改后的termios数据设置到串口中）    
     if (tcsetattr(g_uartfd,TCSANOW,&options) != 0)      
     {    
-        perror("uart set error!\n");      
+        MYLOG_ERROR("uart set error!");      
         return -1;     
     }    
     return 0;    
@@ -240,3 +256,85 @@ int base64_encode(const unsigned char * sourcedata, char * base64)
     return 0;
 }
 
+
+/* 
+*网关信息注册
+*/
+int gatewayregister()
+{
+    CURL *curl_handle;
+    CURLcode res;
+
+    curl_global_init(CURL_GLOBAL_ALL);
+    curl_handle = curl_easy_init();
+
+    curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+
+    curl_easy_setopt(curl_handle, CURLOPT_URL, "https://123.206.15.63:8443/manager/gatewayregister");
+    curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, g_mac);
+
+    res = curl_easy_perform(curl_handle);
+
+    if(res != CURLE_OK)
+    {
+        MYLOG_ERROR("curl_easy_perform() failed: %s\n",
+        curl_easy_strerror(res));
+        curl_easy_cleanup(curl_handle);
+        curl_global_cleanup();        
+        return -1;
+    }
+    else
+    {
+        MYLOG_INFO("Gateway register success!\n");     
+        curl_easy_cleanup(curl_handle);
+        curl_global_cleanup();   
+        return 0;
+    }
+}
+
+/*文件上传
+* const char * filepath 上传文件的绝对路径
+*/
+int updatefile(const char* filepath)
+{
+    MYLOG_INFO("begin to upload file:%s", filepath);
+    if (!filepath)
+    {
+        MYLOG_ERROR("The filepath is null");
+        return -1;
+    }
+    
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    CURL *hCurl = curl_easy_init();
+
+    if(hCurl != NULL)
+    {
+        struct curl_slist *pOptionList = NULL;
+        pOptionList = curl_slist_append(pOptionList, "Expect:");
+        curl_easy_setopt(hCurl, CURLOPT_HTTPHEADER, pOptionList);
+
+        struct curl_httppost* pFormPost = NULL;
+        struct curl_httppost* pLastElem = NULL;
+
+        curl_formadd(&pFormPost, &pLastElem, CURLFORM_COPYNAME, "file", CURLFORM_FILE, 
+            filepath, CURLFORM_CONTENTTYPE, "text/plain", CURLFORM_END);
+
+		curl_easy_setopt(hCurl,CURLOPT_SSL_VERIFYPEER, 0);
+		curl_easy_setopt(hCurl,CURLOPT_SSL_VERIFYHOST, 0);
+        curl_easy_setopt(hCurl, CURLOPT_HTTPPOST, pFormPost);
+        curl_easy_setopt(hCurl, CURLOPT_URL, HTTP_UPLOAD_UAR);
+
+        CURLcode res = curl_easy_perform(hCurl);
+        if(res != CURLE_OK)
+        {
+            MYLOG_ERROR("upload file error");
+        }
+        curl_formfree(pFormPost);
+        curl_easy_cleanup(hCurl);
+    }
+
+    curl_global_cleanup();
+    return 0;
+}

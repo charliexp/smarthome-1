@@ -78,9 +78,6 @@ void zgbmsginit(zgbmsg *msg)
 	msg->header = 0x2A;
 	msg->payload.framecontrol[0] = 0x41;
 	msg->payload.framecontrol[1] = 0x88;
-	msg->payload.cmdid[0] = 0x25;
-	msg->payload.cmdid[1] = 0x00;
-    msg->payload.adf.data.magicnum = 0xAA;
 	msg->footer = 0x23;
 }
 

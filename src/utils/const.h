@@ -3,14 +3,14 @@
 
 /*COO AT命令*/
 #define AT_CREATE_NETWORK       "AT+FORM=02"
-#define AT_OEPN_NETWORK         "AT+PERMITJOIN=30"
+#define AT_OPEN_NETWORK         "AT+PERMITJOIN=30"
 #define AT_DEVICE_LIST          "AT+LIST"
 #define AT_NETWORK_NOCLOSE      "AT+PERMITJOIN=FF"
 #define AT_CLOSE_NETWORK        "AT+PERMITJOIN=00"
 #define AT_NETWORK_INFO         "AT+GETINFO"
 
 #define TYPE_CREATE_NETWORK       0x01
-#define TYPE_OEPN_NETWORK         0x02
+#define TYPE_OPEN_NETWORK         0x02
 #define TYPE_DEVICE_LIST          0x03
 #define TYPE_NETWORK_NOCLOSE      0x04
 #define TYPE_CLOSE_NETWORK        0x05
@@ -31,7 +31,7 @@
 #define USERNAME    "root"
 #define PASSWORD    "root"
 #define TOPICSNUM          5
-#define RESPONSE_WAIT      5000000 //消息响应等待时间5000000us = 5s
+#define RESPONSE_WAIT      3000000 //消息响应等待时间5000000us = 5s
 #define ZGB_ADDRESS_LENGTH 8
 #define ZGBMSG_MAX_NUM     20
 
@@ -140,4 +140,10 @@
 #define TLV_VALUE_AIRCONDITIONER_ON   0x00 //空调主机断电
 #define TLV_VALUE_AIRCONDITIONER_ON   0x00 //空调主机上电
 
+
+/*
+**http常量
+**
+*/
+#define HTTP_UPLOAD_UAR "http://123.206.15.63:8060/manager/upload"
 #endif

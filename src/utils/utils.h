@@ -23,7 +23,7 @@ char getpacketid(void);
 */
 int getmac(char *address);
 
-
+int addresszero(const void* src);
 /*睡眠msec毫秒*/
 void milliseconds_sleep(unsigned long msec);
 
@@ -36,4 +36,9 @@ int base64_encode(const unsigned char * sourcedata, char * base64);
 /*base64解码*/
 int base64_decode(const char * base64, unsigned char * dedata);
 
+/*网关注册mac地址*/
+int gatewayregister();
+
+/*上传文件到服务器*/
+int updatefile(const char* filepath);
 #endif
