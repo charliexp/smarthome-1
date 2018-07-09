@@ -382,10 +382,9 @@ void* devicemsgprocess(void *argc)
                     break;   
                 default:
                     MYLOG_ERROR("Unknow actiontype!");
-                    cJSON_AddStringToObject(g_device, "result", MQTT_MSG_FORMAT_ERROR);
-                    goto response;                    
+                    cJSON_AddStringToObject(g_device, "result", MQTT_MSG_FORMAT_ERROR);                    
             }
-            continue;
+            goto response;
         }
         
 		devices = cJSON_GetObjectItem(g_device, "devices");
