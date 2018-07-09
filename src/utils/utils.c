@@ -22,6 +22,7 @@
 #include "error.h"
 
 extern int g_uartfd;
+extern char g_mac[20];
 char g_current_packetid = 0;
 const char * base64char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const char padding_char = '=';

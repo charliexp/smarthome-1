@@ -192,7 +192,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
         }
         else if(operationtype == 3)
         {
-            loglevel = cJSON_GetObjectItem(root, "value")->valueint;
+            int loglevel = cJSON_GetObjectItem(root, "value")->valueint;
             g_log_level = loglevel;
         }
 	}
@@ -566,6 +566,7 @@ void* zgbmsgprocess(void* argc)
         switch (msgtype)
         {
             case ZGB_MSGTYPE_DEVICEREGISTER_RESPONSE:
+            {
                  cJSON* root = cJSON_CreateObject();
                  int nrow = 0, ncolumn = 0;
                  char **azResult; 
@@ -590,7 +591,9 @@ void* zgbmsgprocess(void* argc)
                  cJSON_AddNumberToObject(root, "devicetype", devicetype);
                  sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
                  break;
+            }
             case ZGB_MSGTYPE_DEVICE_OPERATION_RESULT:
+            {
                 for (int i = 0; i < ZGBMSG_MAX_NUM; ++i)
                 {
                     if (g_devicemsgstatus[i].packetid == packetid)
@@ -601,6 +604,7 @@ void* zgbmsgprocess(void* argc)
                     }
                 }
                 break;
+            }
             default:
                 ;
         }
