@@ -672,7 +672,7 @@ void* uartlisten(void *argc)
                     bitnum = bitnum + nbyte;
                 }
                 MYLOG_DEBUG("The complete msg is :");
-                MYLOG_BYTE(msgbuf+i, zmsg.msglength);
+                MYLOG_BYTE(msgbuf+i, zmsg.msglength + 4);
             }
 			zmsg.check = msgbuf[i + zmsg.msglength + 2];
 			sum = 0;
@@ -684,6 +684,8 @@ void* uartlisten(void *argc)
 			}
 			if (sum%256 != zmsg.check)
 			{
+                MYLOG_DEBUG("The zmsg.check is %d", zmsg.check);
+                MYLOG_DEBUG("The sum is %d,the sum/256 = ", sum, sum%256);
 				MYLOG_ERROR("Wrong format!");
 				//i = i + zmsg.msglength + 4;
 				i++;
@@ -696,6 +698,7 @@ void* uartlisten(void *argc)
                 //移除前一个报文
                 if((i + zmsg.msglength + 4)!= (bitnum -1))
                 {
+                    MYLOG_DEBUG("move a message!");
                     memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
                     bitnum = bitnum - (i + zmsg.msglength + 4);
                     i = 0;
@@ -714,6 +717,7 @@ void* uartlisten(void *argc)
                 //移除前一个报文
                 if((i + zmsg.msglength + 4)!= (bitnum -1))
                 {
+                    MYLOG_DEBUG("move a message!");
                     memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
                     bitnum = bitnum - (i + zmsg.msglength + 4);
                     i = 0;
@@ -740,6 +744,7 @@ void* uartlisten(void *argc)
             //移除前一个报文
             if((i + zmsg.msglength + 4)!= (bitnum -1))
             {
+                MYLOG_DEBUG("move a message!");
                 memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
                 bitnum = bitnum - (i + zmsg.msglength + 4);
                 i = 0;
