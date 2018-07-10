@@ -510,7 +510,6 @@ void* uartsend(void *argc)
 	    {
 		    MYLOG_ERROR("com write check and footer error!");
 	    }
-        write(g_uartfd, "\n", 1);
     }
 	pthread_exit(NULL);    
 }

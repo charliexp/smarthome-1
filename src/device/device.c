@@ -113,7 +113,7 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
 
 	for (;i < msg.msglength; i++)
 	{
-		sum += (int)((char *)&msg.payload)[i];
+		sum += ((BYTE *)&msg.payload)[i];
 	}
     MYLOG_DEBUG("The sum is %d", sum);
 	msg.check = sum % 256;
