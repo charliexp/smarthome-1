@@ -115,6 +115,7 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
 	{
 		sum += (int)((char *)&msg.payload)[i];
 	}
+    MYLOG_DEBUG("The sum is %d", sum);
 	msg.check = sum % 256;
 
     uartmsg.msgtype = QUEUE_MSG_UART;
