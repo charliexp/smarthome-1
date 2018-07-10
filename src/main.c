@@ -501,6 +501,7 @@ void* uartsend(void *argc)
 			MYLOG_ERROR("recive uartsendmsg fail!");
 		}
         MYLOG_INFO("uart begin to send msg!");
+        MYLOG_BYTE(qmsg.msg, sizeof(qmsg.msg));
         if ( write(g_uartfd, (char *)&qmsg.msg, (int)(qmsg.msg.msglength + 2)) != (qmsg.msg.msglength + 2))
 	    {
 		    MYLOG_ERROR("com write error!");
@@ -553,7 +554,7 @@ void* zgbmsgprocess(void* argc)
             MYLOG_INFO(sql);
             
             sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-            MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg)
+            MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
             if(nrow == 0) //数据库中没有该设备
             {
                 sendzgbmsg(src, data, 0, ZGB_MSGTYPE_DEVICEREGISTER, 0, 0, getpacketid());//要求设备注册
