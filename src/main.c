@@ -540,12 +540,14 @@ void* zgbmsgprocess(void* argc)
             MYLOG_ERROR("rcvret = %d", rcvret);
 		}
 		MYLOG_INFO("zgbmsgprocess recive a msg");
+        memcpy(src, qmsg.msg.payload.src, 8);
+        zgbaddresstodbaddress(src, db_zgbaddress);
 
         if(qmsg.msg.payload.adf.index[0] == 0x00 && qmsg.msg.payload.adf.index[1] == 0x00) //设备入网消息
         {
             int nrow = 0, ncolumn = 0;
 	        char **dbresult; 
-
+        
             MYLOG_INFO("[ZGB DEVICE]Get a device network joining message.");
             sprintf(sql,"SELECT * FROM devices WHERE zgbaddress = %s;", db_zgbaddress);
             MYLOG_INFO(sql);
@@ -562,8 +564,7 @@ void* zgbmsgprocess(void* argc)
         devicetype = qmsg.msg.payload.adf.data.devicetype;
         deviceindex = qmsg.msg.payload.adf.data.deviceindex;
         packetid = qmsg.msg.payload.adf.data.packetid;
-        memcpy(src, qmsg.msg.payload.src, 8);
-        zgbaddresstodbaddress(src, db_zgbaddress);
+
         sprintf(db_deviceid, "%s%d", db_zgbaddress, deviceindex);
         
         switch (msgtype)
@@ -741,7 +742,7 @@ void* uartlisten(void *argc)
 		        MYLOG_ERROR("send zgbqueuemsg fail!");
 	        }
             //移除前一个报文
-            if((i + zmsg.msglength + 4)!= (bitnum -1))
+            if((i + zmsg.msglength + 4)!= bitnum)
             {
                 MYLOG_DEBUG("move a message!");
                 memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
