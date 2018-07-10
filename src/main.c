@@ -56,7 +56,11 @@ void init()
 	{
         sprintf(g_topicroot, "/%s/", g_mac);    
 	}
-
+    
+    if(init_uart("/dev/ttyS1") == -1)
+    {
+        MYLOG_ERROR("init_uart fail!");
+    }
 
 	for(; i < TOPICSNUM; i++)
 	{
@@ -627,11 +631,6 @@ void* uartlisten(void *argc)
     pthread_create(&threads[1], NULL, zgbmsgprocess, NULL);
 
     MYLOG_DEBUG("pthread uartlisten begin");
-
-    if(init_uart("/dev/ttyS1") == -1)
-    {
-        MYLOG_ERROR("init_uart fail!");
-    }
     
 	while(true)
 	{
@@ -927,6 +926,7 @@ int main(int argc, char* argv[])
     pthread_t threads[NUM_THREADS];
     
     log_init();	
+    
     init(); //程序启动初始任务
     sem_init(&g_mqttconnetionsem, 0, 1); 
 
