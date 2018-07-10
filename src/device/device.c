@@ -94,6 +94,9 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
 	int i = 0;
 	int sum = 0;
 
+    MYLOG_INFO("Send a zgbmsg!The data is:");
+    MYLOG_BYTE(data, length);
+    
     zgbmsginit(&msg);
     msg.msglength = 46 + length;
 	memcpy((char*)msg.payload.dest, (char*)address, 8);//目标地址赋值

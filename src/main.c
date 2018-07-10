@@ -553,6 +553,7 @@ void* zgbmsgprocess(void* argc)
             MYLOG_INFO(sql);
             
             sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+            MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg)
             if(nrow == 0) //数据库中没有该设备
             {
                 sendzgbmsg(src, data, 0, ZGB_MSGTYPE_DEVICEREGISTER, 0, 0, getpacketid());//要求设备注册
