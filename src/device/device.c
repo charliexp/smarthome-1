@@ -100,6 +100,8 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
     zgbmsginit(&msg);
     msg.msglength = 46 + length;
 	memcpy((char*)msg.payload.dest, (char*)address, 8);//目标地址赋值
+	msg.payload.cmdid[0] = 0x25;
+    msg.payload.cmdid[1] = 0x38;
 	msg.payload.adf.index[0] = 0xA0;
 	msg.payload.adf.index[1] = 0x0F;
 	msg.payload.adf.length = length + 7;
