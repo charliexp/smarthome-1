@@ -110,7 +110,7 @@ void onDisconnect(void* context, MQTTAsync_successData* response)
 	MYLOG_ERROR("Successful disconnection");
 }
 
-/*订阅消息到达的处理函数*/
+/*MQTT订阅消息到达的处理函数*/
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *message)
 {
     int i;
@@ -635,7 +635,7 @@ void* uartlisten(void *argc)
 
     MYLOG_DEBUG("pthread uartlisten begin");
     
-	while(true)
+	while(1)
 	{
 		nbyte = read(g_uartfd, msgbuf, 110);
         MYLOG_INFO("Uart recv %d byte:", nbyte);
@@ -749,9 +749,12 @@ void* uartlisten(void *argc)
                 MYLOG_DEBUG("move a message!");
                 memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
                 bitnum = bitnum - (i + zmsg.msglength + 4);
-                i = 0;
-                continue;                    
-            }  
+                i = 0;                   
+            } 
+            else
+            {
+                i = bitnum;
+            }
 		}
 	}
 	pthread_exit(NULL);
@@ -935,7 +938,7 @@ int main(int argc, char* argv[])
 
     if(createmessagequeue() == -1)
     {
-        MYLOG_ERROR("CreateMessageQueue failed!");
+        MYLOG_ERROR("CreateMessageQueue failed!");//这里后续要添加重启的功能
         return -1;
     }
     if(sqlitedb_init() == -1)
