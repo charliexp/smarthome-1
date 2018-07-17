@@ -13,6 +13,7 @@
 #include <sqlite3.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "paho/MQTTAsync.h"
 #include "utils/utils.h"
