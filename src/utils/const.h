@@ -23,7 +23,7 @@
 #define LOG_LEVEL_INFO 1
 #define LOG_LEVEL_ERROR 2
 
-#define NUM_THREADS 4
+#define THREAD_NUMS 5
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
 #define CLIENTID    "todlee"                   //客户端ID
 #define CLIENTID1   "todlee_pub"              //客户端ID
@@ -59,7 +59,7 @@
 /*设备类型*/
 #define DEV_BOOT			0x00	// 空设备，特指Boot Loader
 #define DEV_SOCKET		    0x01	// 插座
-#define DEV_AIR_CON		    0x02	// 空调外机
+#define DEV_AIR_CON		    0x02	// 空调
 #define DEV_BOILER			0x03	// 锅炉
 #define DEV_FAN_COIL		0x04	// 风机盘管
 #define DEV_FLOOR_HEAT	    0x05	// 地暖
@@ -139,6 +139,12 @@
 #define TLV_TYPE_AIRCONDITIONER_STATUS 0x20
 #define TLV_VALUE_AIRCONDITIONER_ON   0x00 //空调主机断电
 #define TLV_VALUE_AIRCONDITIONER_ON   0x00 //空调主机上电
+
+/*设备属性*/
+#define ATTR_WORKSTATUS        0x03               //设备工作状态
+#define ATTR_WINDSPEED         0x04               //设备风速 中低高三档
+#define ATTR_WINDSPEED_NUM     0x05               //设备风速 0~100
+#define ATTR_TEMPERATURE       0x06               //设备温度 0~100
 
 
 /*

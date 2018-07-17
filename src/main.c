@@ -22,7 +22,7 @@ char g_topicroot[20] = {0};
 char g_mac[20] = {0};
 ZGB_MSG_STATUS g_devicemsgstatus[ZGBMSG_MAX_NUM];
 int g_zgbmsgnum;
-cJSON* g_device;
+cJSON* g_device_mqtt_json, *g_devices_status_json;
 int g_uartfd;
 int g_log_level = 0;
 
@@ -67,7 +67,7 @@ void init()
 		g_topics[i] = (char*)malloc(sizeof(g_topicroot) + sizeof(g_topicthemes[i]) + strlen("/+"));
 		sprintf(g_topics[i], "%s%s/+", g_topicroot, g_topicthemes[i]);
 	}
-
+    devices_status_json_init();
     gatewayregister();
 }
 
@@ -332,12 +332,12 @@ void* devicemsgprocess(void *argc)
 		MYLOG_INFO("devicemsgprocess recive a msg");
 		MYLOG_INFO("the msg is %s", cJSON_PrintUnformatted(msg.p_operation_json));
         
-		g_device = msg.p_operation_json;
-        tmp = cJSON_GetObjectItem(g_device, "operation");
+		g_device_mqtt_json = msg.p_operation_json;
+        tmp = cJSON_GetObjectItem(g_device_mqtt_json, "operation");
         if (tmp == NULL)
         {
             MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-            cJSON_AddStringToObject(g_device, "result", MQTT_MSG_FORMAT_ERROR);
+            cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
             goto response;
         }          
         operationtype = tmp->valueint;//操作类型
@@ -345,11 +345,11 @@ void* devicemsgprocess(void *argc)
         if(operationtype == 0)//操作的coo模块
         {
             int actiontype;
-            tmp = cJSON_GetObjectItem(g_device, "operationvalue");
+            tmp = cJSON_GetObjectItem(g_device_mqtt_json, "operationvalue");
             if (tmp == NULL)
             {
                 MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                cJSON_AddStringToObject(g_device, "result", MQTT_MSG_FORMAT_ERROR);
+                cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
                 goto response;
             }             
             actiontype = tmp->valueint;//coo操作值
@@ -386,16 +386,16 @@ void* devicemsgprocess(void *argc)
                     break;   
                 default:
                     MYLOG_ERROR("Unknow actiontype!");
-                    cJSON_AddStringToObject(g_device, "result", MQTT_MSG_FORMAT_ERROR);                    
+                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);                    
             }
             goto response;
         }
         
-		devices = cJSON_GetObjectItem(g_device, "devices");
+		devices = cJSON_GetObjectItem(g_device_mqtt_json, "devices");
 		if (devices == NULL)
 		{
 			MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-            cJSON_AddStringToObject(g_device, "result", MQTT_MSG_FORMAT_ERROR);
+            cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
             goto response;
 		} 
         
@@ -418,7 +418,7 @@ void* devicemsgprocess(void *argc)
             if(tmp == NULL)
 		    {
                 MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                cJSON_AddStringToObject(g_device, "result", MQTT_MSG_FORMAT_ERROR);
+                cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
                 goto response;
 			}                
             
@@ -434,7 +434,7 @@ void* devicemsgprocess(void *argc)
             if(nrow == 0) //数据库中没有该设备
             {
                 MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                cJSON_AddStringToObject(g_device, "result", MQTT_MSG_UNKNOW_DEVICE);
+                cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_UNKNOW_DEVICE);
                 goto response;
             }
 
@@ -445,7 +445,7 @@ void* devicemsgprocess(void *argc)
 		    if (operations == NULL)
 		    {
 			    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                cJSON_AddStringToObject(g_device, "result", MQTT_MSG_FORMAT_ERROR);
+                cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
                 goto response;
 		    }        
 		    operationnum = cJSON_GetArraySize(operations);
@@ -482,7 +482,7 @@ response:
 		cJSON_Delete(msg.p_operation_json);
         g_zgbmsgnum = 0;
 		g_operationflag = 0;
-        g_device = NULL;
+        g_device_mqtt_json = NULL;
 	}
 	pthread_exit(NULL);
 }
@@ -525,7 +525,7 @@ void* zgbmsgprocess(void* argc)
     char msgtype,devicetype,deviceindex,packetid;
     zgbmsg responsemsg;
     char topic[TOPIC_LENGTH] = { 0 };
-    char *zErrMsg = 0;  
+    char *zErrMsg = NULL;  
     char sql[512]; 
     BYTE data[72];
     int rc;  
@@ -587,11 +587,12 @@ void* zgbmsgprocess(void* argc)
                      MYLOG_ERROR(zErrMsg);
                      continue;
                  }
-                      
+                 cJSON* devicestatus = get_status_json(db_deviceid, devicetype);
+                 cJSON_AddItemToArray(g_devices_status_json, devicestatus);
+                 
                  data[0] = TLV_TYPE_RESPONSE; //tag
-                 data[2] = 0x1;               //length
                  data[1] = TLV_VALUE_RTN_OK;  //value
-                 sendzgbmsg(src, data, 3, ZGB_MSGTYPE_GATEWAY_RESPONSE, devicetype, deviceindex, packetid);//设备注册的网关响应
+                 sendzgbmsg(src, data, 2, ZGB_MSGTYPE_GATEWAY_RESPONSE, devicetype, deviceindex, packetid);//设备注册的网关响应
                  sprintf(topic, "%s%s/", g_topicroot, TOPIC_NEWDEVICE);
                  cJSON_AddStringToObject(root, "deviceid", db_deviceid);
                  cJSON_AddNumberToObject(root, "devicetype", devicetype);
@@ -600,17 +601,22 @@ void* zgbmsgprocess(void* argc)
             }
             case ZGB_MSGTYPE_DEVICE_OPERATION_RESULT:
             {
+                
                 for (int i = 0; i < ZGBMSG_MAX_NUM; ++i)
                 {
                     if (g_devicemsgstatus[i].packetid == packetid)
                     {
                         g_devicemsgstatus[i].finish = 1;
-                        g_devicemsgstatus[i].result = *((char*)qmsg.msg.payload.adf.data.pdu + 2);
+                        g_devicemsgstatus[i].result = *((char*)qmsg.msg.payload.adf.data.pdu + 1);
                         break;
                     }
                 }
+
+                
+                
                 break;
             }
+            case 
             default:
                 ;
         }
@@ -904,13 +910,13 @@ int sqlitedb_init()
     int rc;  
     int len = 0; 
 
-    rc = sqlite3_open("mydb", &g_db);
+    rc = sqlite3_open("smarthome.db", &g_db);
     if(rc != SQLITE_OK)  
     {  
-        MYLOG_ERROR("open mydb error!");  
+        MYLOG_ERROR("open smarthome.db error!");  
         return -1;  
     }
-    sprintf(sql,"CREATE TABLE devices (deviceid TEXT, zgbaddress CHAR(20) DEFAULT 0xFFFFFFFFFFFFFFFF, devicetype CHAR(1), deviceindex CHAR(1), online CHAR(1));");
+    sprintf(sql,"CREATE TABLE devices (deviceid TEXT, zgbaddress TEXT, devicetype CHAR(1), deviceindex CHAR(1), online CHAR(1));");
     rc = sqlite3_exec(g_db,sql,0,0,&zErrMsg);
     if (rc != SQLITE_OK && rc != SQLITE_ERROR) //表重复会返回SQLITE_ERROR，该错误属于正常
     {
@@ -927,9 +933,63 @@ int sqlitedb_init()
     return 0;
 }
 
+
+/*局域网监听任务*/
+void* lantask(void *argc)
+{
+    struct sockaddr_in servaddr,appaddr;
+    char text[] = "smarthome app";
+    int listenfd,sendfd;
+    char buf[128];               
+                         
+    listenfd = socket(AF_INET,SOCK_DGRAM,0);
+    sendfd = socket(AF_INET,SOCK_DGRAM,0);
+    int set = 1;
+    setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &set, sizeof(int));
+    setsockopt(sendfd, SOL_SOCKET, SO_REUSEADDR, &set, sizeof(int));
+
+    bzero(&servaddr,sizeof(servaddr));
+    bzero(&appaddr,sizeof(appaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY); 
+    servaddr.sin_port = htons(8787);
+
+    bind(listenfd,(struct sockaddr *)&servaddr,sizeof(servaddr));  //端口绑定
+    int recvbytes;
+    int addrlen = sizeof(struct sockaddr_in);
+
+    while(1)
+    {
+        if((recvbytes = recvfrom(listenfd, buf, 128, 0, (struct sockaddr *)&appaddr, &addrlen)) != -1)
+        {
+            buf[recvbytes] = '\0';
+            MYLOG_DEBUG("Lantask revc a udp msg!, the msg is %s", buf);
+            if(memcmp(buf, text, strlen(text))==0)
+            {
+                int sendBytes;
+                appaddr.sin_family = AF_INET;
+                appaddr.sin_addr.s_addr = htonl(inet_ntoa(appaddr.sin_addr));
+                appaddr.sin_port = htons(8866);  
+
+                MYLOG_DEBUG("Send a msg to app!");
+                if((sendBytes = sendto(sendfd, text, strlen(text), 0, (struct sockaddr *)&appaddr, sizeof(struct sockaddr))) == -1)
+                {
+                    MYLOG_ERROR("sendto fail, errno=%d\n", errno);
+                }                
+            }
+        }
+        else
+        {
+            MYLOG_ERROR("recvfrom fail\n");
+        }
+    }
+	pthread_exit(NULL);    
+}
+
+
 int main(int argc, char* argv[])
 {
-    pthread_t threads[NUM_THREADS];
+    pthread_t threads[THREAD_NUMS];
     
     log_init();	
     
@@ -947,11 +1007,11 @@ int main(int argc, char* argv[])
         return -1;        
     }
     
-    
-	pthread_create(&threads[0], NULL, mqttlient, NULL);
+	pthread_create(&threads[0], NULL, mqttlient,        NULL);
 	pthread_create(&threads[1], NULL, devicemsgprocess, NULL);
-	pthread_create(&threads[2], NULL, uartlisten, NULL);
+	pthread_create(&threads[2], NULL, uartlisten,       NULL);
 	pthread_create(&threads[3], NULL, mqttqueueprocess, NULL);
+    pthread_create(&threads[4], NULL, lantask, NULL);
 
     pthread_exit(NULL);
 }

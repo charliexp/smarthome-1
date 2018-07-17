@@ -7,12 +7,14 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/stat.h>
+#include <sqlite3.h> 
 
 #include "../utils/utils.h"
 #include "device.h"
 #include "../log/log.h"
 
 extern int g_queueid;
+extern cJSON* g_devices_status;
 
 void zgbaddresstodbaddress(ZGBADDRESS addr, char* db_address)
 {
@@ -130,5 +132,105 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
 	}
 
 	return 0;
+}
+
+
+void devices_status_json_init()
+{
+    int nrow = 0, ncolumn = 0;
+	char **dbresult;     
+    char[50] sql={"select deviceid, devicetype from devices "};
+    char* zErrMsg = NULL;
+    cJSON *device_status;
+    char* deviceid;
+    char devicetype;
+
+    g_devices_status_json = cJSON_CreateArray();
+
+    sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+
+    if(nrow == 0)
+    {
+        MYLOG_DEBUG("There are not any device!");
+        return 0;
+    }
+
+    for(int i=0; i< nrow; i++)
+    {
+        deviceid = dbresult[i*ncolumn];
+        devicetype = *(dbresult[i*ncolumn+1]) - '0';
+        device_status = set_device_status_json(deviceid, devicetype);
+        MYLOG_INFO("The device_status is %s", cJSON_PrintUnformatted(device_status));
+        cJSON_AddItemToArray(g_devices_status_json, device_status);
+    }
+        
+
+}
+
+
+cJSON* set_device_status_json(char* deviceid, char devicetype)
+{
+	cJSON* device = cJSON_CreateObject();
+	cJSON* statusarray = cJSON_CreateArray();
+    cJSON* status;
+
+
+    cJSON_AddStringToObject(device, "deviceid", deviceid);
+	cJSON_AddItemToObject(device, "status", statusarray);
+
+    switch(devicetype)
+    {
+        case DEV_SOCKET:
+        {
+	        status = cJSON_CreateObject();            
+        	cJSON_AddNumberToObject(status, "type", ATTR_WORKSTATUS);
+        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddItemToArray(statusarray, status);
+            break;
+        }
+        case DEV_AIR_CON:
+        {
+	        status = cJSON_CreateObject();            
+        	cJSON_AddNumberToObject(status, "type", ATTR_WORKSTATUS);
+        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddItemToArray(statusarray, status);
+	        status = cJSON_CreateObject();            
+        	cJSON_AddNumberToObject(status, "type", ATTR_WINDSPEED);
+        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddItemToArray(statusarray, status);
+	        status = cJSON_CreateObject();            
+        	cJSON_AddNumberToObject(status, "type", ATTR_TEMPERATURE);
+        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddItemToArray(statusarray, status);
+            break;
+        }
+        default:
+            device = NULL;
+            
+    }
+    
+	return device;    
+}
+
+
+cJSON* get_device_status_json(char* deviceid, char devicetype)
+{
+    int devicenum;
+    cJSON* devicestatus;
+    char* array_deviceid;
+
+    devicenum = cJSON_GetArraySize(g_devices_status_json);
+
+    for (int i=0; i < devicenum; i++)
+    {
+        devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
+        array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid");
+        if(memcmp(deviceid, array_deviceid, 9) == 0)
+        {
+            return devicestatus;
+        }
+    }
+
+    return NULL;
 }
 
