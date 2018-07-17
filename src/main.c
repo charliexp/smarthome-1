@@ -9,7 +9,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <semaphore.h>
-#include <sqlite3.h> 
+#include <sqlite3.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 #include "paho/MQTTAsync.h"
 #include "utils/utils.h"
@@ -974,8 +976,8 @@ void* lantask(void *argc)
                 MYLOG_DEBUG("Send a msg to app!");
                 if((sendBytes = sendto(sendfd, text, strlen(text), 0, (struct sockaddr *)&appaddr, sizeof(struct sockaddr))) == -1)
                 {
-                    MYLOG_ERROR("sendto fail, errno=%d\n", errno);
-                }                
+                    MYLOG_ERROR("sendto fail!);
+                }
             }
         }
         else
