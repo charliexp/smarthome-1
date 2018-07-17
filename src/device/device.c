@@ -140,7 +140,7 @@ void devices_status_json_init()
 {
     int nrow = 0, ncolumn = 0;
 	char **dbresult;     
-    char[50] sql={"select deviceid, devicetype from devices "};
+    char sql[]={"select deviceid, devicetype from devices "};
     char* zErrMsg = NULL;
     cJSON *device_status;
     char* deviceid;
@@ -153,7 +153,7 @@ void devices_status_json_init()
     if(nrow == 0)
     {
         MYLOG_DEBUG("There are not any device!");
-        return 0;
+        return;
     }
 
     for(int i=0; i< nrow; i++)
@@ -225,7 +225,7 @@ cJSON* get_device_status_json(char* deviceid, char devicetype)
     for (int i=0; i < devicenum; i++)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
-        array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid");
+        array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
         if(memcmp(deviceid, array_deviceid, 9) == 0)
         {
             return devicestatus;

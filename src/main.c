@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
@@ -589,7 +590,7 @@ void* zgbmsgprocess(void* argc)
                      MYLOG_ERROR(zErrMsg);
                      continue;
                  }
-                 cJSON* devicestatus = get_status_json(db_deviceid, devicetype);
+                 cJSON* devicestatus = get_device_status_json(db_deviceid, devicetype);
                  cJSON_AddItemToArray(g_devices_status_json, devicestatus);
                  
                  data[0] = TLV_TYPE_RESPONSE; //tag
@@ -617,8 +618,7 @@ void* zgbmsgprocess(void* argc)
                 
                 
                 break;
-            }
-            case 
+            }           
             default:
                 ;
         }
