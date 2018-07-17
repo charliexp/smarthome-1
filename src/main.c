@@ -971,7 +971,7 @@ void* lantask(void *argc)
             {
                 int sendBytes;
                 appaddr.sin_family = AF_INET;
-                appaddr.sin_addr.s_addr = htonl(inet_ntoa(appaddr.sin_addr));
+                appaddr.sin_addr.s_addr = inet_addr(inet_ntoa(appaddr.sin_addr));
                 appaddr.sin_port = htons(8866);  
 
                 MYLOG_DEBUG("Send a msg to app!");
