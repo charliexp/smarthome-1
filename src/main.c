@@ -976,7 +976,7 @@ void* lantask(void *argc)
                 MYLOG_DEBUG("Send a msg to app!");
                 if((sendBytes = sendto(sendfd, text, strlen(text), 0, (struct sockaddr *)&appaddr, sizeof(struct sockaddr))) == -1)
                 {
-                    MYLOG_ERROR("sendto fail!);
+                    MYLOG_ERROR("sendto fail!");
                 }
             }
         }

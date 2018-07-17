@@ -14,7 +14,8 @@
 #include "../log/log.h"
 
 extern int g_queueid;
-extern cJSON* g_devices_status;
+extern cJSON* g_devices_status_json;
+extern sqlite3* g_db;
 
 void zgbaddresstodbaddress(ZGBADDRESS addr, char* db_address)
 {
