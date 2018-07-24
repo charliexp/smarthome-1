@@ -89,6 +89,12 @@ void deviceneedregister(ZGBADDRESS addr)
     
 }
 
+void devices_status_query()
+{
+    ZGBADDRESS address = {0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF}; //广播报文
+    sendzgbmsg(address, NULL, 0, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, 0);
+}
+
 int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char devicetype, char deviceindex, char packetid)
 {
 	int ret;
@@ -184,7 +190,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         case DEV_SOCKET:
         {
 	        status = cJSON_CreateObject();            
-        	cJSON_AddNumberToObject(status, "type", ATTR_WORKSTATUS);
+        	cJSON_AddNumberToObject(status, "type", ATTR_WORKING_STATUS);
         	cJSON_AddNullToObject(status, "value");
         	cJSON_AddItemToArray(statusarray, status);
             break;
@@ -192,7 +198,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         case DEV_AIR_CON:
         {
 	        status = cJSON_CreateObject();            
-        	cJSON_AddNumberToObject(status, "type", ATTR_WORKSTATUS);
+        	cJSON_AddNumberToObject(status, "type", ATTR_WORKING_STATUS);
         	cJSON_AddNullToObject(status, "value");
         	cJSON_AddItemToArray(statusarray, status);
 	        status = cJSON_CreateObject();            
@@ -260,11 +266,4 @@ cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
     }
     MYLOG_ERROR("Cannot find the attr");
     return NULL;
-}
-
-
-void devices_status_query()
-{
-    ZGBADDRESS address = {0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF}; //广播报文
-    sendzgbmsg(address, NULL, 0, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, 0);
 }

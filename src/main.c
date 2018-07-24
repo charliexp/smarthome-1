@@ -929,7 +929,7 @@ int createmessagequeue()
 /*创建需要的数据库表*/
 int sqlitedb_init()
 {
- 
+    int rc; 
     char sql[512];  
 
     rc = sqlite3_open("smarthome.db", &g_db);

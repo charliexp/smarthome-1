@@ -25,4 +25,6 @@ cJSON* get_device_status_json(char* deviceid, char devicetype);
 
 cJSON* get_attr_value_object_json(cJSON* device, char attrtype);
 
+void devices_status_query();
+
 #endif
