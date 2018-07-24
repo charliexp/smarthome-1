@@ -24,9 +24,6 @@
 #include "error.h"
 #include "../log/log.h"
 
-#define LOCKFILE "/var/run/mydaemon.pid"
-#define LOCKMODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) 
-
 extern sqlite3* g_db;
 extern int g_uartfd;
 extern char g_mac[20];

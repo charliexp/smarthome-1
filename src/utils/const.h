@@ -16,6 +16,8 @@
 #define TYPE_CLOSE_NETWORK        0x05
 #define TYPE_NETWORK_INFO         0x06
 
+#define LOCKFILE "/var/run/mydaemon.pid"
+#define LOCKMODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) 
 
 
 #define LOG_FILE "smarthomelog.log"
