@@ -258,7 +258,7 @@ cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
     for (int i=0; i < arraynum; i++)
     {
         attr = cJSON_GetArrayItem(status, i);
-        type = cJSON_GetObjectItem(attr, "type")->valuestring;
+        type = cJSON_GetObjectItem(attr, "type")->valuestring[0];
         if(type == attrtype)
         {
             return attr;

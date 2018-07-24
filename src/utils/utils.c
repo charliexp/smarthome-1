@@ -5,6 +5,7 @@
  *******************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -23,7 +24,7 @@
 #include "error.h"
 #include "../log/log.h"
 
-
+extern sqlite3* g_db;
 extern int g_uartfd;
 extern char g_mac[20];
 char g_current_packetid = 0;
