@@ -140,9 +140,9 @@ void devices_status_json_init()
 {
     int nrow = 0, ncolumn = 0;
 	char **dbresult;     
-    char sql[]={"select deviceid, devicetype from devices "};
+    char sql[]={"select deviceid, devicetype from devices"};
     char* zErrMsg = NULL;
-    cJSON *device_status;
+    cJSON *device_status_json;
     char* deviceid;
     char devicetype;
 
@@ -156,20 +156,20 @@ void devices_status_json_init()
         return;
     }
 
-    for(int i=0; i< nrow; i++)
+    for(int i=1; i< nrow; i++)
     {
-        deviceid = dbresult[i*ncolumn];
-        devicetype = *(dbresult[i*ncolumn+1]) - '0';
-        device_status = set_device_status_json(deviceid, devicetype);
-        MYLOG_INFO("The device_status is %s", cJSON_PrintUnformatted(device_status));
-        cJSON_AddItemToArray(g_devices_status_json, device_status);
+        deviceid      = dbresult[i*ncolumn];
+        devicetype    = *(dbresult[i*ncolumn+1]) - '0';
+        device_status_json = create_device_status_json(deviceid, devicetype);
+        MYLOG_INFO("The device_status is %s", cJSON_PrintUnformatted(device_status_json));
+        cJSON_AddItemToArray(g_devices_status_json, device_status_json);
     }
-        
-
+    devices_status_query();
+    sqlite3_free_table(dbresult);
 }
 
 
-cJSON* set_device_status_json(char* deviceid, char devicetype)
+cJSON* create_device_status_json(char* deviceid, char devicetype)
 {
 	cJSON* device = cJSON_CreateObject();
 	cJSON* statusarray = cJSON_CreateArray();
@@ -217,7 +217,7 @@ cJSON* set_device_status_json(char* deviceid, char devicetype)
 cJSON* get_device_status_json(char* deviceid, char devicetype)
 {
     int devicenum;
-    cJSON* devicestatus;
+    cJSON* devicestatus = NULL;
     char* array_deviceid;
 
     devicenum = cJSON_GetArraySize(g_devices_status_json);
@@ -232,6 +232,39 @@ cJSON* get_device_status_json(char* deviceid, char devicetype)
         }
     }
 
+    return devicestatus;
+}
+
+cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
+{
+    cJSON* status,attr;
+    int arraynum = 0;
+    char type;
+
+    status = cJSON_GetObjectItem(device, "status");
+    if(status == NULL)
+    {
+        MYLOG_ERROR("get_attr_value_object_json error, status is null");
+        return NULL;
+    }
+    arraynum = cJSON_GetArraySize(status);
+
+    for (int i=0; i < arraynum; i++)
+    {
+        attr = cJSON_GetArrayItem(status, i);
+        type = cJSON_GetObjectItem(attr, "type")->valuestring;
+        if(type == attrtype)
+        {
+            return attr;
+        }
+    }
+    MYLOG_ERROR("Cannot find the attr");
     return NULL;
 }
 
+
+void devices_status_query()
+{
+    ZGBADDRESS address = {0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF}; //¹ã²¥±¨ÎÄ
+    sendzgbmsg(address, NULL, 0, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, 0);
+}

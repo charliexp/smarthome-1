@@ -27,7 +27,7 @@
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
 #define CLIENTID    "todlee"                   //客户端ID
 #define CLIENTID1   "todlee_pub"              //客户端ID
-#define QOS                1
+
 #define USERNAME    "root"
 #define PASSWORD    "root"
 #define TOPICSNUM          2
@@ -35,7 +35,7 @@
 #define ZGB_ADDRESS_LENGTH 8
 #define ZGBMSG_MAX_NUM     20
 
-#define TOPIC_NEWDEVICE "newdevice"
+#define TOPIC_DEVICE_ADD "devices/add/"
 
 #define QOS_LEVEL_0 0
 #define QOS_LEVEL_1 1
@@ -48,9 +48,9 @@
 #define QUEUE_MSG_UART  0x04
 
 
-#define TOPIC_LENGTH       100
-#define MQTT_MSG_TYPE_PUB  1
-#define MQTT_MSG_TYPE_SUB  2
+#define TOPIC_LENGTH        100
+#define MQTT_MSG_TYPE_PUB   1
+#define MQTT_MSG_TYPE_SUB   2
 #define MQTT_MSG_TYPE_UNSUB 3
 
 #define ZGB_MAGIC_NUM  0xAA
@@ -78,7 +78,8 @@
 #define ZGB_MSGTYPE_DEVICE_OFFNET           0x02 //要求设备离网
 #define ZGB_MSGTYPE_DEVICE_OPERATION        0x03 //设备操作
 #define ZGB_MSGTYPE_DEVICE_OPERATION_RESULT 0x04 //设备操作结果
-#define ZGB_MSGTYPE_GATEWAY_RESPONSE        0x05 //网关响应报文
+#define ZGB_MSGTYPE_DEVICE_STATUS_QUERY     0x05 //设备状态查询
+#define ZGB_MSGTYPE_DEVICE_STATUS_REPORT    0x06 //设备状态上报
 #define ZGB_MSGTYPE_UPDATE                  0x10 //软件升级提示
 #define ZGB_MSGTYPE_UPDATE_RESPONSE         0x11 //软件升级响应
 #define ZGB_MSGTYPE_UPDATE_PAYLOAD          0x12 //升级报文
@@ -96,52 +97,37 @@
 
 /*系统消息 0x00~0x0f*/
 /*响应报文*/
-#define TLV_TYPE_RESPONSE     0x00 
+#define ATTR_RESPONSE     0x00 
 
 #define TLV_VALUE_RTN_OK			0x00	// 操作成功
 #define TLV_VALUE_RTN_FAIL		    0x01	// 操作失败
 #define TLV_VALUE_RTN_ILLEGAL       0x02	// 非法请求
 #define TLV_VALUE_RTN_PARAM		    0x03	// 参数错误
 #define TLV_VALUE_RTN_BUSY		    0x04	// 系统忙
+
 /*故障上报*/
-#define TLV_TYPE_FAULT_REPORT 0x01 
+#define ATTR_FAULT 0x01 
 
 #define TLV_VALUE_FAULT_SOCKET    0x01 //插座保险丝损坏
 #define TLV_VALUE_FAULT_PURIFIER  0x02 //净水器滤芯更换
 
-/*插座操作 0x10~0x1f*/
-/*插座状态*/
-#define TLV_TYPE_SOCKET_STATUS 0x10
+#define ATTR_DEVICENAME     0x02
 
-#define TLV_VALUE_SOCKET_OFF  0x00 //插座断电
-#define TLV_VALUE_SOCKET_ON   0x01 //插座上电
-/*插座数据上报*/
-#define TLV_TYPE_SOCKET_READ 0x11
+#define ATTR_WORKING_STATUS 0x03
 
-#define TLV_VALUE_SOCKET_E   0x01 //插座电量上报(半小时)
-#define TLV_VALUE_SOCKET_P   0x02 //插座功率上报
-#define TLV_VALUE_SOCKET_V   0x03 //插座电压上报
-#define TLV_VALUE_SOCKET_I   0x04 //插座电流上报
-#define TLV_VALUE_SOCKET_BE  0x05 //插座总电量上报
-/*插座电量上报*/
-#define TLV_TYPE_SOCKET_E 0x12
-/*插座功率上报*/
-#define TLV_TYPE_SOCKET_P 0x13
-/*插座电压上报*/
-#define TLV_TYPE_SOCKET_V 0x14
-/*插座电流上报*/
-#define TLV_TYPE_SOCKET_I 0x15
-/*插座总电量上报*/
-#define TLV_TYPE_SOCKET_BE 0x16
+#define TLV_VALUE_POWER_OFF  0x00 //断电
+#define TLV_VALUE_POWER_ON   0x01 //上电
+#define TLV_VALUE_STANDBY    0x02 //待机
 
-/*空调操作 0x20~0x2f*/
-/*空调主机状态*/
-#define TLV_TYPE_AIRCONDITIONER_STATUS 0x20
-#define TLV_VALUE_AIRCONDITIONER_ON   0x00 //空调主机断电
-#define TLV_VALUE_AIRCONDITIONER_ON   0x00 //空调主机上电
+/*插座数据*/
+#define ATTR_SOCKET_E   0x10 //插座电量
+#define ATTR_SOCKET_P   0x11 //插座功率
+#define ATTR_SOCKET_V   0x12 //插座电压
+#define ATTR_SOCKET_I   0x13 //插座电流
+#define ATTR_SOCKET_BE  0x14 //插座总电量
+#define ATTR_SOCKET_WORKTIME 0x15 //插座通电时间
 
 /*设备属性*/
-#define ATTR_WORKSTATUS        0x03               //设备工作状态
 #define ATTR_WINDSPEED         0x04               //设备风速 中低高三档
 #define ATTR_WINDSPEED_NUM     0x05               //设备风速 0~100
 #define ATTR_TEMPERATURE       0x06               //设备温度 0~100

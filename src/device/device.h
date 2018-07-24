@@ -19,8 +19,10 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
 
 void devices_status_json_init();
 
-cJSON* set_device_status_json(char* deviceid, char devicetype);
+cJSON* create_device_status_json(char* deviceid, char devicetype);
 
 cJSON* get_device_status_json(char* deviceid, char devicetype);
+
+cJSON* get_attr_value_object_json(cJSON* device, char attrtype);
 
 #endif

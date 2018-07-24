@@ -41,4 +41,12 @@ int gatewayregister();
 
 /*上传文件到服务器*/
 int updatefile(const char* filepath);
+
+/*电量统计*/
+void electricity_stat(char* deviceid, int num);
+
+/*sql语句执行*/
+int exec_sql_create(char* sql);
+
+
 #endif
