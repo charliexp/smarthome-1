@@ -15,6 +15,7 @@
 #include <termios.h>    /*PPSIX 终端控制定义*/    
 #include <errno.h>      /*错误号定义*/   
 #include <curl/curl.h>
+#include <sqlite3.h>
 
 #include "utils.h"
 #include "const.h"

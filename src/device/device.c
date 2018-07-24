@@ -243,7 +243,7 @@ cJSON* get_device_status_json(char* deviceid, char devicetype)
 
 cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
 {
-    cJSON* status,attr;
+    cJSON* status,*attr;
     int arraynum = 0;
     char type;
 
