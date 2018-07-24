@@ -497,7 +497,6 @@ int already_running(const char *filename)
         exit(1);
     }
     /* 写入运行实例的pid */
-    ftruncate(fd, 0);
     sprintf(buf, "%ld\n", (long)getpid());
     write(fd, buf, strlen(buf) + 1);
     return 0;
