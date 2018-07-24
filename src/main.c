@@ -1017,7 +1017,11 @@ void* lantask(void *argc)
 int main(int argc, char* argv[])
 {
     pthread_t threads[THREAD_NUMS];
-    
+    /*只运行单例*/
+    if (already_running(LOCKFILE))
+    {
+        return 0;    
+    }
     log_init();	
     
     init(); //程序启动初始任务

@@ -48,5 +48,6 @@ void electricity_stat(char* deviceid, int num);
 /*sql语句执行*/
 int exec_sql_create(char* sql);
 
-
+/*检查程序是否已运行*/
+int already_running(const char *filename);
 #endif
