@@ -99,7 +99,7 @@ void sendmqttmsg(long messagetype, char* topic, char* message, int qos, int reta
 	}
 
 	msglen = sizeof(mqttmsg);
-
+    MYLOG_INFO("pub mqtt msg: topic(%s),msg(%s)", topic, message);
 	if (ret = msgsnd(g_queueid, &msg, msglen, 0) != 0)
 	{
 		MYLOG_ERROR("send mqttqueuemsg fail!");
@@ -281,7 +281,7 @@ void* devicemsgprocess(void *argc)
 {
 	devicequeuemsg msg; //消息队列中取出的设备操作消息
 	char topic[TOPIC_LENGTH] = { 0 };//对操作的响应topic
-	int mqttid = {0};
+	int mqttid = 0;
 	cJSON *devices, *device, *operations, *operation, *tmp;
 	int devicenum = 0, operationnum = 0;
 	int i = 0;
@@ -325,7 +325,7 @@ void* devicemsgprocess(void *argc)
         if(operationtype == 0)//操作的coo模块
         {
             int actiontype;
-            tmp = cJSON_GetObjectItem(g_device_mqtt_json, "operationvalue");
+            tmp = cJSON_GetObjectItem(g_device_mqtt_json, "cmdid");
             if (tmp == NULL)
             {
                 MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
@@ -333,8 +333,7 @@ void* devicemsgprocess(void *argc)
                 goto response;
             }             
             actiontype = tmp->valueint;//coo操作值
-            
-            
+                     
             switch (actiontype)
             {
                 case TYPE_CREATE_NETWORK:
@@ -344,7 +343,7 @@ void* devicemsgprocess(void *argc)
                 case TYPE_OPEN_NETWORK:
                     write(g_uartfd, AT_CREATE_NETWORK, strlen(AT_CREATE_NETWORK));
                     MYLOG_INFO("COO operation AT+FORM=02");
-                    milliseconds_sleep(1000);
+                    milliseconds_sleep(2000);
                     write(g_uartfd, AT_OPEN_NETWORK, strlen(AT_OPEN_NETWORK));
                     MYLOG_INFO("COO operation AT+PERMITJOIN=60");
                     break;
