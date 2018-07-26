@@ -527,7 +527,7 @@ void* zgbmsgprocess(void* argc)
         if(qmsg.msg.payload.adf.index[0] == 0x00 && qmsg.msg.payload.adf.index[1] == 0x00) //设备入网消息
         {
             int nrow = 0, ncolumn = 0;
-	        char **dbresult; 
+	        char **dbresult;
         
             MYLOG_INFO("[ZGB DEVICE]Get a device network joining message.");
             sprintf(sql,"SELECT * FROM devices WHERE zgbaddress = %s;", db_zgbaddress);
@@ -833,23 +833,23 @@ void* mqttqueueprocess(void *argc)
 	MYLOG_DEBUG("enter mqttqueueprocess pthread!");
 
 	/*处理mqtt消息队列*/
-	while (1)
+	while(1)
 	{
 		ret = msgrcv(g_queueid, (void*)&msg, sizeof(mqttmsg), QUEUE_MSG_MQTT, 0);
-		if (ret == -1)
+		if(ret == -1)
 		{
 			MYLOG_ERROR("read mqttmsg fail!");
 		}
 loop:
-		switch (msg.msgtype)
+		switch(msg.msgtype)
 		{
 		case MQTT_MSG_TYPE_PUB:
 			result = MQTTAsync_send(client, (const char*)msg.msg.topic, strlen(msg.msg.msgcontent),
 				(void *)msg.msg.msgcontent, msg.msg.qos, msg.msg.retained, &opts);
 			
-			if (result != MQTTASYNC_SUCCESS)
+			if(result != MQTTASYNC_SUCCESS)
 			{
-                if (result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
+                if(result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
                 {
                     while(MQTTAsync_connect(client, &conn_opts) != MQTTASYNC_SUCCESS)
                     {
@@ -865,8 +865,8 @@ loop:
 			break;
 		case MQTT_MSG_TYPE_SUB:
 			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, &opts);
-			if (result != MQTTASYNC_SUCCESS)
-                if (result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
+			if(result != MQTTASYNC_SUCCESS)
+                if(result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
                 {
                     while(MQTTAsync_connect(client, &conn_opts) != MQTTASYNC_SUCCESS)
                     {
@@ -878,12 +878,11 @@ loop:
                 {
 				    MYLOG_ERROR("MQTTAsync_subscribe fail! %d", result);
                 }
-
 			break;
 		case MQTT_MSG_TYPE_UNSUB:
 			result = MQTTAsync_unsubscribe(client, (const char*)msg.msg.topic, &opts);
-			if (result != MQTTASYNC_SUCCESS)
-                if (result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
+			if(result != MQTTASYNC_SUCCESS)
+                if(result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
                 {
                     while(MQTTAsync_connect(client, &conn_opts) != MQTTASYNC_SUCCESS)
                     {
@@ -895,12 +894,11 @@ loop:
                 {
 				    MYLOG_ERROR("MQTTAsync_unsubscribe fail! %d\n", result);
                 }
-
 			break;
 		default:
 			MYLOG_INFO("unknow msg!\n");
 		}
-		if (msg.msgtype == MQTT_MSG_TYPE_PUB)
+		if(msg.msgtype == MQTT_MSG_TYPE_PUB)
 		{
 			free(msg.msg.msgcontent); //如果是PUB消息需要把内容指针释放
 		}

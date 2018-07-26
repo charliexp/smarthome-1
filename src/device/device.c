@@ -146,7 +146,7 @@ void devices_status_json_init()
 {
     int nrow = 0, ncolumn = 0;
 	char **dbresult;     
-    char sql[]={"select deviceid, devicetype from devices"};
+    char sql[]={"select deviceid, devicetype from devices;"};
     char* zErrMsg = NULL;
     cJSON *device_status_json;
     char* deviceid;
