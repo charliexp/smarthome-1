@@ -523,7 +523,8 @@ void* zgbmsgprocess(void* argc)
 		MYLOG_INFO("zgbmsgprocess recive a msg");
         memcpy(src, qmsg.msg.payload.src, 8);
         zgbaddresstodbaddress(src, db_zgbaddress);
-
+        MYLOG_ZGBMSG(qmsg.msg);
+        MYLOG_INFO("The index is %2x, %2x", qmsg.msg.payload.adf.index[0], qmsg.msg.payload.adf.index[1]);
         if(qmsg.msg.payload.adf.index[0] == 0x00 && qmsg.msg.payload.adf.index[1] == 0x00) //设备入网消息
         {
             int nrow = 0, ncolumn = 0;
@@ -767,6 +768,7 @@ void* uartlisten(void *argc)
 
             zgbqmsg.msgtype = QUEUE_MSG_ZGB;
             zgbqmsg.msg = zmsg;
+            MYLOG_ZGBMSG(zmsg);
           	if (ret = msgsnd(g_queueid, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
         	{
 		        MYLOG_ERROR("send zgbqueuemsg fail!");
