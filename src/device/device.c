@@ -91,7 +91,7 @@ void deviceneedregister(ZGBADDRESS addr)
 
 void devices_status_query()
 {
-    ZGBADDRESS address = {0xF,0xF,0xF,0xF,0xF,0xF,0xF,0xF}; //广播报文
+    ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文
     sendzgbmsg(address, NULL, 0, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, 0);
 }
 
@@ -171,6 +171,7 @@ void devices_status_json_init()
         MYLOG_INFO("The device_status is %s", cJSON_PrintUnformatted(device_status_json));
         cJSON_AddItemToArray(g_devices_status_json, device_status_json);
     }
+    MYLOG_INFO("The g_device_status is %s", cJSON_PrintUnformatted(g_devices_status_json));
     devices_status_query();
     sqlite3_free_table(dbresult);
 }
