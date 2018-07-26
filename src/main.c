@@ -99,7 +99,6 @@ void sendmqttmsg(long messagetype, char* topic, char* message, int qos, int reta
 	}
 
 	msglen = sizeof(mqttmsg);
-    MYLOG_INFO("pub mqtt msg: topic(%s),msg(%s)", topic, message);
 	if (ret = msgsnd(g_queueid, &msg, msglen, 0) != 0)
 	{
 		MYLOG_ERROR("send mqttqueuemsg fail!");
