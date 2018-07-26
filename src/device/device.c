@@ -159,6 +159,7 @@ void devices_status_json_init()
     if(nrow == 0)
     {
         MYLOG_DEBUG("There are not any device!");
+        MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
         return;
     }
 
@@ -180,7 +181,6 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
 	cJSON* device = cJSON_CreateObject();
 	cJSON* statusarray = cJSON_CreateArray();
     cJSON* status;
-
 
     cJSON_AddStringToObject(device, "deviceid", deviceid);
 	cJSON_AddItemToObject(device, "status", statusarray);

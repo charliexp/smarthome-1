@@ -1019,6 +1019,12 @@ int main(int argc, char* argv[])
         return 0;    
     }
     log_init();	
+
+    if(sqlitedb_init() == -1)
+    {
+        MYLOG_ERROR("Create db failed!");
+        return -1;        
+    }
     
     init(); //程序启动初始任务
     sem_init(&g_mqttconnetionsem, 0, 1); 
@@ -1028,12 +1034,7 @@ int main(int argc, char* argv[])
         MYLOG_ERROR("CreateMessageQueue failed!");//这里后续要添加重启的功能
         return -1;
     }
-    if(sqlitedb_init() == -1)
-    {
-        MYLOG_ERROR("Create db failed!");
-        return -1;        
-    }
-    
+   
 	pthread_create(&threads[0], NULL, mqttlient,        NULL);
 	pthread_create(&threads[1], NULL, devicemsgprocess, NULL);
 	pthread_create(&threads[2], NULL, uartlisten,       NULL);
