@@ -107,7 +107,7 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
     MYLOG_BYTE(data, length);
     
     zgbmsginit(&msg);
-    msg.msglength = 46 + length;
+    msg.msglength = 42 + length;
 	memcpy((char*)msg.payload.dest, (char*)address, 8);//目标地址赋值
 	msg.payload.cmdid[0] = 0x25;
     msg.payload.cmdid[1] = 0x00;
