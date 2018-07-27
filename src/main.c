@@ -853,6 +853,7 @@ loop:
 			
 			if(result != MQTTASYNC_SUCCESS)
 			{
+                MQTTAsync_closeSession(client);			
                 if(result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
                 {
                     while(MQTTAsync_connect(client, &conn_opts) != MQTTASYNC_SUCCESS)
@@ -870,6 +871,8 @@ loop:
 		case MQTT_MSG_TYPE_SUB:
 			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, &opts);
 			if(result != MQTTASYNC_SUCCESS)
+			{
+                MQTTAsync_closeSession(client);			
                 if(result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
                 {
                     while(MQTTAsync_connect(client, &conn_opts) != MQTTASYNC_SUCCESS)
@@ -882,12 +885,15 @@ loop:
                 {
 				    MYLOG_ERROR("MQTTAsync_subscribe fail! %d", result);
                 }
+            }
 			break;
 		case MQTT_MSG_TYPE_UNSUB:
 			result = MQTTAsync_unsubscribe(client, (const char*)msg.msg.topic, &opts);
 			if(result != MQTTASYNC_SUCCESS)
+			{
+			    MQTTAsync_closeSession(client);
                 if(result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
-                {
+                {          
                     while(MQTTAsync_connect(client, &conn_opts) != MQTTASYNC_SUCCESS)
                     {
                         milliseconds_sleep(1000);
@@ -898,6 +904,7 @@ loop:
                 {
 				    MYLOG_ERROR("MQTTAsync_unsubscribe fail! %d\n", result);
                 }
+            }
 			break;
 		default:
 			MYLOG_INFO("unknow msg!\n");
@@ -938,7 +945,7 @@ int sqlitedb_init()
         MYLOG_ERROR("open smarthome.db error!");  
         return -1;  
     }
-    sprintf(sql,"CREATE TABLE devices (deviceid TEXT, zgbaddress TEXT, devicetype CHAR(1), deviceindex CHAR(1), online CHAR(1));");
+    sprintf(sql,"CREATE TABLE devices (deviceid TEXT, zgbaddress TEXT, devicetype CHAR(1), deviceindex CHAR(1), online CHAR(1), primary key(deviceid);");
     exec_sql_create(sql);
         
     sprintf(sql,"CREATE TABLE [electricity_day]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[day] INT NOT NULL, primary key(deviceid, day));");
