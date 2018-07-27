@@ -562,7 +562,7 @@ void* zgbmsgprocess(void* argc)
                  
                  MYLOG_INFO("[ZGB DEVICE]Get a device network joining response message.");
        
-                 sprintf(sql, "insert into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, devicetype, deviceindex);
+                 sprintf(sql, "replace into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, devicetype, deviceindex);
                  MYLOG_INFO("The sql is %s", sql);
                  rc = sqlite3_exec(g_db, sql, 0, 0, &zErrMsg);
                  if(rc != SQLITE_OK)
@@ -572,6 +572,7 @@ void* zgbmsgprocess(void* argc)
                  }
                  cJSON* devicestatus = create_device_status_json(db_deviceid, devicetype);
                  cJSON_AddItemToArray(g_devices_status_json, devicestatus);
+                 MYLOG_INFO("The devices status is %s", cJSON_PrintUnformatted(g_devices_status_json));
                  
                  sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_ADD);
                  cJSON_AddStringToObject(root, "deviceid", db_deviceid);
@@ -939,10 +940,7 @@ int sqlitedb_init()
     }
     sprintf(sql,"CREATE TABLE devices (deviceid TEXT, zgbaddress TEXT, devicetype CHAR(1), deviceindex CHAR(1), online CHAR(1));");
     exec_sql_create(sql);
-    
-    sprintf(sql,"create table airconditioning(deviceid INTEGER PRIMARY KEY, status INTEGER,mode INTEGER,temperature float, windspeed INTEGER);");
-    exec_sql_create(sql);
-    
+        
     sprintf(sql,"CREATE TABLE [electricity_day]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[day] INT NOT NULL, primary key(deviceid, day));");
     exec_sql_create(sql);
 
