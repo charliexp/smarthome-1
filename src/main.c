@@ -852,11 +852,10 @@ loop:
 				(void *)msg.msg.msgcontent, msg.msg.qos, msg.msg.retained, &opts);
 			
 			if(result != MQTTASYNC_SUCCESS)
-			{
-                MQTTAsync_closeSession(client);			
+			{		
                 if(result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
                 {
-                    while(MQTTAsync_connect(client, &conn_opts) != MQTTASYNC_SUCCESS)
+                    while(MQTTAsync_reconnect(client) != MQTTASYNC_SUCCESS)
                     {
                         milliseconds_sleep(1000);
                     }
@@ -871,11 +870,10 @@ loop:
 		case MQTT_MSG_TYPE_SUB:
 			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, &opts);
 			if(result != MQTTASYNC_SUCCESS)
-			{
-                MQTTAsync_closeSession(client);			
+			{		
                 if(result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
                 {
-                    while(MQTTAsync_connect(client, &conn_opts) != MQTTASYNC_SUCCESS)
+                    while(MQTTAsync_reconnect(client) != MQTTASYNC_SUCCESS)
                     {
                         milliseconds_sleep(1000);
                     }
@@ -891,10 +889,9 @@ loop:
 			result = MQTTAsync_unsubscribe(client, (const char*)msg.msg.topic, &opts);
 			if(result != MQTTASYNC_SUCCESS)
 			{
-			    MQTTAsync_closeSession(client);
                 if(result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
                 {          
-                    while(MQTTAsync_connect(client, &conn_opts) != MQTTASYNC_SUCCESS)
+                    while(MQTTAsync_reconnect(client) != MQTTASYNC_SUCCESS)
                     {
                         milliseconds_sleep(1000);
                     }
