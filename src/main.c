@@ -531,7 +531,7 @@ void* zgbmsgprocess(void* argc)
 	        char **dbresult;
         
             MYLOG_INFO("[ZGB DEVICE]Get a device network joining message.");
-            sprintf(sql,"SELECT * FROM devices WHERE zgbaddress = %s;", db_zgbaddress);
+            sprintf(sql,"SELECT * FROM devices WHERE zgbaddress = '%s';", db_zgbaddress);
             MYLOG_INFO(sql);
             
             sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
@@ -562,7 +562,7 @@ void* zgbmsgprocess(void* argc)
                  
                  MYLOG_INFO("[ZGB DEVICE]Get a device network joining response message.");
        
-                 sprintf(sql, "insert into devices values(%s, %s, %d, %d, 1);", db_deviceid, db_zgbaddress, devicetype, deviceindex);
+                 sprintf(sql, "insert into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, devicetype, deviceindex);
                  MYLOG_INFO("The sql is %s", sql);
                  rc = sqlite3_exec(g_db, sql, 0, 0, &zErrMsg);
                  if(rc != SQLITE_OK)
