@@ -343,6 +343,7 @@ int updatefile(const char* filepath)
     return 0;
 }
 
+/*电量数据处理*/
 void electricity_stat(char* deviceid, int num)
 {
     time_t time_now;

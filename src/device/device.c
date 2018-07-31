@@ -142,8 +142,14 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
 	return 0;
 }
 
+/*针对同一类设备发送zgb消息*/
+void sendzgbmsgfordevices(char devicetype, BYTE *data, char length, char msgtype)
+{
+    
+}
 
-void devices_status_json_init()
+/*内存中维护设备状态的json表*/
+void devices_status_json_init(char devicetype, )
 {
     int nrow = 0, ncolumn = 0;
 	char **dbresult;     
@@ -177,7 +183,7 @@ void devices_status_json_init()
     sqlite3_free_table(dbresult);
 }
 
-
+/*创建一个设备的json状态指针*/
 cJSON* create_device_status_json(char* deviceid, char devicetype)
 {
 	cJSON* device = cJSON_CreateObject();

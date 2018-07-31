@@ -14,6 +14,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <signal.h>
 
 #include "paho/MQTTAsync.h"
 #include "utils/utils.h"
@@ -40,16 +41,6 @@ int g_qoss[TOPICSNUM] = {2, 1};
 char* g_topics[TOPICSNUM] ={0x0, 0x0};
 char g_topicthemes[TOPICSNUM][10] = {{"devices"}, {"gateway"}};
 
-struct operation_results
-{
-	int msgid;
-	struct operation
-	{ 
-		ZGBADDRESS address;
-		char op;
-		char result;
-	} operation;
-} g_operationstatus;
 
 void init()
 {
@@ -116,8 +107,6 @@ void onDisconnect(void* context, MQTTAsync_successData* response)
 /*MQTT订阅消息到达的处理函数*/
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *message)
 {
-    int i;
-	char* payloadptr;
 	char* mqttid;
 	cJSON *root;
 	devicequeuemsg msg;
@@ -126,10 +115,10 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	char topic[TOPIC_LENGTH] = { 0 };
 
     MYLOG_INFO("Message arrived");
-    MYLOG_INFO("topic: %s", topicName);
+    MYLOG_INFO("Topic: %s", topicName);
+    MYLOG_INFO("Message:%s", (char*)message->payload);
 
-    payloadptr = (char*)message->payload;
-	root = cJSON_Parse(payloadptr);
+	root = cJSON_Parse((char*)message->payload);
     MYLOG_INFO("message: %s", cJSON_Print(root));
 
 	if (root == NULL)
@@ -640,6 +629,11 @@ void* zgbmsgprocess(void* argc)
                             break;
                     }
                 }
+                if(needmqtt)
+                {
+                    sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
+                    sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device_json), 0, 0);
+                }
             }
             default: 
                 ;
@@ -1015,6 +1009,46 @@ void* lantask(void *argc)
 }
 
 
+/*定时回调任务*/
+void sigalrm_fn(int sig)
+{
+    MYLOG_INFO("alarm!\n");
+    time_t time_now;
+    struct tm* t;
+    int sec,min;
+    int time_sec;//需要定时的秒数
+
+    ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文
+    BYTE* payload = {ATTR_SOCKET_E, ATTR_SOCKET_WORKTIME}
+    sendzgbmsg(address, payload, 2, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_SOCKET, 0, getpacketid());        
+    time(&time_now);
+    t = localtime(&time_now);
+    sec = t->tm_sec;
+    min = t->tm_min;
+    time_sec = (60*60 - min*60 -sec) + 59*60;//当前一小时剩余的秒数加上下个59分钟的秒数
+    alarm(time_sec);
+    return;
+}
+
+/*定时任务*/
+void timefun(void)
+{
+    time_t time_now;
+    struct tm* t;
+    int sec,min;
+    int time_sec;//需要定时的秒数 
+    
+    time(&time_now);
+    t = localtime(&time_now);
+    sec = t->tm_sec;
+    min = t->tm_min;
+
+    time_sec = (60*60 - min*60 -sec);
+    signal(SIGALRM, sigalrm_fn);    
+    alarm(time_sec);
+}
+
+
 int main(int argc, char* argv[])
 {
     pthread_t threads[THREAD_NUMS];
@@ -1024,6 +1058,7 @@ int main(int argc, char* argv[])
         return 0;    
     }
     log_init();	
+    timefun();
 
     if(sqlitedb_init() == -1)
     {
@@ -1045,6 +1080,7 @@ int main(int argc, char* argv[])
 	pthread_create(&threads[2], NULL, uartlisten,       NULL);
 	pthread_create(&threads[3], NULL, mqttqueueprocess, NULL);
     pthread_create(&threads[4], NULL, lantask,          NULL);
+    pthread_create(&threads[5], NULL, timer,            NULL);
 
     pthread_exit(NULL);
 }
