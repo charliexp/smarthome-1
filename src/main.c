@@ -1025,7 +1025,8 @@ void sigalrm_fn(int sig)
     t = localtime(&time_now);
     sec = t->tm_sec;
     min = t->tm_min;
-    time_sec = (60*60 - min*60 -sec) + 59*60;//当前一小时剩余的秒数加上下个59分钟的秒数
+    time_sec = (60*60 - min*60 -sec) + 58*60;//当前一小时剩余的秒数加上下个59分钟的秒数alarm函数不精确
+    MYLOG_INFO("alarm %d", time_sec);
     alarm(time_sec);
     return;
 }
@@ -1043,8 +1044,17 @@ void timefun(void)
     sec = t->tm_sec;
     min = t->tm_min;
 
-    time_sec = (60*60 - min*60 -sec);
-    signal(SIGALRM, sigalrm_fn);    
+    if(min >= 58)
+    {
+        time_sec = 1;
+    }
+    else
+    {
+        time_sec = (58*60 - min*60 -sec);
+    }
+    
+    signal(SIGALRM, sigalrm_fn); 
+    MYLOG_INFO("alarm %d", time_sec);
     alarm(time_sec);
 }
 
