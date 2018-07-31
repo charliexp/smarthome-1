@@ -1019,7 +1019,7 @@ void sigalrm_fn(int sig)
     int time_sec;//需要定时的秒数
 
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文
-    BYTE* payload = {ATTR_SOCKET_E, ATTR_SOCKET_WORKTIME}
+    BYTE* payload = {ATTR_SOCKET_E, ATTR_SOCKET_WORKTIME};
     sendzgbmsg(address, payload, 2, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_SOCKET, 0, getpacketid());        
     time(&time_now);
     t = localtime(&time_now);
@@ -1080,7 +1080,6 @@ int main(int argc, char* argv[])
 	pthread_create(&threads[2], NULL, uartlisten,       NULL);
 	pthread_create(&threads[3], NULL, mqttqueueprocess, NULL);
     pthread_create(&threads[4], NULL, lantask,          NULL);
-    pthread_create(&threads[5], NULL, timer,            NULL);
 
     pthread_exit(NULL);
 }
