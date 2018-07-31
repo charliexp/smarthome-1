@@ -149,7 +149,7 @@ void sendzgbmsgfordevices(char devicetype, BYTE *data, char length, char msgtype
 }
 
 /*内存中维护设备状态的json表*/
-void devices_status_json_init(char devicetype, )
+void devices_status_json_init()
 {
     int nrow = 0, ncolumn = 0;
 	char **dbresult;     
