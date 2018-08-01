@@ -469,7 +469,7 @@ void* uartsend(void *argc)
 		}
         MYLOG_INFO("uart begin to send msg!");
         MYLOG_BYTE((BYTE*)&qmsg.msg, sizeof(qmsg.msg));
-        if ( write(g_uartfd, (char *)&qmsg.msg, (int)(qmsg.msg.msglength - 2)) != (qmsg.msg.msglength - 2))
+        if ( write(g_uartfd, (char *)&qmsg.msg, (int)(qmsg.msg.msglength + 2)) != (qmsg.msg.msglength + 2))
 	    {
 		    MYLOG_ERROR("com write error!");
 	    }
@@ -930,7 +930,7 @@ int sqlitedb_init()
     int rc; 
     char sql[512];  
 
-    rc = sqlite3_open("smarthome.db", &g_db);
+    rc = sqlite3_open("/usr/smarthome.db", &g_db);
     if(rc != SQLITE_OK)  
     {  
         MYLOG_ERROR("open smarthome.db error!");  
