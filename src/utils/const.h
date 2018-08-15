@@ -27,6 +27,7 @@
 
 #define THREAD_NUMS 8
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
+#define LAN_MQTT_SERVER "tcp://127.0.0.1:1883"
 #define CLIENTID    "todlee"                   //客户端ID
 #define CLIENTID1   "todlee_pub"              //客户端ID
 
