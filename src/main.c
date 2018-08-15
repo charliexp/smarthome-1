@@ -979,14 +979,14 @@ void* lanmqttqueueprocess(void *argc)
 	ssize_t ret;
 	int result;
 
-	MQTTAsync_create(&client, ADDRESS, CLIENTID1, MQTTCLIENT_PERSISTENCE_NONE, NULL);
+	MQTTAsync_create(&client, LAN_MQTT_SERVER, CLIENTID1, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 	MQTTAsync_setCallbacks(client, client, connlost, msgarrvd, NULL);
 
 	conn_opts.keepAliveInterval = 20;
 	conn_opts.cleansession = 1;
 	//conn_opts.username = "root";
 	//conn_opts.password = "root";
-	conn_opts.onFailure = onconnectfailure;
+	conn_opts.onFailure = lanonconnectfailure;
 	conn_opts.context = client;
 
 	opts.onFailure = mqttpub_onFailure;
