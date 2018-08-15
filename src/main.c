@@ -290,7 +290,7 @@ void *lanmqttlient(void *argc)
 	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
 	int rc;
 
-	MQTTAsync_create(&client, ADDRESS, CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
+	MQTTAsync_create(&client, LAN_MQTT_SERVER, CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
 	MQTTAsync_setCallbacks(client, client, connlost, msgarrvd, NULL);  
 
