@@ -34,12 +34,14 @@ int g_log_level = 0;
 int g_operationflag = 0;
 int g_queueid;
 sqlite3* g_db;
-sem_t g_mqttconnetionsem;
+sem_t g_mqttconnetionsem,g_lanmqttconnetionsem;
 //订阅g_topics对应的qos
 int g_qoss[TOPICSNUM] = {2, 1};
 //程序启动后申请堆存放需要订阅的topic
 char* g_topics[TOPICSNUM] ={0x0, 0x0};
 char g_topicthemes[TOPICSNUM][10] = {{"devices"}, {"gateway"}};
+char g_sub_clientid[30];
+char g_pub_clientid[30];
 
 
 void init()
@@ -49,7 +51,9 @@ void init()
     //获取网关mac地址
 	if(getmac(g_mac) == 0)
 	{
-        sprintf(g_topicroot, "/%s/", g_mac);    
+        sprintf(g_topicroot, "/%s/", g_mac);
+        sprintf(g_sub_clientid, "[%s]_sub", g_mac);
+        sprintf(g_pub_clientid, "[%s]_pub", g_mac);
 	}
     
     if(init_uart("/dev/ttyS1") == -1)
@@ -199,7 +203,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 }
 
 
-void onConnectFailure(void* context, MQTTAsync_failureData* response)
+void onconnectfailure(void* context, MQTTAsync_failureData* response)
 {
 	MYLOG_ERROR("Connect failed, rc %d", response ? response->code : 0);
     sem_post(&g_mqttconnetionsem);
@@ -212,12 +216,24 @@ void connlost(void *context, char *cause)
 	sem_post(&g_mqttconnetionsem);
 }
 
+void lanonconnectfailure(void* context, MQTTAsync_failureData* response)
+{
+	MYLOG_ERROR("lan mqtt Connect failed, rc %d", response ? response->code : 0);
+    sem_post(&g_lanmqttconnetionsem);
+}
+
+
+void lanconnlost(void *context, char *cause)
+{
+	MYLOG_ERROR("lan mqtt Connection lost,the cause is %s", cause);
+	sem_post(&g_lanmqttconnetionsem);
+}
+
 
 void onConnect(void* context, MQTTAsync_successData* response)
 {
 	MQTTAsync client = (MQTTAsync)context;
 	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
-	pthread_t pthread;
 	int rc;
 	MYLOG_DEBUG("Successful connection");
 
@@ -238,7 +254,7 @@ void *mqttlient(void *argc)
 	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
 	int rc;
 
-	MQTTAsync_create(&client, ADDRESS, CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
+	MQTTAsync_create(&client, ADDRESS, g_sub_clientid, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
 	MQTTAsync_setCallbacks(client, client, connlost, msgarrvd, NULL);  
 
@@ -247,12 +263,12 @@ void *mqttlient(void *argc)
 	conn_opts.username = USERNAME;
 	conn_opts.password = PASSWORD;
 	conn_opts.onSuccess = onConnect;
-	conn_opts.onFailure = onConnectFailure;
+	conn_opts.onFailure = onconnectfailure;
 	conn_opts.context = client;
 
     while(1)
 	{
-        sem_wait(&g_mqttconnetionsem);
+        sem_wait(&g_mqttconnetionsem);//mqtt连接失败之后信号量被+1触发重连
         rc = MQTTAsync_connect(client, &conn_opts);
         if (rc != MQTTASYNC_SUCCESS)
         {
@@ -263,6 +279,44 @@ void *mqttlient(void *argc)
     MQTTAsync_destroy(&client);   
     pthread_exit(NULL);
 }
+
+
+
+/*局域网MQTT订阅消息处理消息的进程*/
+void *lanmqttlient(void *argc)
+{  
+	MQTTAsync client;
+	MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
+	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
+	int rc;
+
+	MQTTAsync_create(&client, ADDRESS, CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
+
+	MQTTAsync_setCallbacks(client, client, connlost, msgarrvd, NULL);  
+
+	conn_opts.keepAliveInterval = 60;
+	conn_opts.cleansession = 1;
+	//conn_opts.username = USERNAME;
+	//conn_opts.password = PASSWORD;
+	conn_opts.onSuccess = onConnect;
+	conn_opts.onFailure = lanonconnectfailure;
+	conn_opts.context = client;
+
+    while(1)
+	{
+        sem_wait(&g_lanmqttconnetionsem);//mqtt连接失败之后信号量被+1触发重连
+        rc = MQTTAsync_connect(client, &conn_opts);
+        if (rc != MQTTASYNC_SUCCESS)
+        {
+            MYLOG_ERROR("MQTTClient:LAN MQTT connect fail!");
+        }
+	}
+
+    MQTTAsync_destroy(&client);   
+    pthread_exit(NULL);
+}
+
+
 
 /*设备消息的处理进程*/
 void* devicemsgprocess(void *argc)
@@ -811,24 +865,26 @@ void* mqttqueueprocess(void *argc)
 	ssize_t ret;
 	int result;
 
-	MQTTAsync_create(&client, ADDRESS, CLIENTID1, MQTTCLIENT_PERSISTENCE_NONE, NULL);
+	MQTTAsync_create(&client, ADDRESS, g_pub_clientid, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 	MQTTAsync_setCallbacks(client, client, connlost, msgarrvd, NULL);
 
 	conn_opts.keepAliveInterval = 20;
 	conn_opts.cleansession = 1;
-	conn_opts.username = "root";
-	conn_opts.password = "root";
-	conn_opts.onFailure = onConnectFailure;
+	conn_opts.username = USERNAME;
+	conn_opts.password = PASSWORD;
+	conn_opts.onFailure = onconnectfailure;
 	conn_opts.context = client;
 
 	opts.onFailure = mqttpub_onFailure;
 	opts.onSuccess = mqtt_onSuccess;
-	rc = MQTTAsync_connect(client, &conn_opts);
-	if (rc != MQTTASYNC_SUCCESS)
-	{
-		MYLOG_ERROR("MQTTClient: MQTT connect fail!");
-	}
+
 	MYLOG_DEBUG("enter mqttqueueprocess pthread!");
+
+    while((rc = MQTTAsync_connect(client, &conn_opts)) != MQTTASYNC_SUCCESS)
+	{
+		MYLOG_ERROR("MQTTClient:MQTT connect fail!");
+		milliseconds_sleep(1000);
+	}
 
 	/*处理mqtt消息队列*/
 	while(1)
@@ -908,6 +964,122 @@ loop:
 	}
 	pthread_exit(NULL);
 }
+
+
+
+/*局域网MQTT消息队列的处理进程*/
+void* lanmqttqueueprocess(void *argc)
+{
+	MQTTAsync client;
+	MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
+	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
+	int rc;
+
+	mqttqueuemsg msg;
+	ssize_t ret;
+	int result;
+
+	MQTTAsync_create(&client, ADDRESS, CLIENTID1, MQTTCLIENT_PERSISTENCE_NONE, NULL);
+	MQTTAsync_setCallbacks(client, client, connlost, msgarrvd, NULL);
+
+	conn_opts.keepAliveInterval = 20;
+	conn_opts.cleansession = 1;
+	//conn_opts.username = "root";
+	//conn_opts.password = "root";
+	conn_opts.onFailure = onconnectfailure;
+	conn_opts.context = client;
+
+	opts.onFailure = mqttpub_onFailure;
+	opts.onSuccess = mqtt_onSuccess;
+
+	MYLOG_DEBUG("enter lanmqttqueueprocess pthread!");
+
+    while((rc = MQTTAsync_connect(client, &conn_opts)) != MQTTASYNC_SUCCESS)
+	{
+		MYLOG_ERROR("MQTTClient:LAN MQTT connect fail!");
+		milliseconds_sleep(1000);
+	}
+
+	/*处理mqtt消息队列*/
+	while(1)
+	{
+		ret = msgrcv(g_queueid, (void*)&msg, sizeof(mqttmsg), QUEUE_MSG_MQTT, 0);
+		if(ret == -1)
+		{
+			MYLOG_ERROR("read mqttmsg fail!");
+		}
+loop:
+		switch(msg.msgtype)
+		{
+		case MQTT_MSG_TYPE_PUB:
+			result = MQTTAsync_send(client, (const char*)msg.msg.topic, strlen(msg.msg.msgcontent),
+				(void *)msg.msg.msgcontent, msg.msg.qos, msg.msg.retained, &opts);
+			
+			if(result != MQTTASYNC_SUCCESS)
+			{		
+                if(result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
+                {
+                    while(MQTTAsync_reconnect(client) != MQTTASYNC_SUCCESS)
+                    {
+                        milliseconds_sleep(1000);
+                    }
+                    goto loop;
+                }
+                else
+                {
+				    MYLOG_ERROR("MQTTAsync_send fail! %d", result);
+                }
+			}
+			break;
+		case MQTT_MSG_TYPE_SUB:
+			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, &opts);
+			if(result != MQTTASYNC_SUCCESS)
+			{		
+                if(result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
+                {
+                    while(MQTTAsync_reconnect(client) != MQTTASYNC_SUCCESS)
+                    {
+                        milliseconds_sleep(1000);
+                    }
+                    goto loop;
+                }
+                else
+                {
+				    MYLOG_ERROR("MQTTAsync_subscribe fail! %d", result);
+                }
+            }
+			break;
+		case MQTT_MSG_TYPE_UNSUB:
+			result = MQTTAsync_unsubscribe(client, (const char*)msg.msg.topic, &opts);
+			if(result != MQTTASYNC_SUCCESS)
+			{
+                if(result == MQTTASYNC_DISCONNECTED) //如果连接断掉，重连并重发消息
+                {          
+                    while(MQTTAsync_reconnect(client) != MQTTASYNC_SUCCESS)
+                    {
+                        milliseconds_sleep(1000);
+                    }
+                    goto loop;
+                }
+                else
+                {
+				    MYLOG_ERROR("MQTTAsync_unsubscribe fail! %d\n", result);
+                }
+            }
+			break;
+		default:
+			MYLOG_INFO("unknow msg!\n");
+		}
+		if(msg.msgtype == MQTT_MSG_TYPE_PUB)
+		{
+			free(msg.msg.msgcontent); //如果是PUB消息需要把内容指针释放
+		}
+		free(msg.msg.topic);
+	}
+	pthread_exit(NULL);
+}
+
+
 
 /*创建程序需要用到的消息队列，用于MQTT的订阅、发布、去订阅和存取设备操作消息以及zgb消息的存储*/
 int createmessagequeue()
@@ -993,7 +1165,7 @@ void* lantask(void *argc)
                 appaddr.sin_addr.s_addr = inet_addr(inet_ntoa(appaddr.sin_addr));
                 appaddr.sin_port = htons(8787);  
 
-                MYLOG_DEBUG("Send a msg to app!");
+                MYLOG_DEBUG("Send a msg to app!srcip is %s", inet_ntoa(appaddr.sin_addr));
                 if((sendBytes = sendto(sendfd, text, strlen(text), 0, (struct sockaddr *)&appaddr, sizeof(struct sockaddr))) == -1)
                 {
                     MYLOG_ERROR("sendto fail!");
@@ -1067,8 +1239,9 @@ int main(int argc, char* argv[])
     {
         return 0;    
     }
+    chdir("/usr");//更改进程工作目录
     log_init();	
-    timefun();
+    timefun();//定时去请求智能插座的电量
 
     if(sqlitedb_init() == -1)
     {
@@ -1077,7 +1250,8 @@ int main(int argc, char* argv[])
     }
     
     init(); //程序启动初始任务
-    sem_init(&g_mqttconnetionsem, 0, 1); 
+    sem_init(&g_mqttconnetionsem, 0, 1); //线程间共享的信号量初始值为1
+    sem_init(&g_lanmqttconnetionsem, 0, 1); //线程间共享的信号量初始值为1
 
     if(createmessagequeue() == -1)
     {
@@ -1090,6 +1264,9 @@ int main(int argc, char* argv[])
 	pthread_create(&threads[2], NULL, uartlisten,       NULL);
 	pthread_create(&threads[3], NULL, mqttqueueprocess, NULL);
     pthread_create(&threads[4], NULL, lantask,          NULL);
+
+	pthread_create(&threads[5], NULL, lanmqttlient, NULL);
+    pthread_create(&threads[6], NULL, lanmqttqueueprocess,  NULL);    
 
     pthread_exit(NULL);
 }

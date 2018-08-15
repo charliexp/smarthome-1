@@ -25,7 +25,7 @@
 #define LOG_LEVEL_INFO 1
 #define LOG_LEVEL_ERROR 2
 
-#define THREAD_NUMS 6
+#define THREAD_NUMS 8
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
 #define CLIENTID    "todlee"                   //客户端ID
 #define CLIENTID1   "todlee_pub"              //客户端ID
