@@ -1291,8 +1291,8 @@ void* testfun(void *argv)
     cJSON_AddNumberToObject(root, "devicetype", 1);
     sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
     sleep(1);
-    addr = cJSON_CreateString("00FA2DC1DF2");
-    value = cJSON_CreateNumber(1);
+    cJSON* addr = cJSON_CreateString("00FA2DC1DF2");
+    cJSON* value = cJSON_CreateNumber(1);
     cJSON_ReplaceItemInObject(root, "deviceid", addr);
     cJSON_ReplaceItemInObject(root, "devicetype", value);
     sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息    
