@@ -43,6 +43,8 @@ char g_topicthemes[TOPICSNUM][10] = {{"devices"}, {"gateway"}};
 char g_sub_clientid[30];
 char g_pub_clientid[30];
 
+void* testfun(void *argv);
+
 
 void init()
 {
@@ -388,6 +390,11 @@ void* devicemsgprocess(void *argc)
                     milliseconds_sleep(2000);
                     write(g_uartfd, AT_OPEN_NETWORK, strlen(AT_OPEN_NETWORK));
                     MYLOG_INFO("COO operation AT+PERMITJOIN=60");
+                    //测试代码
+                    {
+                        pthread_t pth;
+                        pthread_create(&pth, NULL, testfun, NULL);                   
+                    }
                     break;
                 case TYPE_DEVICE_LIST:
                     write(g_uartfd, AT_DEVICE_LIST, strlen(AT_DEVICE_LIST));
@@ -1271,4 +1278,72 @@ int main(int argc, char* argv[])
     pthread_exit(NULL);
 }
 
+
+
+
+//测试函数
+void* testfun(void *argv)
+{
+    cJSON* root = cJSON_CreateObject();  
+    char topic[TOPIC_LENGTH] = { 0 };
+    sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_ADD);
+    cJSON_AddStringToObject(root, "deviceid", "00FA2DC1DF1");
+    cJSON_AddNumberToObject(root, "devicetype", 1);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
+    sleep(1);
+    addr = cJSON_CreateString("00FA2DC1DF2");
+    value = cJSON_CreateNumber(1);
+    cJSON_ReplaceItemInObject(root, "deviceid", addr);
+    cJSON_ReplaceItemInObject(root, "devicetype", value);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息    
+    sleep(1);
+    addr = cJSON_CreateString("00FA2DC1DF3");
+    value = cJSON_CreateNumber(1);
+    cJSON_ReplaceItemInObject(root, "deviceid", addr);
+    cJSON_ReplaceItemInObject(root, "devicetype", value);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息   
+    sleep(1);
+    addr = cJSON_CreateString("00FA2DC1DF4");
+    value = cJSON_CreateNumber(1);
+    cJSON_ReplaceItemInObject(root, "deviceid", addr);
+    cJSON_ReplaceItemInObject(root, "devicetype", value);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息   
+    sleep(1);
+    addr = cJSON_CreateString("00FA2DC1DF5");
+    value = cJSON_CreateNumber(2);
+    cJSON_ReplaceItemInObject(root, "deviceid", addr);
+    cJSON_ReplaceItemInObject(root, "devicetype", value);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息   
+    sleep(1);
+    addr = cJSON_CreateString("00FA2DC1DF6");
+    value = cJSON_CreateNumber(3);
+    cJSON_ReplaceItemInObject(root, "deviceid", addr);
+    cJSON_ReplaceItemInObject(root, "devicetype", value);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息   
+    sleep(1);
+    addr = cJSON_CreateString("00FA2DC1DF7");
+    value = cJSON_CreateNumber(4);
+    cJSON_ReplaceItemInObject(root, "deviceid", addr);
+    cJSON_ReplaceItemInObject(root, "devicetype", value);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息   
+    sleep(1);
+    addr = cJSON_CreateString("00FA2DC1DF8");
+    value = cJSON_CreateNumber(5);
+    cJSON_ReplaceItemInObject(root, "deviceid", addr);
+    cJSON_ReplaceItemInObject(root, "devicetype", value);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息   
+    sleep(1);
+    addr = cJSON_CreateString("00FA2DC1DF9");
+    value = cJSON_CreateNumber(6);
+    cJSON_ReplaceItemInObject(root, "deviceid", addr);
+    cJSON_ReplaceItemInObject(root, "devicetype", value);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息 
+    sleep(1);
+    addr = cJSON_CreateString("00FA2DC1DFA");
+    value = cJSON_CreateNumber(6);
+    cJSON_ReplaceItemInObject(root, "deviceid", addr);
+    cJSON_ReplaceItemInObject(root, "devicetype", value);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息     
+    
+}
 
