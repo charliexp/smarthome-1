@@ -5,19 +5,23 @@
 
 extern int g_log_level;
 
-void my_log(char* file, int line, char* function, const char *format, ...);
+void my_log(char* loglvl, char* file, int line, char* function, const char *format, ...);
 
 void printBYTE(BYTE* p, int num);
     
 int log_init();
 
+#define DEBUG "[DEBUG]"
+#define INFO "[INFO]"
+#define ERROR "[ERROR]"
+
 #define MYLOG_BYTE(p, n)  if(g_log_level == 0) printBYTE(p, n)
 
-#define MYLOG_DEBUG(format...) if(g_log_level== 0) my_log((char*)__FILE__, (int)__LINE__, (char*)__FUNCTION__, "[DEBUG]"##format)
+#define MYLOG_DEBUG(format...) if(g_log_level== 0) my_log(DEBUG, (char*)__FILE__, (int)__LINE__, (char*)__FUNCTION__, format)
 
-#define MYLOG_INFO(format...)  if(g_log_level == 0 || g_log_level == 1) my_log((char*)__FILE__, (int)__LINE__, (char*)__FUNCTION__, "[INFO]"##format)
+#define MYLOG_INFO(format...)  if(g_log_level == 0 || g_log_level == 1) my_log(INFO, (char*)__FILE__, (int)__LINE__, (char*)__FUNCTION__, format)
 
-#define MYLOG_ERROR(format...)  my_log((char*)__FILE__, (int)__LINE__, (char*)__FUNCTION__, "[ERROR]"##format)
+#define MYLOG_ERROR(format...)  my_log(ERROR, (char*)__FILE__, (int)__LINE__, (char*)__FUNCTION__, format)
 
 #define MYLOG_ZGBMSG(msg) {  MYLOG_INFO("header:%2X", msg.header);MYLOG_INFO("msglength:%2X", msg.msglength);\
     MYLOG_INFO("framecontrol:%2X%2X", msg.payload.framecontrol[0], msg.payload.framecontrol[1]);\
