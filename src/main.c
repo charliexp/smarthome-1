@@ -62,10 +62,10 @@ void init()
     {
         MYLOG_ERROR("init_uart fail!");
     }
-
+    
 	for(; i < TOPICSNUM; i++)
 	{
-		g_topics[i] = (char*)malloc(sizeof(g_topicroot) + sizeof(g_topicthemes[i]) + strlen("/+"));
+		g_topics[i] = (char*)malloc(sizeof(g_topicroot) + strlen(g_topicthemes[i])-1);
 		sprintf(g_topics[i], "%s%s", g_topicroot, g_topicthemes[i]);
 	}
     devices_status_json_init();
@@ -80,19 +80,19 @@ void sendmqttmsg(long messagetype, char* topic, char* message, int qos, int reta
 	mqttqueuemsg msg = { 0 };
 	msg.msgtype = QUEUE_MSG_MQTT;
 	msg.msg.qos = qos;
-	msg.msg.retained = 0;
+	msg.msg.retained = retained;
 	if (topic != NULL)
 	{
 		msg.msg.topic = malloc(strlen(topic)+1);
 		strncpy(msg.msg.topic, topic, strlen(topic));
-		msg.msg.topic[strlen(topic)] = '\n';
+		msg.msg.topic[strlen(topic)] = 0;
 	}
 
 	if (message != NULL && messagetype == 1)
 	{
 		msg.msg.msgcontent = malloc(strlen(message) + 1);
 		strncpy(msg.msg.msgcontent, message, strlen(message));
-		msg.msg.msgcontent[strlen(message)] = '\n';
+		msg.msg.msgcontent[strlen(message)] = 0;
 	}
 
 	msglen = sizeof(mqttmsg);
@@ -1067,7 +1067,7 @@ void* lantask(void *argc)
 /*定时回调任务*/
 void sigalrm_fn(int sig)
 {
-    MYLOG_INFO("alarm!\n");
+    MYLOG_INFO("alarm!");
     time_t time_now;
     struct tm* t;
     int sec,min;
@@ -1162,10 +1162,10 @@ void* testfun(void *argv)
 {
     cJSON* root = cJSON_CreateObject();  
     char topic[TOPIC_LENGTH] = { 0 };
-    sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_ADD);
+    sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_ADD);   
     cJSON_AddStringToObject(root, "deviceid", "00FA2DC1DF1");
     cJSON_AddNumberToObject(root, "devicetype", 1);
-    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
+    sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
     MYLOG_DEBUG("The mqtt msg is %s", cJSON_PrintUnformatted(root));
     sleep(1);
     cJSON* addr = cJSON_CreateString("00FA2DC1DF2");
