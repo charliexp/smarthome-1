@@ -531,7 +531,7 @@ void* devicemsgprocess(void *argc)
                     goto response;
                 }
                 cJSON* devicestatus = get_device_status_json(deviceid);
-                if (status == NULL)
+                if (devicestatus == NULL)
                 {
                     MYLOG_ERROR("Can't find the device status!");
                 }
@@ -682,7 +682,7 @@ void* zgbmsgprocess(void* argc)
             } 
             case ZGB_MSGTYPE_DEVICE_STATUS_REPORT:
             {
-                cJSON *device_json = get_device_status_json(db_deviceid, devicetype);
+                cJSON *device_json = get_device_status_json(db_deviceid);
                 cJSON *attr_json;
                 cJSON *replace_value_json;
                 int value;
