@@ -316,7 +316,7 @@ void *lanmqttlient(void *argc)
 
 
 
-/*设备消息的处理进程*/
+/*APP下发的设备消息的处理进程*/
 void* devicemsgprocess(void *argc)
 {
 	devicequeuemsg msg; //消息队列中取出的设备操作消息
@@ -328,7 +328,7 @@ void* devicemsgprocess(void *argc)
 	int rcvret;
     int operationtype;
 	char packetid;
-	int deviceid;
+	char* deviceid;
 	size_t msglen = sizeof(devicequeuemsg);
 
     ZGBADDRESS src;
@@ -425,79 +425,120 @@ void* devicemsgprocess(void *argc)
         
 		devicenum = cJSON_GetArraySize(devices);//一个消息中操作的设备数量
 
-		for (i=0; i< devicenum; i++)
-		{
-			device = cJSON_GetArrayItem(devices, i);
+        if (operationtype == 1)
+        {
+    		for (i=0; i< devicenum; i++)
+    		{
+    			device = cJSON_GetArrayItem(devices, i);
 
-            /***
-            **全局的设备操作数组中添加一个新的未处理的
-            **设备操作动作
-            ***/
-			packetid = getpacketid(); //packetid是用来跟zgb设备通信使用的
-			g_devicemsgstatus[i].packetid = packetid;
-			g_devicemsgstatus[i].finish = 0;
-			g_zgbmsgnum++;
-            
-            tmp = cJSON_GetObjectItem(device, "deviceid");
-            if(tmp == NULL)
-		    {
-                MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
-                goto response;
-			}                
-            
-			deviceid = tmp->valueint;
+                /***
+                **全局的设备操作数组中添加一个新的未处理的
+                **设备操作动作
+                ***/
+    			packetid = getpacketid(); //packetid是用来跟zgb设备通信使用的
+    			g_devicemsgstatus[i].packetid = packetid;
+    			g_devicemsgstatus[i].finish = 0;
+    			g_zgbmsgnum++;
+                
+                tmp = cJSON_GetObjectItem(device, "deviceid");
+                if(tmp == NULL)
+    		    {
+                    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
+                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
+                    goto response;
+    			}                
+                
+    			deviceid = tmp->valuestring;
 
-            int nrow = 0, ncolumn = 0;
-	        char **dbresult; 
-            
-            sprintf(sql,"SELECT * FROM devices WHERE deviceid = %d;", deviceid);
-            MYLOG_INFO(sql);
-            
-            sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-            if(nrow == 0) //数据库中没有该设备
-            {
-                MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_UNKNOW_DEVICE);
-                goto response;
-            }
+                int nrow = 0, ncolumn = 0;
+    	        char **dbresult; 
+                
+                sprintf(sql,"SELECT * FROM devices WHERE deviceid = %s;", deviceid);
+                MYLOG_INFO(sql);
+                
+                sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+                if(nrow == 0) //数据库中没有该设备
+                {
+                    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
+                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_UNKNOW_DEVICE);
+                    goto response;
+                }
 
-            strncpy(db_zgbaddress, dbresult[ncolumn+1], 20);
-            devicetype  = dbresult[ncolumn+2][0] - '0';
-            deviceindex = dbresult[ncolumn+3][0] - '0';
-            operations  = cJSON_GetObjectItem(device, "operations");
-		    if (operations == NULL)
-		    {
-			    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
-                goto response;
-		    }        
-		    operationnum = cJSON_GetArraySize(operations);
-            MYLOG_INFO("the operationnum = %d", operationnum);
-            sqlite3_free_table(dbresult);
-            
-		}
+                strncpy(db_zgbaddress, dbresult[ncolumn+1], 20);
+                devicetype  = dbresult[ncolumn+2][0] - '0';
+                deviceindex = dbresult[ncolumn+3][0] - '0';
+                operations  = cJSON_GetObjectItem(device, "operations");
+    		    if (operations == NULL)
+    		    {
+    			    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
+                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
+                    goto response;
+    		    }        
+    		    operationnum = cJSON_GetArraySize(operations);
+                MYLOG_INFO("the operationnum = %d", operationnum);
+                sqlite3_free_table(dbresult);
+                
+    		}
 
-		for (i=0; i<RESPONSE_WAIT/50000; i++)
-		{
-			int j = 0;
-			for (; j < g_zgbmsgnum; j++)
-			{
-				if (g_devicemsgstatus[j].finish == 0)
-					break;
-			}
-			if (j == g_zgbmsgnum)//所有的zgb消息都已处理完
-			{
-				break;
-			}
-			milliseconds_sleep(50);
-		}
+    		for (i=0; i<RESPONSE_WAIT/50; i++)  //50毫秒循环一次
+    		{
+    			int j = 0;
+    			for (; j < g_zgbmsgnum; j++)
+    			{
+    				if (g_devicemsgstatus[j].finish == 0)
+    					break;
+    			}
+    			if (j == g_zgbmsgnum)//所有的zgb消息都已处理完
+    			{
+    				break;
+    			}
+    			milliseconds_sleep(50);
+    		}
 
-		for (i=0; i<devicenum; i++)
-		{
-			device = cJSON_GetArrayItem(devices, i);
-			cJSON_AddNumberToObject(device, "result", g_devicemsgstatus[i].result);
-		}
+    		for (i=0; i<devicenum; i++)
+    		{
+    			device = cJSON_GetArrayItem(devices, i);
+    			cJSON_AddNumberToObject(device, "result", g_devicemsgstatus[i].result);
+    		}            
+        }
+
+        if (operationtype == 2)
+        {
+    		for (i=0; i< devicenum; i++)
+    		{
+    			device = cJSON_GetArrayItem(devices, i); 
+                tmp = cJSON_GetObjectItem(device, "deviceid");
+                if(tmp == NULL)
+    		    {
+                    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
+                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
+                    goto response;
+    			}                
+                
+    			deviceid = tmp->valuestring;
+
+                int nrow = 0, ncolumn = 0;
+    	        char **dbresult; 
+                
+                sprintf(sql,"SELECT * FROM devices WHERE deviceid = %s;", deviceid);
+                MYLOG_INFO(sql);
+                
+                sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+                if(nrow == 0) //数据库中没有该设备
+                {
+                    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
+                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_UNKNOW_DEVICE);
+                    goto response;
+                }
+                cJSON* devicestatus = get_device_status_json(deviceid);
+                if (status == NULL)
+                {
+                    MYLOG_ERROR("Can't find the device status!");
+                }
+                cJSON* status = cJSON_GetObjectItem(devicestatus, "status");
+                cJSON_AddItemToObject(device, "status", status);
+            }   	    	
+        }
         
 response:      
 		mqttid = cJSON_GetObjectItem(msg.p_operation_json, "mqttid")->valueint;
@@ -997,7 +1038,6 @@ int sqlitedb_init()
     sprintf(sql,"CREATE TABLE [electricity_day]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[day] INT NOT NULL, primary key(deviceid, day));");
     exec_sql_create(sql);
 
-
     sprintf(sql,"CREATE TABLE [electricity_month]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[month] INT NOT NULL, primary key(deviceid, month));");
     exec_sql_create(sql);
 
@@ -1148,8 +1188,8 @@ int main(int argc, char* argv[])
 	pthread_create(&threads[3], NULL, mqttqueueprocess, NULL);
     pthread_create(&threads[4], NULL, lantask,          NULL);
 
-	//pthread_create(&threads[5], NULL, lanmqttlient, NULL);
-   // pthread_create(&threads[6], NULL, lanmqttqueueprocess,  NULL);    
+	pthread_create(&threads[5], NULL, lanmqttlient,         NULL);
+    pthread_create(&threads[6], NULL, lanmqttqueueprocess,  NULL);    
 
     pthread_exit(NULL);
 }

@@ -34,7 +34,7 @@
 #define USERNAME    "root"
 #define PASSWORD    "root"
 #define TOPICSNUM          2
-#define RESPONSE_WAIT      3000000 //消息响应等待时间5000000us = 5s
+#define RESPONSE_WAIT      3000 //消息响应等待时间(毫秒)
 #define ZGB_ADDRESS_LENGTH 8
 #define ZGBMSG_MAX_NUM     20
 
@@ -73,6 +73,7 @@
 #define DEV_WATER_PUMP	    0x09	// 循环泵
 #define DEV_DUST_CLEAN	    0x0A    // 除尘器
 #define DEV_MULTI_PANEL     0x0B    // 多合一控制面板
+#define DEV_ENV_BOX         0x0C    // 环境盒子
 #define DEV_ANYONE          0xFF    // 任何设备
 
 
@@ -136,6 +137,13 @@
 #define ATTR_WINDSPEED_NUM     0x05               //设备风速 0~100
 #define ATTR_TEMPERATURE       0x06               //设备温度 0~100
 
+/*环境盒子属性*/
+#define ATTR_ENV_TEMPERATURE   0x21              //温度
+#define ATTR_ENV_HUMIDITY      0x22              //湿度
+#define ATTR_ENV_PM25          0x23              //PM2.5
+#define ATTR_ENV_CO2           0x24              //CO2
+#define ATTR_ENV_FORMALDEHYDE  0x25              //甲醛
+#define ATTR_ENV_TV0C          0x26              //TVOC
 
 /*
 **http常量
