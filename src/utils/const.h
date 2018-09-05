@@ -138,12 +138,12 @@
 #define ATTR_TEMPERATURE       0x06               //设备温度 0~100
 
 /*环境盒子属性*/
-#define ATTR_ENV_TEMPERATURE   0x21              //温度
-#define ATTR_ENV_HUMIDITY      0x22              //湿度
-#define ATTR_ENV_PM25          0x23              //PM2.5
-#define ATTR_ENV_CO2           0x24              //CO2
-#define ATTR_ENV_FORMALDEHYDE  0x25              //甲醛
-#define ATTR_ENV_TV0C          0x26              //TVOC
+#define ATTR_ENV_TEMPERATURE   0x40              //温度
+#define ATTR_ENV_HUMIDITY      0x41              //湿度
+#define ATTR_ENV_PM25          0x42              //PM2.5
+#define ATTR_ENV_CO2           0x43              //CO2
+#define ATTR_ENV_FORMALDEHYDE  0x44              //甲醛
+#define ATTR_ENV_TV0C          0x45              //TVOC
 
 /*
 **http常量

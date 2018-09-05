@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h> 
 #include <termios.h>
@@ -151,13 +152,13 @@ void sendzgbmsgfordevices(char devicetype, BYTE *data, char length, char msgtype
 /*内存中维护设备状态的json表*/
 void devices_status_json_init()
 {
-    int nrow = 0, ncolumn = 0;
+    size_t nrow = 0, ncolumn = 0;
 	char **dbresult;     
     char sql[]={"select deviceid, devicetype from devices;"};
     char* zErrMsg = NULL;
     cJSON *device_status_json;
     char* deviceid;
-    char devicetype;
+    size_t devicetype;
 
     g_devices_status_json = cJSON_CreateArray();
 
@@ -170,10 +171,12 @@ void devices_status_json_init()
         return;
     }
 
-    for(int i=1; i< nrow; i++)
+    MYLOG_DEBUG("The devicenum is %d", nrow);
+    for(int i=1; i<= nrow; i++)
     {
         deviceid      = dbresult[i*ncolumn];
-        devicetype    = *(dbresult[i*ncolumn+1]) - '0';
+        devicetype    = atoi(dbresult[i*ncolumn+1]);
+        MYLOG_DEBUG("The deviceid is %s,the devicetype is %d", deviceid, devicetype);
         device_status_json = create_device_status_json(deviceid, devicetype);
         MYLOG_INFO("The device_status is %s", cJSON_PrintUnformatted(device_status_json));
         cJSON_AddItemToArray(g_devices_status_json, device_status_json);
