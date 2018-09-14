@@ -273,11 +273,11 @@ cJSON* get_device_status_json(char* deviceid)
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
         if(memcmp(deviceid, array_deviceid, 9) == 0)
         {
-            return devicestatus;
+            return cJSON_Duplicate(devicestatus, 1);
         }
     }
 
-    return devicestatus;
+    return cJSON_Duplicate(devicestatus, 1);
 }
 
 cJSON* get_attr_value_object_json(cJSON* device, char attrtype)

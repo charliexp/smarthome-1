@@ -114,7 +114,7 @@ void onDisconnect(void* context, MQTTAsync_successData* response)
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *message)
 {
 	char* mqttid;
-	cJSON *root;
+	cJSON *root, *tmp;
 	devicequeuemsg msg;
 	int sendret;
 	size_t msglen = sizeof(devicequeuemsg);
@@ -122,10 +122,9 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 
     MYLOG_INFO("Message arrived");
     MYLOG_INFO("Topic: %s", topicName);
-    MYLOG_INFO("Message:%s", (char*)message->payload);
-
+    
 	root = cJSON_Parse((char*)message->payload);
-    MYLOG_INFO("message: %s", cJSON_Print(root));
+    MYLOG_INFO("Message: %s", cJSON_Print(root));
 
 	if (root == NULL)
 	{
@@ -133,7 +132,15 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 		return 0;
 	}
 
-    mqttid = cJSON_GetObjectItem(root, "mqttid")->valuestring;
+    tmp = cJSON_GetObjectItem(root, "mqttid");
+    if(tmp == NULL)
+    {   
+        MYLOG_ERROR("Wrong format MQTT message!");
+        MQTTAsync_freeMessage(&message);
+        MQTTAsync_free(topicName);
+        return 1;        
+    }
+    mqttid = tmp->valuestring;
     sprintf(topic, "%sresponse/%s/", topicName, mqttid);
     
 	if (strstr(topicName, "devices") != 0)
@@ -453,7 +460,7 @@ void* devicemsgprocess(void *argc)
                 int nrow = 0, ncolumn = 0;
     	        char **dbresult; 
                 
-                sprintf(sql,"SELECT * FROM devices WHERE deviceid = %s;", deviceid);
+                sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", deviceid);
                 MYLOG_INFO(sql);
                 
                 sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
@@ -520,10 +527,11 @@ void* devicemsgprocess(void *argc)
                 int nrow = 0, ncolumn = 0;
     	        char **dbresult; 
                 
-                sprintf(sql,"SELECT * FROM devices WHERE deviceid = %s;", deviceid);
+                sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", deviceid);
                 MYLOG_INFO(sql);
                 
                 sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+                MYLOG_DEBUG("query db over!");
                 if(nrow == 0) //数据库中没有该设备
                 {
                     MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
@@ -534,17 +542,22 @@ void* devicemsgprocess(void *argc)
                 if (devicestatus == NULL)
                 {
                     MYLOG_ERROR("Can't find the device status!");
-                }
+                }              
                 cJSON* status = cJSON_GetObjectItem(devicestatus, "status");
                 cJSON_AddItemToObject(device, "status", status);
             }   	    	
         }
         
-response:      
-		mqttid = cJSON_GetObjectItem(msg.p_operation_json, "mqttid")->valueint;
-		sprintf(topic, "%s%s/response/%d", g_topicroot, g_topicthemes[0], mqttid);
-		sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(msg.p_operation_json), QOS_LEVEL_2, 0);
-		cJSON_Delete(msg.p_operation_json);
+response:
+        tmp = cJSON_GetObjectItem(g_device_mqtt_json, "mqttid");
+        if (tmp != NULL)
+        {
+        	mqttid = tmp->valueint;
+     		sprintf(topic, "%s%s/response/%d", g_topicroot, g_topicthemes[0], mqttid);
+    		sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(g_device_mqtt_json), QOS_LEVEL_2, 0);       
+        }
+
+		cJSON_Delete(g_device_mqtt_json);
         g_zgbmsgnum = 0;
 		g_operationflag = 0;
         g_device_mqtt_json = NULL;
@@ -1188,8 +1201,8 @@ int main(int argc, char* argv[])
 	pthread_create(&threads[3], NULL, mqttqueueprocess, NULL);
     pthread_create(&threads[4], NULL, lantask,          NULL);
 
-	pthread_create(&threads[5], NULL, lanmqttlient,         NULL);
-    pthread_create(&threads[6], NULL, lanmqttqueueprocess,  NULL);    
+	//pthread_create(&threads[5], NULL, lanmqttlient,         NULL);
+    //pthread_create(&threads[6], NULL, lanmqttqueueprocess,  NULL);    
 
     pthread_exit(NULL);
 }
@@ -1265,6 +1278,23 @@ void* testfun(void *argv)
     cJSON_ReplaceItemInObject(root, "deviceid", addr);
     cJSON_ReplaceItemInObject(root, "devicetype", value);
     sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息     
-    
+    sleep(1);
+    addr = cJSON_CreateString("20FA2DC1DFA0");
+    value = cJSON_CreateNumber(12);
+    cJSON_ReplaceItemInObject(root, "deviceid", addr);
+    cJSON_ReplaceItemInObject(root, "devicetype", value);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
+    sleep(1);
+    addr = cJSON_CreateString("30FA2DC1DFA0");
+    value = cJSON_CreateNumber(12);
+    cJSON_ReplaceItemInObject(root, "deviceid", addr);
+    cJSON_ReplaceItemInObject(root, "devicetype", value);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
+    sleep(1);
+    addr = cJSON_CreateString("10FA2DC1DFA0");
+    value = cJSON_CreateNumber(12);
+    cJSON_ReplaceItemInObject(root, "deviceid", addr);
+    cJSON_ReplaceItemInObject(root, "devicetype", value);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
 }
 
