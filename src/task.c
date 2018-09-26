@@ -608,7 +608,7 @@ void* zgbmsgprocess(void* argc)
                     
                     switch(attr)
                     {
-                        case ATTR_WORKING_STATUS:
+                        case ATTR_DEVICESTATUS:
                         {
                             value = zgbdata->pdu[i++];
                             replace_value_json = cJSON_CreateNumber(value);
