@@ -190,7 +190,7 @@ void *mqttlient(void *argc)
 	MQTTAsync_setCallbacks(client, client, connectlost, msgarrvd, NULL);  
 
 	conn_opts.keepAliveInterval = 60;
-	conn_opts.cleansession = 1;
+	conn_opts.cleansession = 0;
 	conn_opts.username = USERNAME;
 	conn_opts.password = PASSWORD;
 	conn_opts.onSuccess = connectsuccess;
@@ -221,7 +221,7 @@ void *lanmqttlient(void *argc)
 	MQTTAsync_setCallbacks(client, client, connectlost, msgarrvd, NULL);  
 
 	conn_opts.keepAliveInterval = 60;
-	conn_opts.cleansession = 1;
+	conn_opts.cleansession = 0;
 	//conn_opts.username = USERNAME;
 	//conn_opts.password = PASSWORD;
 	conn_opts.onSuccess = connectsuccess;
@@ -258,7 +258,7 @@ void* mqttqueueprocess(void *argc)
 	MQTTAsync_setCallbacks(client, client, connectlost, msgarrvd, NULL);  
 
 	conn_opts.keepAliveInterval = 60;
-	conn_opts.cleansession = 1;
+	conn_opts.cleansession = 0;
 	conn_opts.username = USERNAME;
 	conn_opts.password = PASSWORD;
 	conn_opts.onFailure = connectfailure;
@@ -335,7 +335,7 @@ void* lanmqttqueueprocess(void *argc)
 	MQTTAsync_setCallbacks(client, client, connectlost, msgarrvd, NULL);  
 
 	conn_opts.keepAliveInterval = 60;
-	conn_opts.cleansession = 1;
+	conn_opts.cleansession = 0;
 	conn_opts.username = USERNAME;
 	conn_opts.password = PASSWORD;
 	conn_opts.onFailure = connectfailure;
