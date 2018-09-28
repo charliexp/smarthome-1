@@ -211,7 +211,7 @@ static void connectsuccess(void* context, MQTTAsync_successData* response)
     MQTTAsync client = clicontext->handle;
     int clientid = clicontext->clientid;
 
-    if((clientid == WAN_CLIENT_PUB_ID)|| (clientid == LAN_CLIENT_PUB_ID))
+    if((clientid == WAN_CLIENT_PUB_ID)|| (clientid == LAN_CLIENT_PUB_ID)) //发布进程不需要订阅topic
         return;
 
     int qoss[TOPICSNUM] = {2, 1};
@@ -232,17 +232,17 @@ static void connectsuccess(void* context, MQTTAsync_successData* response)
 void *mqttlient(void *argc)
 {  
     MQTTAsync client;
+    Clientcontext context;
 	MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
 	int rc;
 
-	MQTTAsync_create(&client, ADDRESS, g_clientid, MQTTCLIENT_PERSISTENCE_NONE, NULL);
-
-	MQTTAsync_setCallbacks(client, client, connectlost, msgarrvd, NULL);  
-    Clientcontext context;
 	context.clientid = WAN_CLIENT_ID;
 	context.handle = client;
 
+	MQTTAsync_create(&client, ADDRESS, g_clientid, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
+	MQTTAsync_setCallbacks(client, (void*)&context, connectlost, msgarrvd, NULL);  
+    
 	conn_opts.keepAliveInterval = 60;
 	conn_opts.cleansession = 1;
 	conn_opts.username = USERNAME;
