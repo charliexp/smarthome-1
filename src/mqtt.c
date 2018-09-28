@@ -52,7 +52,7 @@ void sendmqttmsg(long messagetype, char* topic, char* message, int qos, int reta
 }
 
 
-void mqtt_reconnect(Clientcontext handle)
+void mqtt_reconnect(Clientcontext* context)
 {
     MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
 	conn_opts.keepAliveInterval = 60;
@@ -61,11 +61,11 @@ void mqtt_reconnect(Clientcontext handle)
 	conn_opts.password = PASSWORD;
 	conn_opts.onSuccess = connectsuccess;
 	conn_opts.onFailure = connectfailure;
-	conn_opts.context = handle;
+	conn_opts.context = context;
 
     sleep(10);
 	
-	MQTTAsync_connect(handle, &conn_opts);
+	MQTTAsync_connect(context->handle, &conn_opts);
 }
 
 
@@ -188,7 +188,7 @@ static void connectfailure(void* context, MQTTAsync_failureData* response)
     MQTTAsync client = clicontext->handle;
 	MYLOG_ERROR("Connect failed, rc %d", response ? response->code : 0);
 	//MQTTAsync_reconnect(client);
-	mqtt_reconnect(client);
+	mqtt_reconnect(clicontext);
 
 	return;
 }
@@ -200,7 +200,7 @@ static void connectlost(void *context, char *cause)
     MQTTAsync client = clicontext->handle;
 	MYLOG_ERROR("Connection lost,the cause is %s", cause);
 	//MQTTAsync_reconnect(client);
-	mqtt_reconnect(client);
+	mqtt_reconnect(clicontext);
 
 	return;
 }
