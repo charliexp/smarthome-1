@@ -5,6 +5,7 @@ extern int g_queueid;
 extern int g_operationflag;
 extern char* g_topics[TOPICSNUM];
 extern char g_clientid[30], g_clientid_pub[30];
+extern FILE* g_fp;
 
 static void connectfailure(void* context, MQTTAsync_failureData* response);
 static void connectsuccess(void* context, MQTTAsync_successData* response);
@@ -209,7 +210,7 @@ static void connectsuccess(void* context, MQTTAsync_successData* response)
     MQTTAsync client = clicontext->handle;
     int clientid = clicontext->clientid;
 
-    if((clientid == WAN_CLIENT_PUB_ID)|| (clientid == LAN_CLIENT_PUB_ID)
+    if((clientid == WAN_CLIENT_PUB_ID)|| (clientid == LAN_CLIENT_PUB_ID))
         return;
 
     int qoss[TOPICSNUM] = {2, 1};
