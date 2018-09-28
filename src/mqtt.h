@@ -5,7 +5,7 @@
 void sendmqttmsg(long messagetype, char* topic, char* message, int qos, int retained);
 
 /*MQTT客户端进程*/
-void *mqttlient(void *argc);
+void *mqttclient(void *argc);
 
 /*局域网MQTT客户端进程*/
 void *lanmqttlient(void *argc);
