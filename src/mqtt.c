@@ -6,6 +6,11 @@ extern int g_operationflag;
 extern char* g_topics[TOPICSNUM];
 extern char g_clientid[30], g_clientid_pub[30];
 
+static void connectfailure(void* context, MQTTAsync_failureData* response);
+static void connectsuccess(void* context, MQTTAsync_successData* response);
+static void connectlost(void *context, char *cause);
+
+
 /*messagetype: 1¡¢·¢²¼ 2¡¢¶©ÔÄ 3¡¢È¥¶©ÔÄ*/
 void sendmqttmsg(long messagetype, char* topic, char* message, int qos, int retained)
 {
@@ -158,7 +163,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 }
 
 
-void connectfailure(void* context, MQTTAsync_failureData* response)
+static void connectfailure(void* context, MQTTAsync_failureData* response)
 {
     MQTTAsync client = (MQTTAsync)context;
 	MYLOG_ERROR("Connect failed, rc %d", response ? response->code : 0);
@@ -169,7 +174,7 @@ void connectfailure(void* context, MQTTAsync_failureData* response)
 }
 
 
-void connectlost(void *context, char *cause)
+static void connectlost(void *context, char *cause)
 {
     MQTTAsync client = (MQTTAsync)context;
 	MYLOG_ERROR("Connection lost,the cause is %s", cause);
@@ -179,7 +184,7 @@ void connectlost(void *context, char *cause)
 	return;
 }
 
-void connectsuccess(void* context, MQTTAsync_successData* response)
+static void connectsuccess(void* context, MQTTAsync_successData* response)
 {
     int qoss[TOPICSNUM] = {2, 1};
 	MQTTAsync client = (MQTTAsync)context;
