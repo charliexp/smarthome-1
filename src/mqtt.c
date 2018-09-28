@@ -55,6 +55,8 @@ void mqtt_reconnect(MQTTAsync handle)
 	conn_opts.onSuccess = connectsuccess;
 	conn_opts.onFailure = connectfailure;
 	conn_opts.context = handle;
+
+    sleep(10);
 	
 	MQTTAsync_connect(handle, &conn_opts);
 }
