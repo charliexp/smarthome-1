@@ -10,6 +10,11 @@ static void connectfailure(void* context, MQTTAsync_failureData* response);
 static void connectsuccess(void* context, MQTTAsync_successData* response);
 static void connectlost(void *context, char *cause);
 
+typedef struct
+{
+    int clientid;
+    MQTTAsync handle;
+}Clientcontext;
 
 /*messagetype: 1、发布 2、订阅 3、去订阅*/
 void sendmqttmsg(long messagetype, char* topic, char* message, int qos, int retained)
@@ -94,13 +99,15 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
     }
     mqttid = tmp->valuestring;
     sprintf(topic, "%sresponse/%s/", topicName, mqttid);
-    
+
+    /*设备操作*/
 	if (strstr(topicName, "devices") != 0)
 	{
 		if (g_operationflag) //检查当前是否有msg在处理
 		{
 			/*如果有消息在处理，则返回忙碌错误*/		
 			sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, MQTT_MSG_SYSTEM_BUSY, QOS_LEVEL_2, 0);
+			goto end;
 		}
 		else
 		{
@@ -120,6 +127,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 			cJSON_Delete(root);
 		}
 	}
+	/*网关操作*/
 	else if(strstr(topicName, "gateway") != 0)
 	{
 	    int operationtype = cJSON_GetObjectItem(root, "operation")->valueint;
@@ -156,8 +164,15 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             int loglevel = cJSON_GetObjectItem(root, "value")->valueint;
             g_log_level = loglevel;
         }
+        else if(operationtype == 4)//清空日志
+        {
+            fclose(g_fp);
+            int fd = open(LOG_FILE, O_RDWR | O_TRUNC);
+            log_init();
+        }        
 	}
 
+end:
     MQTTAsync_freeMessage(&message);
     MQTTAsync_free(topicName);
     
@@ -167,7 +182,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 
 static void connectfailure(void* context, MQTTAsync_failureData* response)
 {
-    MQTTAsync client = (MQTTAsync)context;
+    Clientcontext* clicontext = (Clientcontext*)context;
+    MQTTAsync client = clicontext->handle;
 	MYLOG_ERROR("Connect failed, rc %d", response ? response->code : 0);
 	//MQTTAsync_reconnect(client);
 	mqtt_reconnect(client);
@@ -178,7 +194,8 @@ static void connectfailure(void* context, MQTTAsync_failureData* response)
 
 static void connectlost(void *context, char *cause)
 {
-    MQTTAsync client = (MQTTAsync)context;
+    Clientcontext* clicontext = (Clientcontext*)context;
+    MQTTAsync client = clicontext->handle;
 	MYLOG_ERROR("Connection lost,the cause is %s", cause);
 	//MQTTAsync_reconnect(client);
 	mqtt_reconnect(client);
@@ -188,6 +205,13 @@ static void connectlost(void *context, char *cause)
 
 static void connectsuccess(void* context, MQTTAsync_successData* response)
 {
+    Clientcontext* clicontext = (Clientcontext*)context;
+    MQTTAsync client = clicontext->handle;
+    int clientid = clicontext->clientid;
+
+    if((clientid == WAN_CLIENT_PUB_ID)|| (clientid == LAN_CLIENT_PUB_ID)
+        return;
+
     int qoss[TOPICSNUM] = {2, 1};
 	MQTTAsync client = (MQTTAsync)context;
 	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
@@ -213,6 +237,10 @@ void *mqttlient(void *argc)
 	MQTTAsync_create(&client, ADDRESS, g_clientid, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
 	MQTTAsync_setCallbacks(client, client, connectlost, msgarrvd, NULL);  
+    Clientcontext context;
+	context.clientid = WAN_CLIENT_ID;
+	context.handle = client;
+
 
 	conn_opts.keepAliveInterval = 60;
 	conn_opts.cleansession = 0;
@@ -220,7 +248,7 @@ void *mqttlient(void *argc)
 	conn_opts.password = PASSWORD;
 	conn_opts.onSuccess = connectsuccess;
 	conn_opts.onFailure = connectfailure;
-	conn_opts.context = client;
+	conn_opts.context = &context;
 
     while(1)
 	{
@@ -245,13 +273,18 @@ void *lanmqttlient(void *argc)
 
 	MQTTAsync_setCallbacks(client, client, connectlost, msgarrvd, NULL);  
 
+    Clientcontext context;
+	context.clientid = LAN_CLIENT_ID;
+	context.handle = client;
+
+
 	conn_opts.keepAliveInterval = 60;
 	conn_opts.cleansession = 0;
-	//conn_opts.username = USERNAME;
-	//conn_opts.password = PASSWORD;
+	conn_opts.username = USERNAME;
+	conn_opts.password = PASSWORD;
 	conn_opts.onSuccess = connectsuccess;
 	conn_opts.onFailure = connectfailure;
-	conn_opts.context = client;
+	conn_opts.context = &context;
 
     while(1)
 	{
@@ -265,8 +298,7 @@ void *lanmqttlient(void *argc)
 
 /*MQTT消息队列的处理进程*/
 void* mqttqueueprocess(void *argc)
-{
-    
+{   
 	mqttqueuemsg msg;
 	ssize_t ret;
 	int result;
@@ -276,18 +308,22 @@ void* mqttqueueprocess(void *argc)
 
     MQTTAsync client;
 	MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
+	Clientcontext context;
 	int rc;
 
 	MQTTAsync_create(&client, ADDRESS, g_clientid_pub, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
 	MQTTAsync_setCallbacks(client, client, connectlost, msgarrvd, NULL);  
 
+	context.clientid = WAN_CLIENT_PUB_ID;
+	context.handle = client;
+
 	conn_opts.keepAliveInterval = 60;
 	conn_opts.cleansession = 0;
 	conn_opts.username = USERNAME;
 	conn_opts.password = PASSWORD;
 	conn_opts.onFailure = connectfailure;
-	conn_opts.context = client;
+	conn_opts.context = &context;
 
     MQTTAsync_connect(client, &conn_opts);
 	/*处理mqtt消息队列*/
@@ -359,12 +395,17 @@ void* lanmqttqueueprocess(void *argc)
 
 	MQTTAsync_setCallbacks(client, client, connectlost, msgarrvd, NULL);  
 
+    Clientcontext context;
+	context.clientid = LAN_CLIENT_PUB_ID;
+	context.handle = client;
+
+
 	conn_opts.keepAliveInterval = 60;
 	conn_opts.cleansession = 0;
 	conn_opts.username = USERNAME;
 	conn_opts.password = PASSWORD;
 	conn_opts.onFailure = connectfailure;
-	conn_opts.context = client;	
+	conn_opts.context = &context;	
 
 	/*处理mqtt消息队列*/
 	while(1)

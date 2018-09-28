@@ -19,17 +19,25 @@
 #define LOCKFILE "/var/run/smarthome.pid"
 #define LOCKMODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) 
 
+/*=====================LOG 常量=========================*/
 
 #define LOG_FILE "smarthomelog.log"
 #define LOG_LEVEL_DEBUG 0
 #define LOG_LEVEL_INFO 1
 #define LOG_LEVEL_ERROR 2
 
+
+/*=====================MQTT 常量=========================*/
 #define THREAD_NUMS 8
 #define ADDRESS     "tcp://123.206.15.63:1883" //mosquitto server ip
 #define LAN_MQTT_SERVER "tcp://127.0.0.1:1883"
 #define CLIENTID    "todlee"                   //客户端ID
 #define CLIENTID1   "todlee_pub"              //客户端ID
+
+#define WAN_CLIENT_ID 1
+#define WAN_CLIENT_PUB_ID 2
+#define LAN_CLIENT_ID 3
+#define LAN_CLIENT_PUB_ID 4
 
 #define USERNAME    "root"
 #define PASSWORD    "root"
