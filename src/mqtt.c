@@ -412,18 +412,3 @@ void* lanmqttqueueprocess(void *argc)
 	}
 	pthread_exit(NULL);
 }
-
-void mqtt_reconnect(MQTTAsync handle)
-{
-    MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
-	conn_opts.keepAliveInterval = 60;
-	conn_opts.cleansession = 0;
-	conn_opts.username = USERNAME;
-	conn_opts.password = PASSWORD;
-	conn_opts.onSuccess = connectsuccess;
-	conn_opts.onFailure = connectfailure;
-	conn_opts.context = handle;
-	
-	MQTTAsync_connect(handle, &conn_opts);
-}
-
