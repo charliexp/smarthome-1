@@ -13,7 +13,8 @@ static void connectlost(void *context, char *cause);
 
 typedef struct
 {
-    int clientid;
+    /*用于识别哪个mqtt client*/
+    int clientid; 
     MQTTAsync handle;
 }Clientcontext;
 
@@ -51,7 +52,7 @@ void sendmqttmsg(long messagetype, char* topic, char* message, int qos, int reta
 }
 
 
-void mqtt_reconnect(MQTTAsync handle)
+void mqtt_reconnect(Clientcontext handle)
 {
     MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
 	conn_opts.keepAliveInterval = 60;
