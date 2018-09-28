@@ -214,7 +214,6 @@ static void connectsuccess(void* context, MQTTAsync_successData* response)
         return;
 
     int qoss[TOPICSNUM] = {2, 1};
-	MQTTAsync client = (MQTTAsync)context;
 	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
 	int rc;
 	MYLOG_DEBUG("Successful connection");
