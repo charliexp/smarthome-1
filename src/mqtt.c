@@ -40,6 +40,21 @@ void sendmqttmsg(long messagetype, char* topic, char* message, int qos, int reta
 }
 
 
+void mqtt_reconnect(MQTTAsync handle)
+{
+    MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
+	conn_opts.keepAliveInterval = 60;
+	conn_opts.cleansession = 0;
+	conn_opts.username = USERNAME;
+	conn_opts.password = PASSWORD;
+	conn_opts.onSuccess = connectsuccess;
+	conn_opts.onFailure = connectfailure;
+	conn_opts.context = handle;
+	
+	MQTTAsync_connect(handle, &conn_opts);
+}
+
+
 /*MQTT订阅消息到达的处理函数*/
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *message)
 {
@@ -147,7 +162,8 @@ void connectfailure(void* context, MQTTAsync_failureData* response)
 {
     MQTTAsync client = (MQTTAsync)context;
 	MYLOG_ERROR("Connect failed, rc %d", response ? response->code : 0);
-	MQTTAsync_reconnect(client);
+	//MQTTAsync_reconnect(client);
+	mqtt_reconnect(client);
 
 	return;
 }
@@ -157,8 +173,10 @@ void connectlost(void *context, char *cause)
 {
     MQTTAsync client = (MQTTAsync)context;
 	MYLOG_ERROR("Connection lost,the cause is %s", cause);
-	MQTTAsync_reconnect(client);
+	//MQTTAsync_reconnect(client);
+	mqtt_reconnect(client);
 
+	return;
 }
 
 void connectsuccess(void* context, MQTTAsync_successData* response)
@@ -388,5 +406,19 @@ void* lanmqttqueueprocess(void *argc)
 		free(msg.msg.topic);
 	}
 	pthread_exit(NULL);
+}
+
+void mqtt_reconnect(MQTTAsync handle)
+{
+    MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
+	conn_opts.keepAliveInterval = 60;
+	conn_opts.cleansession = 0;
+	conn_opts.username = USERNAME;
+	conn_opts.password = PASSWORD;
+	conn_opts.onSuccess = connectsuccess;
+	conn_opts.onFailure = connectfailure;
+	conn_opts.context = handle;
+	
+	MQTTAsync_connect(handle, &conn_opts);
 }
 
