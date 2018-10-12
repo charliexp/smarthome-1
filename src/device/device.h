@@ -31,4 +31,9 @@ void sendzgbmsgfordevices(char devicetype, BYTE *data, char length, char msgtype
 
 void device_closeallfan();
 
+/* MQTT的操作数据转为ZGB的DATA */
+/* 返回data的数据长度 */
+int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype);
+
+
 #endif

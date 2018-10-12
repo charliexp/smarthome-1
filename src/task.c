@@ -369,7 +369,7 @@ void* devicemsgprocess(void *argc)
                     goto response;
     		    }
     		    
-    		    BYTE data[];
+    		    BYTE data[125];
                 int datalen = mqtttozgb(operations, data, devicetype);
                 sendzgbmsg(src, data, datalen, ZGB_MSGTYPE_DEVICE_OPERATION, devicetype, deviceindex, packetid)
                 sqlite3_free_table(dbresult);             

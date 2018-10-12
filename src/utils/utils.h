@@ -51,8 +51,4 @@ int exec_sql_create(char* sql);
 /*检查程序是否已运行*/
 int already_running(const char *filename);
 
-/* MQTT的操作数据转为ZGB的DATA */
-/* 返回data的数据长度 */
-int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype);
-
 #endif
