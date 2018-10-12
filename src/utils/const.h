@@ -119,16 +119,10 @@
 #define TLV_VALUE_RTN_BUSY		    0x04	// 系统忙
 
 /*故障上报*/
-#define ATTR_FAULT 0x01 
+#define ATTR_FAULT 0xFF 
 
 #define TLV_VALUE_FAULT_SOCKET    0x01 //插座保险丝损坏
 #define TLV_VALUE_FAULT_PURIFIER  0x02 //净水器滤芯更换
-
-#define ATTR_DEVICETYPE     0x01      //设备类型
-#define ATTR_DEVICENAME     0x02
-#define ATTR_DEVICESTATUS   0x03      //设备工作状态：0关机 1工作 2待机 
-#define ATTR_DEVICEMODE     0x04      //工作模式 0无 1制冷 2制热
-
 
 #define TLV_VALUE_POWER_OFF  0x00 //断电
 #define TLV_VALUE_POWER_ON   0x01 //上电
@@ -143,9 +137,14 @@
 #define ATTR_SOCKET_WORKTIME 0x15 //插座通电时间
 
 /*设备属性*/
-#define ATTR_WINDSPEED         0x04               //设备风速 中低高三档
-#define ATTR_WINDSPEED_NUM     0x05               //设备风速 0~100
-#define ATTR_TEMPERATURE       0x06               //设备温度 0~100
+#define ATTR_DEVICETYPE     0x01      //设备类型
+#define ATTR_DEVICENAME     0x02      //设备名称
+#define ATTR_DEVICESTATUS   0x03      //设备工作状态：0关机 1工作 2待机 
+#define ATTR_DEVICEMODE     0x04      //工作模式 0无 1制冷 2制热
+
+#define ATTR_WINDSPEED         0x05               //设备风速 中低高三档
+#define ATTR_WINDSPEED_NUM     0x06               //设备风速 0~100
+#define ATTR_TEMPERATURE       0x07               //设备温度 0~100
 
 /*环境属性*/
 #define ATTR_ENV_TEMPERATURE   0x40              //温度

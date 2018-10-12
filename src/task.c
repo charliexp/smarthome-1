@@ -329,6 +329,7 @@ void* devicemsgprocess(void *argc)
                 ***/
     			packetid = getpacketid(); //packetid是用来跟zgb设备通信使用的
     			g_devicemsgstatus[i].packetid = packetid;
+    			g_devicemsgstatus[i].result = 0;
     			g_devicemsgstatus[i].finish = 0;
     			g_zgbmsgnum++;
                 
@@ -357,6 +358,7 @@ void* devicemsgprocess(void *argc)
                 }
 
                 strncpy(db_zgbaddress, dbresult[ncolumn+1], 20);
+                dbaddresstozgbaddress(db_zgbaddress, src);
                 devicetype  = dbresult[ncolumn+2][0] - '0';
                 deviceindex = dbresult[ncolumn+3][0] - '0';
                 operations  = cJSON_GetObjectItem(device, "operations");
@@ -365,11 +367,12 @@ void* devicemsgprocess(void *argc)
     			    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
                     cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
                     goto response;
-    		    }        
-    		    operationnum = cJSON_GetArraySize(operations);
-                MYLOG_INFO("the operationnum = %d", operationnum);
-                sqlite3_free_table(dbresult);
-                
+    		    }
+    		    
+    		    BYTE data[];
+                int datalen = mqtttozgb(operations, data, devicetype);
+                sendzgbmsg(src, data, datalen, ZGB_MSGTYPE_DEVICE_OPERATION, devicetype, deviceindex, packetid)
+                sqlite3_free_table(dbresult);             
     		}
 
     		for (i=0; i<RESPONSE_WAIT/50; i++)  //50毫秒循环一次
@@ -434,6 +437,7 @@ void* devicemsgprocess(void *argc)
                 MYLOG_DEBUG("The status is %s", cJSON_PrintUnformatted(status));
             }   	    	
         }
+        cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_SUCCESS);
         
 response:
         tmp = cJSON_GetObjectItem(g_device_mqtt_json, "mqttid");

@@ -29,5 +29,6 @@ void devices_status_query();
 
 void sendzgbmsgfordevices(char devicetype, BYTE *data, char length, char msgtype);
 
+void device_closeallfan();
 
 #endif

@@ -3,7 +3,6 @@
 #include "task.h"
 #include "mqtt.h"
 
-//sem_t g_mqttconnetionsem,g_lanmqttconnetionsem;
 
 int main(int argc, char* argv[])
 {

@@ -90,6 +90,10 @@ void deviceneedregister(ZGBADDRESS addr)
     
 }
 
+void device_closeallfan()
+{
+}
+
 void devices_status_query()
 {
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //¹ã²¥±¨ÎÄ

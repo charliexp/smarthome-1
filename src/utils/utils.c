@@ -260,6 +260,61 @@ int base64_encode(const unsigned char * sourcedata, char * base64)
     return 0;
 }
 
+/* MQTT的操作数据转为ZGB的DATA */
+int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
+{
+    if(!op)
+        return;
+    if(!zgbdata)
+        return;
+
+    cJSON* item=NULL;
+    int attr=0;
+    int value=0;
+    int index=0;
+    int opnum = cJSON_GetArraySize(op);
+    MYLOG_INFO("the operationnum = %d", opnum);
+    MYLOG_INFO("Begin to trans mqtt to zgb");
+
+    for(int i=0 ; i<opnum; i++)
+    {
+        item = cJSON_GetArrayItem(op, i);
+        attr = cJSON_GetObjectItem(item, "type")->valueint;
+        
+        if(attr != ATTR_DEVICENAME)
+            value = cJSON_GetObjectItem(item, "value")->valueint;
+        else
+            char* name = cJSON_GetObjectItem(item, "value")->valuestring;
+
+        if((devicetype == DEV_AIR_CON) && ((attr == ATTR_DEVICESTATUS )||(attr == ATTR_DEVICEMODE))) //如果空调状态变化需要同时关闭所有风机盘管
+        {
+            device_closeallfan();
+        }
+
+        /*在此添加联动操作*/
+        
+        switch (attr)
+        {
+            case ATTR_DEVICESTATUS://如果做数据检查在每个枚举下面进行
+            case ATTR_DEVICEMODE:
+            case ATTR_WINDSPEED:
+            case ATTR_WINDSPEED_NUM:
+            case ATTR_TEMPERATURE:
+                zgbdata[index++] = attr;
+                zgbdata[index++] = value;
+                break;
+            case ATTR_DEVICENAME:
+                zgbdata[index++] = attr;
+                memcpy(zgbdata+index, name, strlen(name));
+                index += strlen(name);
+                zgbdata[index++] = '\0';
+                break;
+            default:                
+        }
+    }
+    
+}
+
 
 /* 
 *网关信息注册
