@@ -351,9 +351,9 @@ cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
 int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
 {
     if(!op)
-        return;
+        return 0;
     if(!zgbdata)
-        return;
+        return 0;
 
     cJSON* item=NULL;
     int attr=0;
@@ -397,7 +397,8 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
                 index += strlen(name);
                 zgbdata[index++] = '\0';
                 break;
-            default:                
+            default:
+                break;
         }
     }
 
