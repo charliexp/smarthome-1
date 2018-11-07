@@ -4,7 +4,7 @@
 
 /*全局变量*/
 int g_uartfd;
-int g_log_level = 0;
+int g_log_level = 2;
 int g_operationflag = 0;
 int g_queueid;
 sqlite3* g_db;
@@ -245,11 +245,13 @@ void* devicemsgprocess(void *argc)
 		MYLOG_INFO("the msg is %s", cJSON_PrintUnformatted(msg.p_operation_json));
         
 		g_device_mqtt_json = msg.p_operation_json;
+		cJSON_AddNumberToObject(g_device_mqtt_json, "resultcode", 0);
         tmp = cJSON_GetObjectItem(g_device_mqtt_json, "operation");
         if (tmp == NULL)
         {
             MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
             cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
+            cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
             goto response;
         }          
         operationtype = tmp->valueint;//操作类型
@@ -262,6 +264,7 @@ void* devicemsgprocess(void *argc)
             {
                 MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
                 cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
+                cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
                 goto response;
             }             
             actiontype = tmp->valueint;//coo操作值
@@ -280,8 +283,8 @@ void* devicemsgprocess(void *argc)
                     MYLOG_INFO("COO operation AT+PERMITJOIN=60");
                     //测试代码
                     {
-                        pthread_t pth;
-                        pthread_create(&pth, NULL, testfun, NULL);                   
+                        //pthread_t pth;
+                        //pthread_create(&pth, NULL, testfun, NULL);                   
                     }
                     break;
                 case TYPE_DEVICE_LIST:
@@ -302,7 +305,8 @@ void* devicemsgprocess(void *argc)
                     break;   
                 default:
                     MYLOG_ERROR("Unknow actiontype!");
-                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);                    
+                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
+                    cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
             }
             goto response;
         }
@@ -312,6 +316,7 @@ void* devicemsgprocess(void *argc)
 		{
 			MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
             cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
+            cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
             goto response;
 		} 
         
@@ -338,6 +343,7 @@ void* devicemsgprocess(void *argc)
     		    {
                     MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
                     cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
+                    cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
                     goto response;
     			}                
                 
@@ -354,6 +360,7 @@ void* devicemsgprocess(void *argc)
                 {
                     MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
                     cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_UNKNOW_DEVICE);
+                    cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
                     goto response;
                 }
 
@@ -366,6 +373,7 @@ void* devicemsgprocess(void *argc)
     		    {
     			    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
                     cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
+                    cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
                     goto response;
     		    }
     		    
@@ -408,6 +416,7 @@ void* devicemsgprocess(void *argc)
     		    {
                     MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
                     cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
+                    cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
                     goto response;
     			}                
                 
@@ -425,6 +434,7 @@ void* devicemsgprocess(void *argc)
                 {
                     MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
                     cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_UNKNOW_DEVICE);
+                    cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
                     goto response;
                 }
                 cJSON* devicestatus = get_device_status_json(deviceid);
@@ -471,7 +481,7 @@ void* uartsend(void *argc)
 			MYLOG_ERROR("recive uartsendmsg fail!");
 		}
         MYLOG_INFO("uart begin to send msg!");
-        MYLOG_BYTE((BYTE*)&qmsg.msg, sizeof(qmsg.msg));
+        MYLOG_ZGBMSG(qmsg.msg);
         if ( write(g_uartfd, (char *)&qmsg.msg, (int)(qmsg.msg.msglength + 2)) != (qmsg.msg.msglength + 2))
 	    {
 		    MYLOG_ERROR("com write error!");

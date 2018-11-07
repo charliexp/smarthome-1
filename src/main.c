@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     
     init(); //程序启动初始任务
    
-	pthread_create(&threads[0], NULL, mqttclient,        NULL);
+	pthread_create(&threads[0], NULL, mqttclient,       NULL);
 	pthread_create(&threads[1], NULL, devicemsgprocess, NULL);
 	pthread_create(&threads[2], NULL, uartlisten,       NULL);
 	pthread_create(&threads[3], NULL, mqttqueueprocess, NULL);

@@ -107,8 +107,10 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	{
 		if (g_operationflag) //检查当前是否有msg在处理
 		{
-			/*如果有消息在处理，则返回忙碌错误*/		
-			sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, MQTT_MSG_SYSTEM_BUSY, QOS_LEVEL_2, 0);
+			/*如果有消息在处理，则返回忙碌错误*/
+			cJSON_AddStringToObject(root, "result", MQTT_MSG_SYSTEM_BUSY);
+			cJSON_AddNumberToObject(root, "resultcode", MQTT_MSG_ERRORCODE_BUSY);
+			sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
 			goto end;
 		}
 		else
