@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     }
     
     log_init();	
-    timefun();//定时去请求智能插座的电量
+    timerinit();//定时去请求智能插座的电量
     
     init(); //程序启动初始任务
    

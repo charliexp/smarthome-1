@@ -120,56 +120,6 @@ void* lantask(void *argc)
 }
 
 
-/*定时回调任务*/
-void sigalrm_fn(int sig)
-{
-    MYLOG_INFO("alarm!");
-    time_t time_now;
-    struct tm* t;
-    int sec,min;
-    int time_sec;//需要定时的秒数
-
-    ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文
-    BYTE payload[] = {ATTR_SOCKET_E, ATTR_SOCKET_WORKTIME};
-    sendzgbmsg(address, payload, 2, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_SOCKET, 0, getpacketid());        
-    time(&time_now);
-    t = localtime(&time_now);
-    sec = t->tm_sec;
-    min = t->tm_min;
-    time_sec = (60*60 - min*60 -sec) + 58*60;//当前一小时剩余的秒数加上下个59分钟的秒数alarm函数不精确
-    MYLOG_INFO("alarm %d", time_sec);
-    alarm(time_sec);
-    return;
-}
-
-/*定时任务*/
-void timefun(void)
-{
-    time_t time_now;
-    struct tm* t;
-    int sec,min;
-    int time_sec;//需要定时的秒数 
-    
-    time(&time_now);
-    t = localtime(&time_now);
-    sec = t->tm_sec;
-    min = t->tm_min;
-
-    if(min >= 58)
-    {
-        time_sec = 1;
-    }
-    else
-    {
-        time_sec = (58*60 - min*60 -sec);
-    }
-    
-    signal(SIGALRM, sigalrm_fn); 
-    MYLOG_INFO("alarm %d", time_sec);
-    alarm(time_sec);
-}
-
-
 void init()
 {
 	int i = 0;
@@ -540,7 +490,7 @@ void* zgbmsgprocess(void* argc)
             MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
             if(nrow == 0) //数据库中没有该设备
             {
-                sendzgbmsg(src, NULL, 0, ZGB_MSGTYPE_DEVICEREGISTER, 0, 0, getpacketid());//要求设备注册
+                sendzgbmsg(src, NULL, 0, ZGB_MSGTYPE_DEVICEREGISTER, DEV_ANYONE , 0, getpacketid());//要求设备注册
             }
             sqlite3_free_table(dbresult);
             continue;

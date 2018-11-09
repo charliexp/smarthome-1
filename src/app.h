@@ -20,6 +20,7 @@
 #include <signal.h>
 
 #include "utils/utils.h"
+#include "utils/mytime.h"
 #include "device/device.h"
 #include "cjson/cJSON.h"
 #include "log/log.h"

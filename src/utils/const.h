@@ -81,7 +81,10 @@
 #define DEV_WATER_PUMP	    0x09	// 循环泵
 #define DEV_DUST_CLEAN	    0x0A    // 除尘器
 #define DEV_MULTI_PANEL     0x0B    // 多合一控制面板
-#define DEV_ENV_BOX         0x0C    // 环境盒子
+#define SEN_WIND_PRESSURE   0x0C //风压传感器
+#define SEN_WATER_FLOW      0x0D //水流量计
+#define SEN_WATER_TEMPERATURE  0x0E//水温传感器
+#define SEN_ENV_DATA        0x0F //环境数据传感器
 #define DEV_ANYONE          0xFF    // 任何设备
 
 
