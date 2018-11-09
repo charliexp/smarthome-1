@@ -95,7 +95,7 @@ int deltimer(timer* t)
 void sigalrm_fn(int sig)
 {
     timer* t = g_timer_manager;
-    MYLOG_DEBUG("alarm callbackfunction!");
+    
     alarm(1); 
     
     if(g_timer_manager == NULL)
