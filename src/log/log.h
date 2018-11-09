@@ -36,6 +36,8 @@ int log_init();
     MYLOG_INFO("opt:%2X", msg.payload.adf.opt);\
     MYLOG_INFO("length:%2X", msg.payload.adf.length);\
     MYLOG_INFO("data:");\
-    MYLOG_BYTE((BYTE*)&msg.payload.adf.data, msg.payload.adf.data.length);\
+    MYLOG_BYTE((BYTE*)&msg.payload.adf.data, msg.payload.adf.length);\
+    MYLOG_INFO("check:%2X", msg.payload.check);\
+    MYLOG_INFO("footer:%2X", msg.payload.footer);\
 }
 #endif

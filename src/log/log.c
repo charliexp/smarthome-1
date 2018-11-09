@@ -48,7 +48,7 @@ void printBYTE(BYTE* p, int num)
     int i = 0;
     for(; i<num; i++)
     {
-        fprintf(g_fp, "%2X(%d) ", p[i], p[i]);
+        fprintf(g_fp, "%02X", p[i], p[i]);
     }
     fprintf(g_fp, "\n");
 
