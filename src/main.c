@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     //通过入参设置日志级别
     int ch;
     int level;
-    if((ch = getopt(argc, argv, "g"))!=-1)
+    if((ch = getopt(argc, argv, "g:"))!=-1)
     {
         level = *optarg - '0';
         if(level == 1 || level == 0)
