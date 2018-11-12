@@ -613,6 +613,7 @@ void* zgbmsgprocess(void* argc)
                 ;
         }
 end:
+    ;
 	}
 	pthread_exit(NULL);        
 }
