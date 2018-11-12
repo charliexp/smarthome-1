@@ -511,6 +511,11 @@ void* zgbmsgprocess(void* argc)
         {
             goto end;
         }
+
+        if(qmsg.msg.payload.adf.data.magicnum != 0xAA)
+        {
+            goto end;
+        }
         
         switch (msgtype)
         {
