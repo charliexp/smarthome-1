@@ -430,7 +430,7 @@ void* uartsend(void *argc)
 			MYLOG_ERROR("rcvret = %d", rcvret);
 			MYLOG_ERROR("recive uartsendmsg fail!");
 		}
-        MYLOG_INFO("uart begin to send msg!");
+        MYLOG_INFO("uart begin to send a msg!");
         MYLOG_ZGBMSG(qmsg.msg);
         if ( write(g_uartfd, (char *)&qmsg.msg, (int)(qmsg.msg.msglength + 2)) != (qmsg.msg.msglength + 2))
 	    {

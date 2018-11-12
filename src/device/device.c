@@ -107,9 +107,6 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
     uartsendqueuemsg uartmsg;
 	int i = 0;
 	int sum = 0;
-
-    MYLOG_INFO("Send a zgbmsg!The data is:");
-    MYLOG_BYTE(data, length);
     
     zgbmsginit(&msg);
     msg.msglength = 42 + length;
@@ -138,7 +135,6 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
     uartmsg.msgtype = QUEUE_MSG_UART;
     uartmsg.msg = msg;
 
-    MYLOG_ZGBMSG(msg);
     if (ret = msgsnd(g_queueid, &uartmsg, sizeof(uartmsg), 0) != 0)
     {
 		MYLOG_ERROR("send uartsendqueuemsg fail!");
