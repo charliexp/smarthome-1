@@ -1,6 +1,8 @@
 #ifndef _APP_H_
 #define _APP_H_
 
+#define _POSIX_C_SOURCE 2
+
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>

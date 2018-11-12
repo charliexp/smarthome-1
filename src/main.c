@@ -4,7 +4,7 @@
 #include "mqtt.h"
 
 extern int g_log_level;
-extern char* optarg;
+
 int main(int argc, char* argv[])
 {
     pthread_t threads[THREAD_NUMS];
