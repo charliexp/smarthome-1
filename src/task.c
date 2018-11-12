@@ -504,6 +504,13 @@ void* zgbmsgprocess(void* argc)
         packetid     = zgbdata->packetid;
         
         sprintf(db_deviceid, "%s%d", db_zgbaddress, deviceindex);
+
+        //如果是广播报文，直接丢弃
+        ZGBADDRESS broadcastaddr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+        if(memcmp(src, broadcastaddr, 8) != 0)
+        {
+            goto end;
+        }
         
         switch (msgtype)
         {
