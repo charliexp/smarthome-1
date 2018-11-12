@@ -3,7 +3,7 @@
 #include "task.h"
 #include "mqtt.h"
 
-
+extern int g_log_level;
 int main(int argc, char* argv[])
 {
     pthread_t threads[THREAD_NUMS];
@@ -13,6 +13,18 @@ int main(int argc, char* argv[])
     if (already_running(LOCKFILE))
     {
         return 0;    
+    }
+
+    //通过入参设置日志级别
+    int ch;
+    int level;
+    if((ch=getopt(argc, argv, "g"))!=-1)
+    {
+        level = optarg - '0';
+        if(level == 1 || level == 0)
+        {
+            g_log_level = level;
+        }
     }
     
     log_init();	
