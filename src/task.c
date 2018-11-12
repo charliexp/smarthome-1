@@ -509,11 +509,13 @@ void* zgbmsgprocess(void* argc)
         ZGBADDRESS broadcastaddr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
         if(memcmp(src, broadcastaddr, 8) == 0)
         {
+            MYLOG_INFO("Drop a broadcast msg!");
             goto end;
         }
 
-        if(qmsg.msg.payload.adf.data.magicnum != 0xAA)
+        if(*zgbdata != 0xAA)
         {
+            MYLOG_INFO("Drop a not own msg!");
             goto end;
         }
         
