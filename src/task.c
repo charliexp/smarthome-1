@@ -490,6 +490,7 @@ void* zgbmsgprocess(void* argc)
             MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
             if(nrow == 0) //数据库中没有该设备
             {
+                milliseconds_sleep(1000);
                 sendzgbmsg(src, NULL, 0, ZGB_MSGTYPE_DEVICEREGISTER, DEV_ANYONE , 0, getpacketid());//要求设备注册
             }
             sqlite3_free_table(dbresult);
@@ -550,13 +551,14 @@ void* zgbmsgprocess(void* argc)
                 cJSON *device_json = get_device_status_json(db_deviceid);
                 cJSON *attr_json;
                 cJSON *replace_value_json;
-                int value;
+                int value,oldvalue;
                 int i = 0;
                 BYTE attr; 
 
+                needmqtt = false;
                 if(device_json == NULL)
                 {
-                    break;
+                    goto end;
                 }
                 
                 while(i < zgbdata->length)
@@ -567,23 +569,32 @@ void* zgbmsgprocess(void* argc)
                     
                     if(device_json == NULL)
                     {
-                        break;
+                        goto end;
                     }
-                    
+                    value = zgbdata->pdu[i++]*256*256*256 + zgbdata->pdu[i++]*256*256 
+                        + zgbdata->pdu[i++]*256 + zgbdata->pdu[i++];
+                       
                     switch(attr)
                     {
                         case ATTR_DEVICESTATUS:
+                        case ATTR_SOCKET_V:
                         {
-                            value = zgbdata->pdu[i++];
                             replace_value_json = cJSON_CreateNumber(value);
-                            cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);
-                            needmqtt = true;
+                            oldvalue = cJSON_GetObjectItem(attr_json, "value")->valueint;
+                            if(value == oldvalue)
+                            {
+                                needmqtt = false || needmqtt;    
+                            }
+                            else
+                            {
+                                cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);
+                                needmqtt = true || needmqtt;
+                            }
                             break;
                         }
                         case ATTR_SOCKET_E:
                         {
-                            value = zgbdata->pdu[i++] + 0xFF*(zgbdata->pdu[i++]) + 0xFFFF*(zgbdata->pdu[i++]) + 0xFFFFFF*(zgbdata->pdu[i++]);
-                            needmqtt = false;
+                            needmqtt = false || needmqtt;
                             MYLOG_INFO("Get a socket electricity report msg!the value is %lu", value);
                             electricity_stat(db_deviceid, value);
                             break;
@@ -601,6 +612,7 @@ void* zgbmsgprocess(void* argc)
             default: 
                 ;
         }
+end:
 	}
 	pthread_exit(NULL);        
 }

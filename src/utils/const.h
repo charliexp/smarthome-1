@@ -132,11 +132,11 @@
 #define TLV_VALUE_STANDBY    0x02 //待机
 
 /*插座数据*/
-#define ATTR_SOCKET_E   0x10 //插座电量
-#define ATTR_SOCKET_P   0x11 //插座功率
-#define ATTR_SOCKET_V   0x12 //插座电压
-#define ATTR_SOCKET_I   0x13 //插座电流
-#define ATTR_SOCKET_BE  0x14 //插座总电量
+#define ATTR_SOCKET_E   0x10 //电量
+#define ATTR_SOCKET_P   0x11 //功率
+#define ATTR_SOCKET_V   0x12 //电压
+#define ATTR_SOCKET_I   0x13 //电流
+#define ATTR_SOCKET_BE  0x14 //总电量
 #define ATTR_SOCKET_WORKTIME 0x15 //插座通电时间
 
 /*设备属性*/
