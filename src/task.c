@@ -507,7 +507,7 @@ void* zgbmsgprocess(void* argc)
 
         //如果是广播报文，直接丢弃
         ZGBADDRESS broadcastaddr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-        if(memcmp(src, broadcastaddr, 8) != 0)
+        if(memcmp(src, broadcastaddr, 8) == 0)
         {
             goto end;
         }
