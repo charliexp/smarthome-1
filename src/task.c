@@ -734,8 +734,8 @@ void* uartlisten(void *argc)
                 }
             }
 
-            zmsg.payload.cmdid[0] = msgbuf[i + (int)&zmsg.payload.cmdid - (int)&zmsg];
-            zmsg.payload.cmdid[1] = msgbuf[i + 1 + (int)&zmsg.payload.cmdid - (int)&zmsg];            
+            zmsg.payload.cmdid[0]     = msgbuf[i + (int)&zmsg.payload.cmdid - (int)&zmsg];
+            zmsg.payload.cmdid[1]     = msgbuf[i + 1 + (int)&zmsg.payload.cmdid - (int)&zmsg];            
 
             zmsg.payload.adf.index[0] = msgbuf[i + (int)&zmsg.payload.adf.index - (int)&zmsg];
             zmsg.payload.adf.index[1] = msgbuf[i + 1 + (int)&zmsg.payload.adf.index - (int)&zmsg]; 
@@ -753,13 +753,20 @@ void* uartlisten(void *argc)
                 }            
             }
 
+            zmsg.payload.adf.sub    = msgbuf[i + (int)&zmsg.payload.adf.sub - (int)&zmsg];
+            zmsg.payload.adf.opt    = msgbuf[i + (int)&zmsg.payload.adf.opt - (int)&zmsg];
+            zmsg.payload.adf.length = msgbuf[i + (int)&zmsg.payload.adf.length - (int)&zmsg];
+            
             if(zmsg.payload.adf.index[0] == 0xA0 && zmsg.payload.adf.index[1] == 0x0F)
             {
+                zmsg.payload.adf.data.magicnum    = msgbuf[i + (int)&zmsg.payload.adf.data.magicnum - (int)&zmsg];
+                zmsg.payload.adf.data.length      = msgbuf[i + (int)&zmsg.payload.adf.data.length - (int)&zmsg];
+                zmsg.payload.adf.data.version     = msgbuf[i + (int)&zmsg.payload.adf.data.version - (int)&zmsg];
                 zmsg.payload.adf.data.devicetype  = msgbuf[i + (int)&zmsg.payload.adf.data.devicetype - (int)&zmsg];
                 zmsg.payload.adf.data.deviceindex = msgbuf[i + (int)&zmsg.payload.adf.data.deviceindex - (int)&zmsg];
     			zmsg.payload.adf.data.packetid    = msgbuf[i + (int)&zmsg.payload.adf.data.packetid - (int)&zmsg];
     			zmsg.payload.adf.data.msgtype     = msgbuf[i + (int)&zmsg.payload.adf.data.msgtype - (int)&zmsg];
-                zmsg.payload.adf.data.length      = msgbuf[i + (int)&zmsg.payload.adf.data.length - (int)&zmsg];
+                
     			memcpy((void*)zmsg.payload.adf.data.pdu, (void*)(msgbuf + i + 44), zmsg.payload.adf.data.length);                
             }
 
