@@ -654,8 +654,8 @@ void* uartlisten(void *argc)
 	while(1)
 	{
 		nbyte = read(g_uartfd, msgbuf, 110);
-        MYLOG_INFO("Uart recv %d byte:", nbyte);
-        MYLOG_BYTE(msgbuf, nbyte);
+        //MYLOG_INFO("Uart recv %d byte:", nbyte);
+        //MYLOG_BYTE(msgbuf, nbyte);
         bitnum = nbyte;
 		for(i = 0; i < bitnum; )
 		{
