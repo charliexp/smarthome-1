@@ -41,7 +41,8 @@ int log_init();
     MYLOG_INFO("footer:%2X", msg.footer);\
 }
 #elif defined(SIMPLE)
-#define MYLOG_ZGBMSG(msg) {MYLOG_BYTE((BYTE*)&msg, msg.msglength+2);\
-    MYLOG_BYTE((BYTE*)&(msg.check), 2);\}
+#define MYLOG_ZGBMSG(msg) { MYLOG_BYTE((BYTE*)&msg, msg.msglength+2);\
+    MYLOG_BYTE((BYTE*)&(msg.check), 2);\
+    }
 #endif
 #endif
