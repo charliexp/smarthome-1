@@ -473,6 +473,7 @@ void* zgbmsgprocess(void* argc)
             MYLOG_ERROR("rcvret = %d", rcvret);
 		}
 		MYLOG_INFO("zgbmsgprocess recive a msg");
+		MYLOG_ZGBMSG(qmsg.msg);
         memcpy(src, qmsg.msg.payload.src, 8);
         zgbaddresstodbaddress(src, db_zgbaddress);
         MYLOG_ZGBMSG(qmsg.msg);
@@ -654,8 +655,8 @@ void* uartlisten(void *argc)
 	while(1)
 	{
 		nbyte = read(g_uartfd, msgbuf, 110);
-        //MYLOG_INFO("Uart recv %d byte:", nbyte);
-        //MYLOG_BYTE(msgbuf, nbyte);
+        MYLOG_INFO("Uart recv %d byte:", nbyte);
+        MYLOG_BYTE(msgbuf, nbyte);
         bitnum = nbyte;
 		for(i = 0; i < bitnum; )
 		{
@@ -665,33 +666,40 @@ void* uartlisten(void *argc)
 				continue;
 			}
 
+            if(nbyte > 2 &&(msgbuf[i+2] != 0x41)) 
+            {
+                continue;
+            }
+
+            if(nbyte > 3 &&(msgbuf[i+3] != 0x88))
+            {
+                continue;
+            }
+            
 			/*开始提取ZGB消息*/
 			zgbmsginit(&zmsg);
 			zmsg.msglength = msgbuf[i + 1];
             if(zmsg.msglength+4 > bitnum-i) //如果ZGB消息长度大于接受到字节剩余长度说明还要接受后续字节
             {
                 int needbyte = (zmsg.msglength + 4) -  (bitnum - i);//构造当前报文还需接收的字节数
-                
-                //MYLOG_DEBUG("Need %d byte to construct a message!", needbyte);
-                
+                        
                 nbyte = read(g_uartfd, msgbuf+bitnum, needbyte);
                     
-                //MYLOG_INFO("Uart extern recv %d byte:", nbyte);
-                //MYLOG_BYTE(msgbuf+bitnum, nbyte);
+                MYLOG_INFO("Uart extern recv %d byte:", nbyte);
+                MYLOG_BYTE(msgbuf+bitnum, nbyte);
                 bitnum = bitnum + nbyte;
                 
                 while(needbyte > nbyte)//循环读取直到全部读取
                 {
                     needbyte = needbyte - nbyte;
-                    //MYLOG_DEBUG("Need %d byte!", needbyte);
                     nbyte = read(g_uartfd, msgbuf+bitnum, needbyte);
-                    //MYLOG_INFO("Uart extern recv %d byte:", nbyte);
-                    //MYLOG_BYTE(msgbuf+bitnum, nbyte); 
+                    MYLOG_INFO("Uart extern recv %d byte:", nbyte);
+                    MYLOG_BYTE(msgbuf+bitnum, nbyte); 
                     bitnum = bitnum + nbyte;
                 }
-                //MYLOG_DEBUG("The complete msg is:");
-                //MYLOG_BYTE(msgbuf+i, zmsg.msglength + 4);
-                //MYLOG_ZGBMSG(zmsg);
+                MYLOG_DEBUG("The complete msg is:");
+                MYLOG_BYTE(msgbuf+i, zmsg.msglength + 4);
+                MYLOG_ZGBMSG(zmsg);
             }
 			zmsg.check = msgbuf[i + zmsg.msglength + 2];
 			sum = 0;
@@ -701,12 +709,14 @@ void* uartlisten(void *argc)
 			{
 				sum += msgbuf[i + 2 + j];//check取值为Payload相加值的最低字节
 			}
+			
+			//如果check值不对，需要整个报文从i-1分析
 			if (sum%256 != zmsg.check)
 			{
                 MYLOG_DEBUG("The zmsg.check is %d", zmsg.check);
                 MYLOG_DEBUG("The sum is %d,the sum/256 = %d", sum, sum%256);
 				MYLOG_ERROR("Wrong format!");
-				//i = i + zmsg.msglength + 4;
+				
 				i++;
 				continue;
 			}
@@ -755,10 +765,7 @@ void* uartlisten(void *argc)
             }
 
             zgbqmsg.msgtype = QUEUE_MSG_ZGB;
-            zgbqmsg.msg = zmsg;
-
-            MYLOG_DEBUG("The complete msg is:");
-            MYLOG_ZGBMSG(zmsg);            
+            memcpy((void*)&zgbqmsg.msg, (void*)&zmsg, sizeof(zgbmsg));
 
           	if (ret = msgsnd(g_queueid, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
         	{
