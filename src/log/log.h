@@ -40,7 +40,7 @@ int log_init();
     MYLOG_INFO("check:%2X", msg.check);\
     MYLOG_INFO("footer:%2X", msg.footer);\
 }
-#elif 1
+#elif
 #define MYLOG_ZGBMSG(msg) MYLOG_BYTE(msg, msg.length+4)
 #endif
 #endif
