@@ -22,7 +22,7 @@ int log_init();
 #define MYLOG_INFO(format...)  if(g_log_level == 0 || g_log_level == 1) my_log(INFO, (char*)__FILE__, (int)__LINE__, (char*)__FUNCTION__, format)
 
 #define MYLOG_ERROR(format...)  my_log(ERROR, (char*)__FILE__, (int)__LINE__, (char*)__FUNCTION__, format)
-
+#ifdef 0
 #define MYLOG_ZGBMSG(msg) {  MYLOG_INFO("header:%2X", msg.header);MYLOG_INFO("msglength:%2X", msg.msglength);\
     MYLOG_INFO("framecontrol:%2X%2X", msg.payload.framecontrol[0], msg.payload.framecontrol[1]);\
     MYLOG_INFO("src:%2X%2X%2X%2X%2X%2X%2X%2X", msg.payload.src[0], msg.payload.src[1], msg.payload.src[2], msg.payload.src[3], msg.payload.src[4], msg.payload.src[5], msg.payload.src[6], \
@@ -40,4 +40,7 @@ int log_init();
     MYLOG_INFO("check:%2X", msg.check);\
     MYLOG_INFO("footer:%2X", msg.footer);\
 }
+#elif 1
+#define MYLOG_ZGBMSG(msg) MYLOG_BYTE(msg, msg.length+4)
+#endif
 #endif

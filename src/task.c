@@ -510,12 +510,14 @@ void* zgbmsgprocess(void* argc)
         if(memcmp(src, broadcastaddr, 8) == 0)
         {
             MYLOG_INFO("Drop a broadcast msg!");
+            MYLOG_ZGBMSG(qmsg.msg);
             goto end;
         }
 
-        if(*zgbdata != 0xAA)
+        if(zgbdata->magicnum != 0xAA)
         {
             MYLOG_INFO("Drop a not own msg!");
+            MYLOG_ZGBMSG(qmsg.msg);
             goto end;
         }
         
