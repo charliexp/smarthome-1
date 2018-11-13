@@ -430,8 +430,8 @@ void* uartsend(void *argc)
 			MYLOG_ERROR("rcvret = %d", rcvret);
 			MYLOG_ERROR("recive uartsendmsg fail!");
 		}
-        MYLOG_INFO("uart begin to send a msg!");
-        MYLOG_ZGBMSG(qmsg.msg);
+        //MYLOG_INFO("uart begin to send a msg!");
+        //MYLOG_ZGBMSG(qmsg.msg);
         if ( write(g_uartfd, (char *)&qmsg.msg, (int)(qmsg.msg.msglength + 2)) != (qmsg.msg.msglength + 2))
 	    {
 		    MYLOG_ERROR("com write error!");
@@ -476,7 +476,7 @@ void* zgbmsgprocess(void* argc)
 		MYLOG_ZGBMSG(qmsg.msg);
         memcpy(src, qmsg.msg.payload.src, 8);
         zgbaddresstodbaddress(src, db_zgbaddress);
-        MYLOG_ZGBMSG(qmsg.msg);
+
         MYLOG_INFO("The index is %2x, %2x", qmsg.msg.payload.adf.index[0], qmsg.msg.payload.adf.index[1]);
         if(qmsg.msg.payload.adf.index[0] == 0x00 && qmsg.msg.payload.adf.index[1] == 0x00) //设备入网消息
         {
@@ -699,7 +699,6 @@ void* uartlisten(void *argc)
                 }
                 MYLOG_DEBUG("The complete msg is:");
                 MYLOG_BYTE(msgbuf+i, zmsg.msglength + 4);
-                MYLOG_ZGBMSG(zmsg);
             }
 			zmsg.check = msgbuf[i + zmsg.msglength + 2];
 			sum = 0;
@@ -766,6 +765,8 @@ void* uartlisten(void *argc)
 
             zgbqmsg.msgtype = QUEUE_MSG_ZGB;
             memcpy((void*)&zgbqmsg.msg, (void*)&zmsg, sizeof(zgbmsg));
+            MYLOG_DEBUG("Before send the zgbmsg:");
+            MYLOG_ZGBMSG(zgbqmsg.msg);
 
           	if (ret = msgsnd(g_queueid, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
         	{
