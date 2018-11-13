@@ -672,26 +672,26 @@ void* uartlisten(void *argc)
             {
                 int needbyte = (zmsg.msglength + 4) -  (bitnum - i);//构造当前报文还需接收的字节数
                 
-                MYLOG_DEBUG("Need %d byte to construct a message!", needbyte);
+                //MYLOG_DEBUG("Need %d byte to construct a message!", needbyte);
                 
                 nbyte = read(g_uartfd, msgbuf+bitnum, needbyte);
                     
-                MYLOG_INFO("Uart extern recv %d byte:", nbyte);
-                MYLOG_BYTE(msgbuf+bitnum, nbyte);
+                //MYLOG_INFO("Uart extern recv %d byte:", nbyte);
+                //MYLOG_BYTE(msgbuf+bitnum, nbyte);
                 bitnum = bitnum + nbyte;
                 
                 while(needbyte > nbyte)//循环读取直到全部读取
                 {
                     needbyte = needbyte - nbyte;
-                    MYLOG_DEBUG("Need %d byte!", needbyte);
+                    //MYLOG_DEBUG("Need %d byte!", needbyte);
                     nbyte = read(g_uartfd, msgbuf+bitnum, needbyte);
-                    MYLOG_INFO("Uart extern recv %d byte:", nbyte);
-                    MYLOG_BYTE(msgbuf+bitnum, nbyte); 
+                    //MYLOG_INFO("Uart extern recv %d byte:", nbyte);
+                    //MYLOG_BYTE(msgbuf+bitnum, nbyte); 
                     bitnum = bitnum + nbyte;
                 }
-                MYLOG_DEBUG("The complete msg is:");
-                MYLOG_BYTE(msgbuf+i, zmsg.msglength + 4);
-                MYLOG_ZGBMSG(zmsg);
+                //MYLOG_DEBUG("The complete msg is:");
+                //MYLOG_BYTE(msgbuf+i, zmsg.msglength + 4);
+                //MYLOG_ZGBMSG(zmsg);
             }
 			zmsg.check = msgbuf[i + zmsg.msglength + 2];
 			sum = 0;
@@ -756,6 +756,9 @@ void* uartlisten(void *argc)
 
             zgbqmsg.msgtype = QUEUE_MSG_ZGB;
             zgbqmsg.msg = zmsg;
+
+            MYLOG_DEBUG("The complete msg is:");
+            MYLOG_ZGBMSG(zmsg);            
 
           	if (ret = msgsnd(g_queueid, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
         	{
