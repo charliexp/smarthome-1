@@ -578,7 +578,7 @@ void* zgbmsgprocess(void* argc)
                     goto end;
                 }
                 
-                while(i < zgbdata->length)
+                while(i < (zgbdata->length - 7))
                 {
                     attr = zgbdata->pdu[i++];
                     
