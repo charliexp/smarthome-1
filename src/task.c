@@ -697,8 +697,8 @@ void* uartlisten(void *argc)
                     MYLOG_BYTE(msgbuf+bitnum, nbyte); 
                     bitnum = bitnum + nbyte;
                 }
-                MYLOG_DEBUG("The complete msg is:");
-                MYLOG_BYTE(msgbuf+i, zmsg.msglength + 4);
+                //MYLOG_DEBUG("The complete msg is:");
+                //MYLOG_BYTE(msgbuf+i, zmsg.msglength + 4);
             }
 			zmsg.check = msgbuf[i + zmsg.msglength + 2];
 			sum = 0;
@@ -772,8 +772,8 @@ void* uartlisten(void *argc)
 
             zgbqmsg.msgtype = QUEUE_MSG_ZGB;
             memcpy((void*)&zgbqmsg.msg, (void*)&zmsg, sizeof(zgbmsg));
-            MYLOG_DEBUG("Before send the zgbmsg:");
-            MYLOG_ZGBMSG(zgbqmsg.msg);
+            //MYLOG_DEBUG("Before send the zgbmsg:");
+            //MYLOG_ZGBMSG(zgbqmsg.msg);
 
           	if (ret = msgsnd(g_queueid, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
         	{

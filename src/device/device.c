@@ -207,7 +207,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status); 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);
             break;
         }
@@ -219,11 +219,11 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status); 	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);
 	        status = cJSON_CreateObject();            
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICEMODE);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);           	
             break;
         }        
@@ -235,27 +235,27 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status); 	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_TEMPERATURE);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);
 	        status = cJSON_CreateObject();            
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_HUMIDITY);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);
 	        status = cJSON_CreateObject();            
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_PM25);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);
 	        status = cJSON_CreateObject();            
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_CO2);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);
 	        status = cJSON_CreateObject();            
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_FORMALDEHYDE);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);     
 	        status = cJSON_CreateObject();            
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_TV0C);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);            	
             break;
         }
@@ -267,11 +267,11 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status); 	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_TEMPERATURE);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);
 	        status = cJSON_CreateObject();            
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_HUMIDITY);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);           	
             break;
         }  
@@ -283,7 +283,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status); 	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);          	
             break;
         }
@@ -295,7 +295,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status); 	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);          	
             break;        
         }
@@ -307,7 +307,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status); 	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SOCKET_V);
-        	cJSON_AddNullToObject(status, "value");
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);          	
             break;        
         }        
