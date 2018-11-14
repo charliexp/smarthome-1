@@ -16,4 +16,6 @@ void* mqttqueueprocess(void *argc);
 /*局域网MQTT消息队列的处理进程*/
 void* lanmqttqueueprocess(void *argc);
 
+/*上报所有已注册设备*/
+void reportdevices();
 #endif

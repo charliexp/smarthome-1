@@ -5,6 +5,9 @@ extern int g_queueid;
 extern int g_operationflag;
 extern char* g_topics[TOPICSNUM];
 extern char g_clientid[30], g_clientid_pub[30];
+extern char g_topicroot[20];
+extern sqlite3* g_db;
+
 extern FILE* g_fp;
 
 static void connectfailure(void* context, MQTTAsync_failureData* response);
@@ -462,4 +465,35 @@ void* lanmqttqueueprocess(void *argc)
 		free(msg.msg.topic);
 	}
 	pthread_exit(NULL);
+}
+
+//上报所有已注册设备
+void reportdevices()
+{
+    int nrow = 0, ncolumn = 0;
+    char **azResult; 
+    char *zErrMsg = NULL; 
+    char sql[256] = {0};
+    char* deviceid = {0}; 
+    char devicetype;
+    char topic[TOPIC_LENGTH] = {0};
+    cJSON* root;
+    
+    sprintf(sql,"SELECT * FROM devices;");
+    MYLOG_INFO(sql);
+            
+    sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_ADD);
+    sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
+    //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+    for(int i=1;i<=nrow;i++)
+    {
+        root = cJSON_CreateObject();
+        deviceid      = azResult[i*ncolumn];
+        devicetype    = atoi(azResult[i*ncolumn+2]); 
+        cJSON_AddStringToObject(root, "deviceid", deviceid);
+        cJSON_AddNumberToObject(root, "devicetype", devicetype);        
+        sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
+        cJSON_Delete(root);
+    } 
+    sqlite3_free_table(azResult);      
 }

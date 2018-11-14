@@ -236,6 +236,7 @@ void* devicemsgprocess(void *argc)
                         //pthread_t pth;
                         //pthread_create(&pth, NULL, testfun, NULL);                   
                     }
+                    reportdevices();
                     break;
                 case TYPE_DEVICE_LIST:
                     write(g_uartfd, AT_DEVICE_LIST, strlen(AT_DEVICE_LIST));
@@ -456,9 +457,9 @@ void* zgbmsgprocess(void* argc)
     char db_deviceid[20] = {0}; 
     char msgtype,devicetype,deviceindex,packetid;
     zgbmsg responsemsg;
-    char topic[TOPIC_LENGTH] = { 0 };
+    char topic[TOPIC_LENGTH] = {0};
     char *zErrMsg = NULL;  
-    char sql[512]; 
+    char sql[256] ={0}; 
     BYTE data[72];
     int rc;  
     int len = 0; 
@@ -531,14 +532,27 @@ void* zgbmsgprocess(void* argc)
                  char **azResult; 
                  
                  MYLOG_INFO("[ZGB DEVICE]Get a device network joining response message.");
-       
+                 
+                 sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", db_deviceid);
+                 MYLOG_INFO(sql);
+            
+                 sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
+                 //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+                 if(nrow != 0) //数据库中没有该设备
+                 {
+                    MYLOG_INFO("The device has been registered!");
+                    break;
+                 }
+                 sqlite3_free_table(azResult);                 
+                 nrow = 0, ncolumn = 0;
+                 
                  sprintf(sql, "replace into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, devicetype, deviceindex);
                  MYLOG_INFO("The sql is %s", sql);
                  rc = sqlite3_exec(g_db, sql, 0, 0, &zErrMsg);
                  if(rc != SQLITE_OK)
                  {
                      MYLOG_ERROR(zErrMsg);
-                     continue;
+                     break;
                  }
                  cJSON* devicestatus = create_device_status_json(db_deviceid, devicetype);
                  cJSON_AddItemToArray(g_devices_status_json, devicestatus);
@@ -548,6 +562,7 @@ void* zgbmsgprocess(void* argc)
                  cJSON_AddStringToObject(root, "deviceid", db_deviceid);
                  cJSON_AddNumberToObject(root, "devicetype", devicetype);
                  sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
+                 cJSON_Delete(root);
                  break;
             }
             case ZGB_MSGTYPE_DEVICE_OPERATION_RESULT:
@@ -772,8 +787,8 @@ void* uartlisten(void *argc)
 
             zgbqmsg.msgtype = QUEUE_MSG_ZGB;
             memcpy((void*)&zgbqmsg.msg, (void*)&zmsg, sizeof(zgbmsg));
-            //MYLOG_DEBUG("Before send the zgbmsg:");
-            //MYLOG_ZGBMSG(zgbqmsg.msg);
+            MYLOG_DEBUG("Before send the zgbmsg:");
+            MYLOG_ZGBMSG(zgbqmsg.msg);
 
           	if (ret = msgsnd(g_queueid, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
         	{
