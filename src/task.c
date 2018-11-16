@@ -653,7 +653,7 @@ void* zgbmsgprocess(void* argc)
                             
                  sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
                  //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
-                 if(nrow != 0) //数据库中没有该设备
+                 if(nrow == 0) //数据库中没有该设备
                  {
                     MYLOG_INFO("The device has been registered!");
                     break;
@@ -810,8 +810,6 @@ void* uartlisten(void *argc)
 
             zgbqmsg.msgtype = QUEUE_MSG_ZGB;
             memcpy((void*)&zgbqmsg.msg, (void*)&zmsg, sizeof(zgbmsg));
-            MYLOG_DEBUG("Before send the zgbmsg:");
-            MYLOG_ZGBMSG(zgbqmsg.msg);
 
           	if (ret = msgsnd(g_queueid, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
         	{
