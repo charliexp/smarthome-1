@@ -640,6 +640,7 @@ void* zgbmsgprocess(void* argc)
                     sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
                     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device_json), 0, 0);
                 }
+                break;
             }
             case ZGB_MSGTYPE_DEVICE_LOCATION:
             {
