@@ -641,6 +641,29 @@ void* zgbmsgprocess(void* argc)
                     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device_json), 0, 0);
                 }
             }
+            case ZGB_MSGTYPE_DEVICE_LOCATION:
+            {
+                 cJSON* root = cJSON_CreateObject();
+                 int nrow = 0, ncolumn = 0;
+                 char **azResult; 
+                 
+                 MYLOG_INFO("[ZGB DEVICE]Get a device location message.");
+                 
+                 sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", db_deviceid);
+                            
+                 sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
+                 //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+                 if(nrow != 0) //数据库中没有该设备
+                 {
+                    MYLOG_INFO("The device has been registered!");
+                    break;
+                 }
+                 sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_SHOW);
+                 cJSON_AddStringToObject(root, "deviceid", db_deviceid);
+                 cJSON_AddNumberToObject(root, "type", devicetype);
+                 sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), 0, 0);
+                 sqlite3_free_table(azResult);                
+            }
             default: 
                 ;
         }

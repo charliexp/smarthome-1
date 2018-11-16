@@ -48,6 +48,7 @@
 
 #define TOPIC_DEVICE_ADD "devices/add"
 #define TOPIC_DEVICE_STATUS "devices/status"
+#define TOPIC_DEVICE_SHOW "devices/show"
 
 #define QOS_LEVEL_0 0
 #define QOS_LEVEL_1 1
@@ -96,6 +97,7 @@
 #define ZGB_MSGTYPE_DEVICE_OPERATION_RESULT 0x04 //设备操作结果
 #define ZGB_MSGTYPE_DEVICE_STATUS_QUERY     0x05 //设备状态查询
 #define ZGB_MSGTYPE_DEVICE_STATUS_REPORT    0x06 //设备状态上报
+#define ZGB_MSGTYPE_DEVICE_LOCATION         0x07 //设备定位  
 #define ZGB_MSGTYPE_UPDATE                  0x10 //软件升级提示
 #define ZGB_MSGTYPE_UPDATE_RESPONSE         0x11 //软件升级响应
 #define ZGB_MSGTYPE_UPDATE_PAYLOAD          0x12 //升级报文
