@@ -619,7 +619,7 @@ void* zgbmsgprocess(void* argc)
                             }
                             else
                             {
-                                cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);
+                                change_device_attr_value(db_deviceid, attr, value);
                                 needmqtt = true || needmqtt;
                             }
                             break;

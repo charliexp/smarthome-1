@@ -29,6 +29,9 @@ void devices_status_query();
 
 void sendzgbmsgfordevices(char devicetype, BYTE *data, char length, char msgtype);
 
+/*更改内存设备属性表中的设备属性*/
+void change_device_attr_value(char* deviceid, char attr, int value);
+
 void device_closeallfan();
 
 /* MQTT的操作数据转为ZGB的DATA */

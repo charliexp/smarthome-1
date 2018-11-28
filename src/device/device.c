@@ -376,6 +376,28 @@ cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
     return NULL;
 }
 
+void change_device_attr_value(char* deviceid, char attr, int value)
+{
+    int devicenum;
+    cJSON* devicestatus = NULL;
+    cJSON* attr_json = NULL;
+    cJSON* replace_value_json = cJSON_CreateNumber(value);
+    char* array_deviceid;
+
+    devicenum = cJSON_GetArraySize(g_devices_status_json);
+
+    for (int i=0; i < devicenum; i++)
+    {
+        devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
+        array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
+        if(strcmp(deviceid, array_deviceid) == 0)
+        {
+            attr_json = get_attr_value_object_json(devicestatus, attr); 
+            cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);            
+        }
+    }    
+}
+
 /* MQTT的操作数据转为ZGB的DATA */
 int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
 {
