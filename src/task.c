@@ -538,7 +538,7 @@ void* zgbmsgprocess(void* argc)
             
                  sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
                  //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
-                 if(nrow != 0) //数据库中没有该设备
+                 if(nrow != 0) //数据库中有该设备
                  {
                     MYLOG_INFO("The device has been registered!");
                     break;
@@ -619,6 +619,7 @@ void* zgbmsgprocess(void* argc)
                             }
                             else
                             {
+                                cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);
                                 change_device_attr_value(db_deviceid, attr, value);
                                 needmqtt = true || needmqtt;
                             }
