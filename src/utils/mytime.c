@@ -150,8 +150,8 @@ void electtimerfun(timer* t)
 
     MYLOG_DEBUG("electric statistics!");
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //¹ã²¥±¨ÎÄ
-    BYTE payload[] = {ATTR_SOCKET_E, ATTR_SOCKET_WORKTIME};
-    sendzgbmsg(address, payload, 2, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_SOCKET, 0, getpacketid());        
+    BYTE payload[] = {ATTR_SOCKET_E};
+    sendzgbmsg(address, payload, 1, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_SOCKET, 0, getpacketid());        
     time(&time_now);
     tm = localtime(&time_now);
     sec = tm->tm_sec;

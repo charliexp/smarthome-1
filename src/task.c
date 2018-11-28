@@ -619,7 +619,9 @@ void* zgbmsgprocess(void* argc)
                             }
                             else
                             {
+                                //修改的是复制出来的设备属性表
                                 cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);
+                                //修改的是全局的设备属性表
                                 change_device_attr_value(db_deviceid, attr, value);
                                 needmqtt = true || needmqtt;
                             }
