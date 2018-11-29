@@ -446,7 +446,8 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
                 while(j)
                 {                    
                     zgbdata[index+j] = attrvalue%256;
-                    attrvalue = attrvalue/256;                      
+                    attrvalue = attrvalue/256; 
+                    j--;
                 }
                 index = index + 5;
                 break;
