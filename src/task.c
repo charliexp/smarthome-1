@@ -478,7 +478,6 @@ void* zgbmsgprocess(void* argc)
         memcpy(src, qmsg.msg.payload.src, 8);
         zgbaddresstodbaddress(src, db_zgbaddress);
 
-        MYLOG_INFO("The index is %2x, %2x", qmsg.msg.payload.adf.index[0], qmsg.msg.payload.adf.index[1]);
         if(qmsg.msg.payload.adf.index[0] == 0x00 && qmsg.msg.payload.adf.index[1] == 0x00) //设备入网消息
         {
             int nrow = 0, ncolumn = 0;
@@ -697,8 +696,8 @@ void* uartlisten(void *argc)
 	while(1)
 	{
 		nbyte = read(g_uartfd, msgbuf, 110);
-        MYLOG_INFO("Uart recv %d byte:", nbyte);
-        MYLOG_BYTE(msgbuf, nbyte);
+        //MYLOG_INFO("Uart recv %d byte:", nbyte);
+        //MYLOG_BYTE(msgbuf, nbyte);
         bitnum = nbyte;
 		for(i = 0; i < bitnum; )
 		{
@@ -727,16 +726,16 @@ void* uartlisten(void *argc)
                         
                 nbyte = read(g_uartfd, msgbuf+bitnum, needbyte);
                     
-                MYLOG_INFO("Uart extern recv %d byte:", nbyte);
-                MYLOG_BYTE(msgbuf+bitnum, nbyte);
+                //MYLOG_INFO("Uart extern recv %d byte:", nbyte);
+                //MYLOG_BYTE(msgbuf+bitnum, nbyte);
                 bitnum = bitnum + nbyte;
                 
                 while(needbyte > nbyte)//循环读取直到全部读取
                 {
                     needbyte = needbyte - nbyte;
                     nbyte = read(g_uartfd, msgbuf+bitnum, needbyte);
-                    MYLOG_INFO("Uart extern recv %d byte:", nbyte);
-                    MYLOG_BYTE(msgbuf+bitnum, nbyte); 
+                    //MYLOG_INFO("Uart extern recv %d byte:", nbyte);
+                    //MYLOG_BYTE(msgbuf+bitnum, nbyte); 
                     bitnum = bitnum + nbyte;
                 }
                 //MYLOG_DEBUG("The complete msg is:");

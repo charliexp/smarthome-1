@@ -439,9 +439,19 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
             case ATTR_WINDSPEED:
             case ATTR_WINDSPEED_NUM:
             case ATTR_TEMPERATURE:
-                zgbdata[index++] = attr;
-                zgbdata[index++] = value;
+            {
+                int j = 4;
+                int attrvalue = value;
+                zgbdata[index] = attr;
+                while(j)
+                {                    
+                    zgbdata[index+j] = attrvalue%256;
+                    attrvalue = attrvalue/256;                      
+                }
+                index = index + 5;
                 break;
+            }
+
             case ATTR_DEVICENAME:
                 zgbdata[index++] = attr;
                 memcpy(zgbdata+index, name, strlen(name));

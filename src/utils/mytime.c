@@ -131,7 +131,7 @@ void timerinit()
         time_sec = (58*60 - min*60 -sec);
     }
 
-    timer* pelecttimer = createtimer(time_sec, electtimerfun);
+    timer* pelecttimer = createtimer(10, electtimerfun);
     addtimer(pelecttimer);
     
     timer* pstatustimer = createtimer(10, statustimerfun);
