@@ -3,7 +3,7 @@
 
 /*COO AT命令*/
 #define AT_CREATE_NETWORK       "AT+FORM=02"
-#define AT_OPEN_NETWORK         "AT+PERMITJOIN=30"
+#define AT_OPEN_NETWORK         "AT+PERMITJOIN=120"
 #define AT_DEVICE_LIST          "AT+LIST"
 #define AT_NETWORK_NOCLOSE      "AT+PERMITJOIN=FF"
 #define AT_CLOSE_NETWORK        "AT+PERMITJOIN=00"
@@ -70,23 +70,29 @@
 #define ZGB_VERSION_10 0x10
 
 /*设备类型*/
-#define DEV_BOOT			0x00	// 空设备，特指Boot Loader
-#define DEV_SOCKET		    0x01	// 插座
-#define DEV_AIR_CON		    0x02	// 空调
-#define DEV_BOILER			0x03	// 锅炉
-#define DEV_FAN_COIL		0x04	// 风机盘管
-#define DEV_FLOOR_HEAT	    0x05	// 地暖
-#define DEV_FRESH			0x06	// 新风
-#define DEV_WATER_PURIF	    0x07	// 净水器
-#define DEV_WATER_HEAT	    0x08	// 热水器
-#define DEV_WATER_PUMP	    0x09	// 循环泵
-#define DEV_DUST_CLEAN	    0x0A    // 除尘器
-#define DEV_MULTI_PANEL     0x0B    // 多合一控制面板
-#define SEN_WIND_PRESSURE   0x0C //风压传感器
-#define SEN_WATER_FLOW      0x0D //水流量计
-#define SEN_WATER_TEMPERATURE  0x0E//水温传感器
-#define SEN_ENV_DATA        0x0F //环境数据传感器
-#define DEV_ANYONE          0xFF    // 任何设备
+#define DEV_BOOT			   0x00	// 空设备
+#define DEV_SOCKET		       0x01	// 插座
+#define DEV_AIR_CON		       0x02	// 空调
+#define DEV_BOILER			   0x03	// 锅炉
+#define DEV_FAN_COIL		   0x04	// 风机盘管
+#define DEV_FLOOR_HEAT	       0x05	// 地暖
+#define DEV_FRESH			   0x06	// 新风
+#define DEV_WATER_PURIF	       0x07	// 净水器
+#define DEV_WATER_HEAT	       0x08	// 热水器
+#define DEV_WATER_PUMP	       0x09	// 循环泵
+#define DEV_DUST_CLEAN	       0x0A // 除尘器
+#define DEV_CONTROL_PANEL      0x0B // 控制面板
+#define DEV_HUMIDIFIER         0x0C // 加湿器
+#define DEV_DEHUMIDIFIER       0x0D // 除湿器
+#define SEN_WIND_PRESSURE      0x50 // 风压传感器
+#define SEN_WATER_FLOW         0x51 // 水流量计
+#define SEN_WATER_TEMPERATURE  0x52 // 水温传感器
+#define SEN_ENV_DATA           0x53 // 环境数据传感器
+#define SEN_ELECTRICITY_METER  0x54 // 电量计 
+#define SEN_GAS_METER          0x55 // 气量计
+#define SEN_ANEMOGRAPH         0x56 // 风速计
+#define DEV_ANYONE             0xFF // 任何设备
+
 
 
 /*消息类型     对应msgtype*/

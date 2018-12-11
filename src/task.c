@@ -206,7 +206,8 @@ void* devicemsgprocess(void *argc)
         }          
         operationtype = tmp->valueint;//操作类型
 
-        if(operationtype == 0)//操作的coo模块
+        //操作的coo模块
+        if(operationtype == 0)
         {
             int actiontype;
             tmp = cJSON_GetObjectItem(g_device_mqtt_json, "cmdid");
@@ -231,11 +232,6 @@ void* devicemsgprocess(void *argc)
                     milliseconds_sleep(2000);
                     write(g_uartfd, AT_OPEN_NETWORK, strlen(AT_OPEN_NETWORK));
                     MYLOG_INFO("COO operation AT+PERMITJOIN=60");
-                    //测试代码
-                    {
-                        //pthread_t pth;
-                        //pthread_create(&pth, NULL, testfun, NULL);                   
-                    }
                     reportdevices();
                     break;
                 case TYPE_DEVICE_LIST:
@@ -273,6 +269,7 @@ void* devicemsgprocess(void *argc)
         
 		devicenum = cJSON_GetArraySize(devices);//一个消息中操作的设备数量
 
+        //设备操作
         if (operationtype == 1)
         {
     		for (i=0; i< devicenum; i++)
@@ -285,7 +282,7 @@ void* devicemsgprocess(void *argc)
                 ***/
     			packetid = getpacketid(); //packetid是用来跟zgb设备通信使用的
     			g_devicemsgstatus[i].packetid = packetid;
-    			g_devicemsgstatus[i].result = 0;
+    			g_devicemsgstatus[i].result = 1; //1代表未响应，0代表成功
     			g_devicemsgstatus[i].finish = 0;
     			g_zgbmsgnum++;
                 
@@ -355,7 +352,8 @@ void* devicemsgprocess(void *argc)
     			cJSON_AddNumberToObject(device, "result", g_devicemsgstatus[i].result);
     		}            
         }
-
+        
+        //设备状态查询
         if (operationtype == 2)
         {
     		for (i=0; i< devicenum; i++)
@@ -560,7 +558,7 @@ void* zgbmsgprocess(void* argc)
                  sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_ADD);
                  cJSON_AddStringToObject(root, "deviceid", db_deviceid);
                  cJSON_AddNumberToObject(root, "devicetype", devicetype);
-                 sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
+                 sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
                  cJSON_Delete(root);
                  break;
             }

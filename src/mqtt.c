@@ -91,7 +91,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	if (root == NULL)
 	{
 		MYLOG_ERROR("Wrong msg!");
-		return 0;
+		return 1;
 	}
 
     tmp = cJSON_GetObjectItem(root, "mqttid");

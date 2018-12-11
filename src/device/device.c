@@ -267,7 +267,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status);            	
             break;
         }
-        case DEV_MULTI_PANEL:
+        case DEV_CONTROL_PANEL:
         {
 	        status = cJSON_CreateObject(); 
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
