@@ -271,7 +271,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         {
 	        status = cJSON_CreateObject(); 
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_MULTI_PANEL);
+        	cJSON_AddNumberToObject(status, "value", DEV_CONTROL_PANEL);
         	cJSON_AddItemToArray(statusarray, status); 	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_TEMPERATURE);
