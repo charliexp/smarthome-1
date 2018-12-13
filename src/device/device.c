@@ -272,14 +272,14 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
 	        status = cJSON_CreateObject(); 
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
         	cJSON_AddNumberToObject(status, "value", DEV_CONTROL_PANEL);
-        	cJSON_AddItemToArray(statusarray, status); 	 
+        	cJSON_AddItemToArray(statusarray, status); 	
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_TEMPERATURE);
-        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddNumberToObject(status, "value", 20);
         	cJSON_AddItemToArray(statusarray, status);
 	        status = cJSON_CreateObject();            
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_HUMIDITY);
-        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddNumberToObject(status, "value", 50);
         	cJSON_AddItemToArray(statusarray, status);           	
             break;
         }  
@@ -318,7 +318,35 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);          	
             break;        
-        }        
+        }
+        case DEV_FAN_COIL:
+        {
+	        status = cJSON_CreateObject(); 
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
+        	cJSON_AddNumberToObject(status, "value", DEV_FAN_COIL);
+        	cJSON_AddItemToArray(statusarray, status); 	 
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
+        	cJSON_AddNumberToObject(status, "value", 1);
+        	cJSON_AddItemToArray(statusarray, status);
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_WINDSPEED);
+        	cJSON_AddNumberToObject(status, "value", 1);
+        	cJSON_AddItemToArray(statusarray, status);           	
+            break;            
+        }
+        case DEV_FLOOR_HEAT:
+        {
+	        status = cJSON_CreateObject(); 
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
+        	cJSON_AddNumberToObject(status, "value", DEV_FLOOR_HEAT);
+        	cJSON_AddItemToArray(statusarray, status); 	 
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
+        	cJSON_AddNumberToObject(status, "value", 1);
+        	cJSON_AddItemToArray(statusarray, status);         	
+            break;            
+        }
         default:
             device = NULL;
             
