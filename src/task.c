@@ -10,13 +10,13 @@ int g_queueid;
 sqlite3* g_db;
 char g_mac[20] = {0};
 char g_topicroot[20] = {0};
-char* g_topics[TOPICSNUM] ={0x0, 0x0};
+char* g_topics[TOPICSNUM] ={0x0, 0x0, 0x0};
 int g_zgbmsgnum;
 cJSON* g_device_mqtt_json, *g_devices_status_json;
 ZGB_MSG_STATUS g_devicemsgstatus[ZGBMSG_MAX_NUM];
 
 //程序启动后申请堆存放需要订阅的topic
-char g_topicthemes[TOPICSNUM][20] = {{"devices/#"},{"gateway"}};
+char g_topicthemes[TOPICSNUM][20] = {{"devices/operation"},{"devices/electric"}{"gateway"}};
 char g_clientid[30], g_clientid_pub[30];
 
 
