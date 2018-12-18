@@ -107,7 +107,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 
     /*设备电量查询*/
     if(strstr(topicName, "electric") != 0)
-    {        
+    {
+        MYLOG_INFO("An electric qury!")
         cJSON* t = cJSON_GetObjectItem(root, "type");        
 	    if(t == NULL)
 	    {
@@ -184,7 +185,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 		goto end;        	   
     }
     /*设备操作*/
-	else if (strstr(topicName, "devices") != 0)
+	else if (strstr(topicName, "operation") != 0)
 	{
 		if (g_operationflag) //检查当前是否有msg在处理
 		{

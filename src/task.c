@@ -16,7 +16,7 @@ cJSON* g_device_mqtt_json, *g_devices_status_json;
 ZGB_MSG_STATUS g_devicemsgstatus[ZGBMSG_MAX_NUM];
 
 //程序启动后申请堆存放需要订阅的topic
-char g_topicthemes[TOPICSNUM][20] = {{"devices/operation"},{"gateway"}};
+char g_topicthemes[TOPICSNUM][20] = {{"devices"},{"gateway"}};
 char g_clientid[30], g_clientid_pub[30];
 
 
