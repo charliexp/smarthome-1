@@ -128,8 +128,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	    char* deviceid = device->valuestring;
 	    char sql[250]={0};   
         int nrow = 0, ncolumn = 0;
-        char **dbresult;
-        char *zErrMsg = NULL;
+        const char **dbresult;
+        const char *zErrMsg = NULL;
         switch(type)
         {
             case 1:
