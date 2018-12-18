@@ -155,7 +155,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
         const char* time;
         for(int i=1;i<nrow;i++)
         {
-            record = cJSON_CreateNull();
+            record = cJSON_CreateObject();
             num = (const char*)dbresult[i*2];
             time = (const char*)dbresult[i*2+1];
             cJSON_AddNumberToObject(record, "electricity", atoi(num));
@@ -179,7 +179,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             }
             cJSON_AddItemToArray(records, record);            
         }
-        cJSON_AddItemToObject(root, "devices", records);
+        cJSON_AddItemToObject(root, "records", records);
         sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
         sqlite3_free_table(dbresult);
 		goto end;        	   
