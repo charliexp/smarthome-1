@@ -108,7 +108,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
     /*设备电量查询*/
     if(strstr(topicName, "electric") != 0)
     {
-        MYLOG_INFO("An electric qury!")
+        MYLOG_INFO("An electric qury!");
         cJSON* t = cJSON_GetObjectItem(root, "type");        
 	    if(t == NULL)
 	    {
