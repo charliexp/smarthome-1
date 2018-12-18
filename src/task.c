@@ -575,7 +575,7 @@ void* zgbmsgprocess(void* argc)
                 }                              
                 break;
             } 
-            case ZGB_MSGTYPE_DEVICE_STATUS_REPORT:
+            case ZGB_MSGTYPE_DEVICE_STATUS_REPORT://设备状态上报
             {
                 cJSON *device_json = get_device_status_json(db_deviceid);
                 cJSON *attr_json;
@@ -595,6 +595,7 @@ void* zgbmsgprocess(void* argc)
                     attr = zgbdata->pdu[i++];
                     
                     attr_json = get_attr_value_object_json(device_json, attr);
+                    replace_value_json = cJSON_CreateNumber(value);
                     
                     if(device_json == NULL)
                     {
@@ -607,8 +608,7 @@ void* zgbmsgprocess(void* argc)
                     {
                         case ATTR_DEVICESTATUS:
                         case ATTR_SOCKET_V:
-                        {
-                            replace_value_json = cJSON_CreateNumber(value);
+                        {                           
                             oldvalue = cJSON_GetObjectItem(attr_json, "value")->valueint;
                             if(value == oldvalue)
                             {
@@ -626,6 +626,7 @@ void* zgbmsgprocess(void* argc)
                         }
                         case ATTR_SOCKET_E:
                         {
+                            change_device_attr_value(db_deviceid, attr, value);                        
                             needmqtt = false || needmqtt;
                             MYLOG_INFO("Get a socket electricity report msg!the value is %lu", value);
                             electricity_stat(db_deviceid, value);

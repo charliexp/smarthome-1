@@ -216,7 +216,11 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SOCKET_V);
         	cJSON_AddNumberToObject(status, "value", 0);
-        	cJSON_AddItemToArray(statusarray, status);       	
+        	cJSON_AddItemToArray(statusarray, status);
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_SOCKET_MODE);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddItemToArray(statusarray, status);          	
             break;
         }
         case DEV_AIR_CON:

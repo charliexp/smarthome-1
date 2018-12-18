@@ -105,8 +105,85 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
     mqttid = tmp->valuestring;
     sprintf(topic, "%sresponse/%s/", topicName, mqttid);
 
+    /*设备电量查询*/
+    if(strstr(topicName, "electric") != 0)
+    {        
+        cJSON* t = cJSON_GetObjectItem(root, "type");        
+	    if(t == NULL)
+	    {
+            MYLOG_ERROR("Wrong format MQTT message!");
+            MQTTAsync_freeMessage(&message);
+            MQTTAsync_free(topicName);
+            return 1;     	        
+	    }
+	    int type = t->valueint;
+	    cJSON* device = cJSON_GetObjectItem(root, "device");
+	    if(device == NULL)
+	    {
+            MYLOG_ERROR("Wrong format MQTT message!");
+            MQTTAsync_freeMessage(&message);
+            MQTTAsync_free(topicName);
+            return 1;     	        
+	    }
+	    char* deviceid = device->valuestring;
+	    char sql[250]={0};   
+        int nrow = 0, ncolumn = 0;
+        char **dbresult;
+        char *zErrMsg = NULL;
+        switch(type)
+        {
+            case 1:
+                sprintf(sql, "select electricity,day from electricity_hour where deviceid='%s';", deviceid);
+                break;
+            case 2:
+                sprintf(sql, "select electricity,day from electricity_day where deviceid='%s';", deviceid);
+                break;
+            case 3:
+                sprintf(sql, "select electricity,day from electricity_month where deviceid='%s';", deviceid);
+                break;
+            case 4:
+                sprintf(sql, "select electricity,day from electricity_year where deviceid='%s';", deviceid);
+                break;
+            default:
+                break;
+        }    
+        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+        cJSON* records = cJSON_CreateArray();
+        cJSON* record;
+        char* num;
+        char* time;
+        for(int i=1;i<nrow;i++)
+        {
+            record = cJSON_CreateNull();
+            num = dbresult[i][0];
+            time = dbresult[i][1];
+            cJSON_AddStringToObject(record, "electricity", cJSON_CreateString(num));
+            switch (type)
+            {
+                case 1:
+                    cJSON_AddStringToObject(record, "hour", cJSON_CreateString(time));
+                    break;
+                case 2:
+                    cJSON_AddStringToObject(record, "day", cJSON_CreateString(time));
+                    break;                
+                case 3:
+                    cJSON_AddStringToObject(record, "month", cJSON_CreateString(time));
+                    break;                
+                case 4:
+                    cJSON_AddStringToObject(record, "year", cJSON_CreateString(time));
+                    break;
+                default:
+                    break;                
+             
+            }
+            cJSON_AddItemToArray(records, record);            
+        }
+        cJSON_AddItemToObject(root, "devices", records);
+        sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
+		goto end;        	   
+    }
     /*设备操作*/
-	if (strstr(topicName, "devices") != 0)
+	else if (strstr(topicName, "devices") != 0)
 	{
 		if (g_operationflag) //检查当前是否有msg在处理
 		{
@@ -137,7 +214,16 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	/*网关操作*/
 	else if(strstr(topicName, "gateway") != 0)
 	{
-	    int operationtype = cJSON_GetObjectItem(root, "operation")->valueint;
+	    cJSON* op = cJSON_GetObjectItem(root, "operation");
+	    if(op == NULL)
+	    {
+            MYLOG_ERROR("Wrong format MQTT message!");
+            MQTTAsync_freeMessage(&message);
+            MQTTAsync_free(topicName);
+            return 1;     	        
+	    }
+	    
+	    int operationtype = op->valueint;
         if(operationtype == 1)
         {
             int ret = gatewayregister();
@@ -180,6 +266,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	}
 
 end:
+    cJSON_Delete(root);
     MQTTAsync_freeMessage(&message);
     MQTTAsync_free(topicName);
     

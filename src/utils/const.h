@@ -144,8 +144,8 @@
 #define ATTR_SOCKET_P   0x11 //功率
 #define ATTR_SOCKET_V   0x12 //电压
 #define ATTR_SOCKET_I   0x13 //电流
-#define ATTR_SOCKET_BE  0x14 //总电量
 #define ATTR_SOCKET_WORKTIME 0x15 //插座通电时间
+#define ATTR_SOCKET_MODE 0x16 //通电模式 0：按键可控，1：按键不可控，一直供电
 
 /*设备属性*/
 #define ATTR_DEVICETYPE     0x01      //设备类型

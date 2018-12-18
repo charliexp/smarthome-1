@@ -365,7 +365,7 @@ void electricity_stat(char* deviceid, int num)
 
 	MYLOG_INFO("The time is %4d-%2d-%2d %2d:%2d", year, month, day, hour, min);
 
-	sprintf(sql, "replace into electricity_hour(deviceid, electricity_num, hour) values('%s', %2d, %2d);", deviceid, num, hour);
+	sprintf(sql, "replace into electricity_hour(deviceid, electricity, hour) values('%s', %2d, %2d);", deviceid, num, hour);
     exec_sql_create(sql);
 
     /*天电量处理*/
@@ -375,7 +375,7 @@ void electricity_stat(char* deviceid, int num)
     }
     else
     {
-    	sprintf(sql, "select electricity_num from electricity_day where deviceid = '%s' and day = %d", deviceid, day);
+    	sprintf(sql, "select electricity from electricity_day where deviceid = '%s' and day = %d", deviceid, day);
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
         MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
         if(ncolumn==1&&nrow==1)
@@ -387,11 +387,11 @@ void electricity_stat(char* deviceid, int num)
         else
         {
             day_sum = num;
-            MYLOG_ERROR("can not find right electricity_num from electricity_day!");
+            MYLOG_ERROR("can not find right electricity from electricity_day!");
         }
         sqlite3_free_table(dbresult);
     }
-	sprintf(sql, "replace into electricity_day(deviceid, electricity_num, day) values('%s', %2d, %2d);", deviceid, day_sum, day);
+	sprintf(sql, "replace into electricity_day(deviceid, electricity, day) values('%s', %2d, %2d);", deviceid, day_sum, day);
     exec_sql_create(sql); 
 	
 	/*月电量处理*/
@@ -401,7 +401,7 @@ void electricity_stat(char* deviceid, int num)
 	}
 	else
 	{
-    	sprintf(sql, "select electricity_num from electricity_month where deviceid = '%s' and month = %d", deviceid, month);
+    	sprintf(sql, "select electricity from electricity_month where deviceid = '%s' and month = %d", deviceid, month);
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
         MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
         if(ncolumn==1&&nrow==1)
@@ -413,11 +413,11 @@ void electricity_stat(char* deviceid, int num)
         else
         {
             month_sum = num;
-            MYLOG_ERROR("can not find right electricity_num from electricity_month!");
+            MYLOG_ERROR("can not find right electricity from electricity_month!");
         }
         sqlite3_free_table(dbresult);
 	}
-	sprintf(sql, "replace into electricity_month(deviceid, electricity_num, month) values('%s', %2d, %2d);", deviceid, month_sum, month);
+	sprintf(sql, "replace into electricity_month(deviceid, electricity, month) values('%s', %2d, %2d);", deviceid, month_sum, month);
     exec_sql_create(sql);   
 
 	/*年电量处理*/
@@ -427,7 +427,7 @@ void electricity_stat(char* deviceid, int num)
 	}
 	else
 	{
-    	sprintf(sql, "select electricity_num from electricity_year where deviceid = '%s' and year = %d", deviceid, year);
+    	sprintf(sql, "select electricity from electricity_year where deviceid = '%s' and year = %d", deviceid, year);
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
         MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
         if(ncolumn==1&&nrow==1)
@@ -439,11 +439,11 @@ void electricity_stat(char* deviceid, int num)
         else
         {
             year_sum = num;
-            MYLOG_ERROR("can not find right electricity_num from electricity_year!");
+            MYLOG_ERROR("can not find right electricity from electricity_year!");
         }
         sqlite3_free_table(dbresult);
 	}
-	sprintf(sql, "replace into electricity_year(deviceid, electricity_num, year) values('%s', %2d, %4d);", deviceid, year_sum, year);
+	sprintf(sql, "replace into electricity_year(deviceid, electricity, year) values('%s', %2d, %4d);", deviceid, year_sum, year);
     exec_sql_create(sql);    	
 }
 
