@@ -157,20 +157,20 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             record = cJSON_CreateNull();
             num = (const char*)dbresult[i*2];
             time = (const char*)dbresult[i*2+1];
-            cJSON_AddStringToObject(record, "electricity", cJSON_CreateString(num));
+            cJSON_AddNumberToObject(record, "electricity", atoi(num));
             switch (type)
             {
                 case 1:
-                    cJSON_AddStringToObject(record, "hour", cJSON_CreateString(time));
+                    cJSON_AddNumberToObject(record, "hour", atoi(time));
                     break;
                 case 2:
-                    cJSON_AddStringToObject(record, "day", cJSON_CreateString(time));
+                    cJSON_AddNumberToObject(record, "day", atoi(time));
                     break;                
                 case 3:
-                    cJSON_AddStringToObject(record, "month", cJSON_CreateString(time));
+                    cJSON_AddNumberToObject(record, "month", atoi(time));
                     break;                
                 case 4:
-                    cJSON_AddStringToObject(record, "year", cJSON_CreateString(time));
+                    cJSON_AddNumberToObject(record, "year", atoi(time));
                     break;
                 default:
                     break;                
@@ -180,6 +180,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
         }
         cJSON_AddItemToObject(root, "devices", records);
         sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
+        sqlite3_free_table(dbresult);
 		goto end;        	   
     }
     /*Éè±¸²Ù×÷*/
