@@ -150,8 +150,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
         cJSON* records = cJSON_CreateArray();
         cJSON* record;
-        char* num;
-        char* time;
+        const char* num;
+        const char* time;
         for(int i=1;i<nrow;i++)
         {
             record = cJSON_CreateNull();
