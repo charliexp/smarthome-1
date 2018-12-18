@@ -128,8 +128,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	    char* deviceid = device->valuestring;
 	    char sql[250]={0};   
         int nrow = 0, ncolumn = 0;
-        const char **dbresult;
-        const char *zErrMsg = NULL;
+        char **dbresult;
+        char *zErrMsg = NULL;
         switch(type)
         {
             case 1:
@@ -155,8 +155,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
         for(int i=1;i<nrow;i++)
         {
             record = cJSON_CreateNull();
-            num = dbresult[i*2];
-            time = dbresult[i*2+1];
+            num = (const char*)dbresult[i*2];
+            time = (const char*)dbresult[i*2+1];
             cJSON_AddStringToObject(record, "electricity", cJSON_CreateString(num));
             switch (type)
             {
