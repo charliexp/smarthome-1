@@ -133,16 +133,16 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
         switch(type)
         {
             case 1:
-                sprintf(sql, "select electricity,day from electricity_hour where deviceid='%s';", deviceid);
+                sprintf(sql, "select electricity,hour from electricity_hour where deviceid='%s';", deviceid);
                 break;
             case 2:
                 sprintf(sql, "select electricity,day from electricity_day where deviceid='%s';", deviceid);
                 break;
             case 3:
-                sprintf(sql, "select electricity,day from electricity_month where deviceid='%s';", deviceid);
+                sprintf(sql, "select electricity,month from electricity_month where deviceid='%s';", deviceid);
                 break;
             case 4:
-                sprintf(sql, "select electricity,day from electricity_year where deviceid='%s';", deviceid);
+                sprintf(sql, "select electricity,year from electricity_year where deviceid='%s';", deviceid);
                 break;
             default:
                 break;
@@ -155,8 +155,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
         for(int i=1;i<nrow;i++)
         {
             record = cJSON_CreateNull();
-            num = dbresult[i][0];
-            time = dbresult[i][1];
+            num = dbresult[i*2];
+            time = dbresult[i*2+1];
             cJSON_AddStringToObject(record, "electricity", cJSON_CreateString(num));
             switch (type)
             {
