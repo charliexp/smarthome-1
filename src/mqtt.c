@@ -113,18 +113,14 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	    if(t == NULL)
 	    {
             MYLOG_ERROR("Wrong format MQTT message!");
-            MQTTAsync_freeMessage(&message);
-            MQTTAsync_free(topicName);
-            return 1;     	        
+            goto end;    	        
 	    }
 	    int type = t->valueint;
 	    cJSON* device = cJSON_GetObjectItem(root, "device");
 	    if(device == NULL)
 	    {
             MYLOG_ERROR("Wrong format MQTT message!");
-            MQTTAsync_freeMessage(&message);
-            MQTTAsync_free(topicName);
-            return 1;     	        
+            goto end;	        
 	    }
 	    char* deviceid = device->valuestring;
 	    char sql[250]={0};   
@@ -208,9 +204,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 			{
 				MYLOG_ERROR("sendret = %d", sendret);
 				MYLOG_ERROR("send devicequeuemsg fail!");
-				return 0;
-			}
-			cJSON_Delete(root);
+                goto end;
+			}			
 		}
 	}
 	/*Íø¹Ø²Ù×÷*/
@@ -220,9 +215,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	    if(op == NULL)
 	    {
             MYLOG_ERROR("Wrong format MQTT message!");
-            MQTTAsync_freeMessage(&message);
-            MQTTAsync_free(topicName);
-            return 1;     	        
+            goto end;       
 	    }
 	    
 	    int operationtype = op->valueint;
