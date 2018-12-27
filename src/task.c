@@ -392,7 +392,7 @@ void* devicemsgprocess(void *argc)
                 }              
                 cJSON* status = cJSON_GetObjectItem(devicestatus, "status");
                 cJSON_AddItemToObject(device, "status", status);
-                MYLOG_DEBUG("The status is %s", cJSON_PrintUnformatted(status));
+                //MYLOG_DEBUG("The status is %s", cJSON_PrintUnformatted(status));
             }   	    	
         }
         cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_SUCCESS);
@@ -645,6 +645,7 @@ void* zgbmsgprocess(void* argc)
                     sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
                     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device_json), 0, 0);
                 }
+                cJSON_Delete(device_json);
                 break;
             }
             case ZGB_MSGTYPE_DEVICE_LOCATION:
