@@ -594,7 +594,6 @@ void* zgbmsgprocess(void* argc)
                     attr = zgbdata->pdu[i++];
                     
                     attr_json = get_attr_value_object_json(device_json, attr);
-                    replace_value_json = cJSON_CreateNumber(value);
                     
                     if(device_json == NULL)
                     {
@@ -602,7 +601,8 @@ void* zgbmsgprocess(void* argc)
                     }
                     value = zgbdata->pdu[i++]*256*256*256 + zgbdata->pdu[i++]*256*256 
                         + zgbdata->pdu[i++]*256 + zgbdata->pdu[i++];
-                       
+                    replace_value_json = cJSON_CreateNumber(value);
+                    
                     switch(attr)
                     {
                         case ATTR_DEVICESTATUS:
