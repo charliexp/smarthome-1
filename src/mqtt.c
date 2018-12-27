@@ -116,7 +116,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             goto end;    	        
 	    }
 	    int type = t->valueint;
-	    cJSON* device = cJSON_GetObjectItem(root, "device");
+	    cJSON* device = cJSON_GetObjectItem(root, "devices");
 	    if(device == NULL)
 	    {
             MYLOG_ERROR("Wrong format MQTT message!");
