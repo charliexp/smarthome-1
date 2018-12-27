@@ -92,7 +92,7 @@ typedef struct
 {
 	char packetid;
 	char result;
-	char finish;//判断该消息是否已收到回复
+	char finish;//判断该消息是否已收到回复或者已经处理完
 }ZGB_MSG_STATUS;
 
 #endif

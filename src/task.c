@@ -275,7 +275,6 @@ void* devicemsgprocess(void *argc)
     		for (i=0; i< devicenum; i++)
     		{
     			device = cJSON_GetArrayItem(devices, i);
-
                 /***
                 **全局的设备操作数组中添加一个新的未处理的
                 **设备操作动作
@@ -331,7 +330,7 @@ void* devicemsgprocess(void *argc)
                 sqlite3_free_table(dbresult);             
     		}
 
-    		for (i=0; i<RESPONSE_WAIT/50; i++)  //50毫秒循环一次
+    		for(i=0; i<RESPONSE_WAIT/50; i++)  //50毫秒循环一次
     		{
     			int j = 0;
     			for (; j < g_zgbmsgnum; j++)
