@@ -103,7 +103,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
         return 1;        
     }
     mqttid = tmp->valueint;
-    sprintf(topic, "%s/response/%d/", topicName, mqttid);
+    sprintf(topic, "%s/response/%d", topicName, mqttid);
 
     /*设备电量查询*/
     if(strstr(topicName, "electric") != 0)
