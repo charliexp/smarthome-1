@@ -264,11 +264,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
 	        status = cJSON_CreateObject();            
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_FORMALDEHYDE);
         	cJSON_AddNumberToObject(status, "value", 0);
-        	cJSON_AddItemToArray(statusarray, status);     
-	        status = cJSON_CreateObject();            
-        	cJSON_AddNumberToObject(status, "type", ATTR_ENV_TV0C);
-        	cJSON_AddNumberToObject(status, "value", 0);
-        	cJSON_AddItemToArray(statusarray, status);            	
+        	cJSON_AddItemToArray(statusarray, status);                	
             break;
         }
         case DEV_CONTROL_PANEL:

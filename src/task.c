@@ -606,6 +606,11 @@ void* zgbmsgprocess(void* argc)
                     switch(attr)
                     {
                         case ATTR_DEVICESTATUS:
+                        case ATTR_ENV_TEMPERATURE:
+                        case ATTR_ENV_HUMIDITY:
+                        case ATTR_ENV_PM25:
+                        case ATTR_ENV_CO2:
+                        case ATTR_ENV_FORMALDEHYDE:
                         case ATTR_SOCKET_V:
                         {                           
                             oldvalue = cJSON_GetObjectItem(attr_json, "value")->valueint;
