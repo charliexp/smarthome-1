@@ -75,7 +75,7 @@ void mqtt_reconnect(Clientcontext* context)
 /*MQTT订阅消息到达的处理函数*/
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *message)
 {
-	char* mqttid;
+	int mqttid;
 	cJSON *root, *tmp;
 	devicequeuemsg msg;
 	int sendret;
