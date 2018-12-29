@@ -116,68 +116,78 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             goto end;    	        
 	    }
 	    int type = t->valueint;
-	    cJSON* device = cJSON_GetObjectItem(root, "devices");
-	    if(device == NULL)
+	    cJSON* devices = cJSON_GetObjectItem(root, "devices");
+	    if(devices == NULL)
 	    {
             MYLOG_ERROR("Wrong format MQTT message!");
             goto end;	        
 	    }
-	    char* deviceid = device->valuestring;
-	    char sql[250]={0};   
-        int nrow = 0, ncolumn = 0;
-        char **dbresult;
-        char *zErrMsg = NULL;
-        switch(type)
-        {
-            case 1:
-                sprintf(sql, "select electricity,hour from electricity_hour where deviceid='%s';", deviceid);
-                break;
-            case 2:
-                sprintf(sql, "select electricity,day from electricity_day where deviceid='%s';", deviceid);
-                break;
-            case 3:
-                sprintf(sql, "select electricity,month from electricity_month where deviceid='%s';", deviceid);
-                break;
-            case 4:
-                sprintf(sql, "select electricity,year from electricity_year where deviceid='%s';", deviceid);
-                break;
-            default:
-                break;
-        }    
-        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        cJSON* records = cJSON_CreateArray();
-        cJSON* record;
-        const char* num;
-        const char* time;
-        for(int i=1;i<nrow;i++)
-        {
-            record = cJSON_CreateObject();
-            num = (const char*)dbresult[i*2];
-            time = (const char*)dbresult[i*2+1];
-            cJSON_AddNumberToObject(record, "electricity", atoi(num));
-            switch (type)
+	    int num = cJSON_GetArraySize(devices);
+	    for(int i=0;i<num;i++){
+	        cJSON* device = cJSON_GetArrayItem(devices, i);
+	        cJSON* deviceidjson = cJSON_GetObjectItem(device, "deviceid");
+    	    if(deviceidjson == NULL)
+    	    {
+                MYLOG_ERROR("Wrong format MQTT message!");
+                goto end;	        
+    	    }	        
+    	    char* deviceid = deviceidjson->valuestring;
+    	    char sql[250]={0};   
+            int nrow = 0, ncolumn = 0;
+            char **dbresult;
+            char *zErrMsg = NULL;
+            switch(type)
             {
                 case 1:
-                    cJSON_AddNumberToObject(record, "hour", atoi(time));
+                    sprintf(sql, "select electricity,hour from electricity_hour where deviceid='%s';", deviceid);
                     break;
                 case 2:
-                    cJSON_AddNumberToObject(record, "day", atoi(time));
-                    break;                
+                    sprintf(sql, "select electricity,day from electricity_day where deviceid='%s';", deviceid);
+                    break;
                 case 3:
-                    cJSON_AddNumberToObject(record, "month", atoi(time));
-                    break;                
+                    sprintf(sql, "select electricity,month from electricity_month where deviceid='%s';", deviceid);
+                    break;
                 case 4:
-                    cJSON_AddNumberToObject(record, "year", atoi(time));
+                    sprintf(sql, "select electricity,year from electricity_year where deviceid='%s';", deviceid);
                     break;
                 default:
-                    break;                
-             
+                    break;
+            }    
+            sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+            cJSON* records = cJSON_CreateArray();
+            cJSON* record;
+            const char* num;
+            const char* time;
+            for(int i=1;i<nrow;i++)
+            {
+                record = cJSON_CreateObject();
+                num = (const char*)dbresult[i*2];
+                time = (const char*)dbresult[i*2+1];
+                cJSON_AddNumberToObject(record, "electricity", atoi(num));
+                switch (type)
+                {
+                    case 1:
+                        cJSON_AddNumberToObject(record, "hour", atoi(time));
+                        break;
+                    case 2:
+                        cJSON_AddNumberToObject(record, "day", atoi(time));
+                        break;                
+                    case 3:
+                        cJSON_AddNumberToObject(record, "month", atoi(time));
+                        break;                
+                    case 4:
+                        cJSON_AddNumberToObject(record, "year", atoi(time));
+                        break;
+                    default:
+                        break;                
+                 
+                }
+                cJSON_AddItemToArray(records, record);            
             }
-            cJSON_AddItemToArray(records, record);            
-        }
-        cJSON_AddItemToObject(root, "records", records);
+            cJSON_AddItemToObject(device, "records", records);	
+            sqlite3_free_table(dbresult);
+	    }
         sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
-        sqlite3_free_table(dbresult);
 		goto end;        	   
     }
     /*Éè±¸²Ù×÷*/
