@@ -197,7 +197,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
 
     cJSON_AddStringToObject(device, "deviceid", deviceid);
 	cJSON_AddItemToObject(device, "status", statusarray);
-	cJSON_AddItemToObject(device, "online", 0);	
+	cJSON_AddItemToObject(device, "online", cJSON_CreateNumber(0));	
 
     switch(devicetype)
     {
