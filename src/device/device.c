@@ -145,9 +145,10 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
 }
 
 /*针对同一类设备发送zgb消息*/
-void sendzgbmsgfordevices(char devicetype, BYTE *data, char length, char msgtype)
+void sendzgbmsgfordevices(BYTE devicetype, BYTE *data, char length, char msgtype)
 {
-    
+    ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文
+    sendzgbmsg(address, data, length, msgtype, devicetype, 0, getpacketid());    
 }
 
 /*内存中维护设备状态的json表*/
@@ -196,6 +197,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
 
     cJSON_AddStringToObject(device, "deviceid", deviceid);
 	cJSON_AddItemToObject(device, "status", statusarray);
+	cJSON_AddItemToObject(device, "online", 0);	
 
     switch(devicetype)
     {
@@ -216,11 +218,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SOCKET_V);
         	cJSON_AddNumberToObject(status, "value", 0);
-        	cJSON_AddItemToArray(statusarray, status);
-        	status = cJSON_CreateObject();
-        	cJSON_AddNumberToObject(status, "type", ATTR_SOCKET_MODE);
-        	cJSON_AddNumberToObject(status, "value", 0);
-        	cJSON_AddItemToArray(statusarray, status);          	
+        	cJSON_AddItemToArray(statusarray, status);       	
             break;
         }
         case DEV_AIR_CON:
@@ -494,4 +492,62 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
 
     return index--;
 }
+
+void change_devices_offline()
+{
+    int devicenum;
+    cJSON* devicestatus = NULL;
+    char* array_deviceid;
+    cJSON* offline = cJSON_CreateNumber(0);
+
+    devicenum = cJSON_GetArraySize(g_devices_status_json);
+
+    for (int i=0; i < devicenum; i++)
+    {
+        devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
+        cJSON_ReplaceItemInObject(devicestatus, "online", offline);
+    }    
+}
+
+void change_device_online(char* deviceid, char status)
+{
+    int devicenum;
+    cJSON* devicestatus = NULL;
+    char* array_deviceid;
+    cJSON* offline = cJSON_CreateNumber(status);
+
+    devicenum = cJSON_GetArraySize(g_devices_status_json);
+
+    for (int i=0; i < devicenum; i++)
+    {
+        devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
+        array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
+        if(strcmp(deviceid, array_deviceid) == 0)
+        {
+            cJSON_ReplaceItemInObject(devicestatus, "online", offline);
+            return;
+        }
+    }      
+}
+
+int check_device_online(char* deviceid)
+{
+    int devicenum;
+    cJSON* devicestatus = NULL;
+    char* array_deviceid;
+    cJSON* offline = cJSON_CreateNumber(status);
+
+    devicenum = cJSON_GetArraySize(g_devices_status_json);
+
+    for (int i=0; i < devicenum; i++)
+    {
+        devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
+        array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
+        if(strcmp(deviceid, array_deviceid) == 0)
+        {            
+            return cJSON_GetObjectItem(devicestatus, "online")->valueint;
+        }
+    }     
+}
+
 

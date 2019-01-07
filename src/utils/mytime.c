@@ -165,6 +165,7 @@ void electtimerfun(timer* t)
 void statustimerfun(timer* t)
 {
     MYLOG_DEBUG("device status query!");
+    change_devices_offline();
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //¹ã²¥±¨ÎÄ
     sendzgbmsg(address, 0, 0, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, getpacketid());  
     t->timevalue = 10;

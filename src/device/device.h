@@ -27,7 +27,7 @@ cJSON* get_attr_value_object_json(cJSON* device, char attrtype);
 
 void devices_status_query();
 
-void sendzgbmsgfordevices(char devicetype, BYTE *data, char length, char msgtype);
+void sendzgbmsgfordevices(BYTE devicetype, BYTE *data, char length, char msgtype);
 
 /*更改内存设备属性表中的设备属性*/
 void change_device_attr_value(char* deviceid, char attr, int value);
@@ -38,5 +38,10 @@ void device_closeallfan();
 /* 返回data的数据长度 */
 int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype);
 
+/*设置设备下线状态*/
+void change_devices_offline();
 
+void change_device_online(char* deviceid, char status);
+
+int check_device_online(char* deviceid);
 #endif

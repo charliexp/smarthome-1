@@ -6,11 +6,13 @@
 #define MQTT_MSG_FORMAT_ERROR   u8"The MQTT message format error,please check it."
 #define MQTT_MSG_SYSTEM_BUSY    u8"The system is busy please try again later."
 #define MQTT_MSG_UNKNOW_DEVICE  u8"The device do not exist."
+#define MQTT_MSG_DEVICE_OFFLINE u8"The device isn't online."
 
-#define MQTT_MSG_ERRORCODE_SUCCESS 0
-#define MQTT_MSG_ERRORCODE_FORMATERROR 1
-#define MQTT_MSG_ERRORCODE_BUSY    2
-#define MQTT_MSG_ERRORCODE_DEVICENOEXIST 3
+#define MQTT_MSG_ERRORCODE_SUCCESS         0
+#define MQTT_MSG_ERRORCODE_FORMATERROR     1
+#define MQTT_MSG_ERRORCODE_BUSY            2
+#define MQTT_MSG_ERRORCODE_DEVICENOEXIST   3
+#define MQTT_MSG_ERRORCODE_DEVICEOFFLINE   4
 
 
 #endif

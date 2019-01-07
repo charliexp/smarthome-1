@@ -123,6 +123,11 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             goto end;	        
 	    }
 	    int num = cJSON_GetArraySize(devices);
+	    if(num == 0)
+	    {
+            MYLOG_ERROR("Wrong format MQTT message!");
+            goto end;	        
+	    }	    
 	    for(int i=0;i<num;i++){
 	        cJSON* device = cJSON_GetArrayItem(devices, i);
 	        cJSON* deviceidjson = cJSON_GetObjectItem(device, "deviceid");

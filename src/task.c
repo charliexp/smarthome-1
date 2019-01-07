@@ -281,8 +281,8 @@ void* devicemsgprocess(void *argc)
                 ***/
     			packetid = getpacketid(); //packetid是用来跟zgb设备通信使用的
     			g_devicemsgstatus[i].packetid = packetid;
-    			g_devicemsgstatus[i].result = 1; //1代表未响应，0代表成功
-    			g_devicemsgstatus[i].finish = 0;
+    			g_devicemsgstatus[i].result = 1; //1代表未响应，0代表成功，2代表设备不在线
+    			g_devicemsgstatus[i].finish = 1; //1代表未处理完
     			g_zgbmsgnum++;
                 
                 tmp = cJSON_GetObjectItem(device, "deviceid");
@@ -309,6 +309,13 @@ void* devicemsgprocess(void *argc)
                     cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_UNKNOW_DEVICE);
                     cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
                     goto response;
+                }
+
+                int online = check_device_online(deviceid);
+                if(online == 0)
+                {
+                    g_devicemsgstatus[i].result = 2;
+                    g_devicemsgstatus[i].finish = 0;
                 }
 
                 strncpy(db_zgbaddress, dbresult[ncolumn+1], 20);
@@ -385,12 +392,15 @@ void* devicemsgprocess(void *argc)
                     cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
                     goto response;
                 }
+                int online = check_device_online(deviceid);
+                
                 cJSON* devicestatus = get_device_status_json(deviceid);
                 if (devicestatus == NULL)
                 {
                     MYLOG_ERROR("Can't find the device status!");
                 }              
                 cJSON* status = cJSON_GetObjectItem(devicestatus, "status");
+                cJSON_AddItemToObject(status, "online", cJSON_CreateNumber(online))
                 cJSON_AddItemToObject(device, "status", status);
                 //MYLOG_DEBUG("The status is %s", cJSON_PrintUnformatted(status));
             }   	    	
@@ -584,6 +594,7 @@ void* zgbmsgprocess(void* argc)
                 BYTE attr; 
 
                 needmqtt = false;
+                change_device_online(db_deviceid, 1);//收到状态查询报文，改变设备上线状态
                 if(device_json == NULL)
                 {
                     goto end;
