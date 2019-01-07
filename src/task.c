@@ -400,7 +400,7 @@ void* devicemsgprocess(void *argc)
                     MYLOG_ERROR("Can't find the device status!");
                 }              
                 cJSON* status = cJSON_GetObjectItem(devicestatus, "status");
-                cJSON_AddItemToObject(status, "online", cJSON_CreateNumber(online))
+                cJSON_AddItemToObject(status, "online", cJSON_CreateNumber(online));
                 cJSON_AddItemToObject(device, "status", status);
                 //MYLOG_DEBUG("The status is %s", cJSON_PrintUnformatted(status));
             }   	    	

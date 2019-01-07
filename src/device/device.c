@@ -535,7 +535,6 @@ int check_device_online(char* deviceid)
     int devicenum;
     cJSON* devicestatus = NULL;
     char* array_deviceid;
-    cJSON* offline = cJSON_CreateNumber(status);
 
     devicenum = cJSON_GetArraySize(g_devices_status_json);
 
