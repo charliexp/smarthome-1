@@ -113,8 +113,8 @@ int init_uart(char* port)
         return -1;    
     }
 
-    cfsetispeed(&options, B57600);     
-    cfsetospeed(&options, B57600); 
+    cfsetispeed(&options, B115200);     
+    cfsetospeed(&options, B115200); 
     //修改控制模式，保证程序不会占用串口    
     options.c_cflag |= CLOCAL;    
     //修改控制模式，使得能够从串口中读取输入数据    

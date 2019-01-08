@@ -366,7 +366,7 @@ cJSON* get_device_status_json(char* deviceid)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
-        if(strcmp(deviceid, array_deviceid) == 0)
+        if(strncmp(deviceid, array_deviceid, 17) == 0)
         {
             return cJSON_Duplicate(devicestatus, 1);
         }
@@ -416,7 +416,7 @@ void change_device_attr_value(char* deviceid, char attr, int value)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
-        if(strcmp(deviceid, array_deviceid) == 0)
+        if(strncmp(deviceid, array_deviceid, 17) == 0)
         {
             attr_json = get_attr_value_object_json(devicestatus, attr); 
             cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);            
@@ -495,7 +495,7 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
 
 void change_devices_offline()
 {
-    int devicenum;
+    int devicenum, online;
     cJSON* devicestatus = NULL;
     char* array_deviceid;
     cJSON* offline = cJSON_CreateNumber(0);
@@ -505,7 +505,11 @@ void change_devices_offline()
     for (int i=0; i < devicenum; i++)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
-        cJSON_ReplaceItemInObject(devicestatus, "online", offline);
+        online = cJSON_GetObjectItem(devicestatus, "online")->valueint;
+        if(online == 1)
+        {
+            cJSON_GetObjectItem(devicestatus, "online")->valueint = 0;
+        }
     }    
 }
 
@@ -522,9 +526,9 @@ void change_device_online(char* deviceid, char status)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
-        if(strcmp(deviceid, array_deviceid) == 0)
+        if(strncmp(deviceid, array_deviceid, 17) == 0)
         {
-            cJSON_ReplaceItemInObject(devicestatus, "online", offline);
+            cJSON_GetObjectItem(devicestatus, "online")->valueint = status;
             return;
         }
     }      
@@ -542,11 +546,13 @@ int check_device_online(char* deviceid)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
-        if(strcmp(deviceid, array_deviceid) == 0)
+        if(strncmp(deviceid, array_deviceid, 17) == 0)
         {            
             return cJSON_GetObjectItem(devicestatus, "online")->valueint;
         }
-    }     
+    }
+
+    return -1;
 }
 
 

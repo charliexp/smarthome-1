@@ -392,7 +392,6 @@ void* devicemsgprocess(void *argc)
                     cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
                     goto response;
                 }
-                int online = check_device_online(deviceid);
                 
                 cJSON* devicestatus = get_device_status_json(deviceid);
                 if (devicestatus == NULL)
@@ -400,7 +399,6 @@ void* devicemsgprocess(void *argc)
                     MYLOG_ERROR("Can't find the device status!");
                 }              
                 cJSON* status = cJSON_GetObjectItem(devicestatus, "status");
-                cJSON_AddItemToObject(status, "online", cJSON_CreateNumber(online));
                 cJSON_AddItemToObject(device, "status", status);
                 //MYLOG_DEBUG("The status is %s", cJSON_PrintUnformatted(status));
             }   	    	
