@@ -593,7 +593,7 @@ void* zgbmsgprocess(void* argc)
 
                 needmqtt = false;
                 change_device_online(db_deviceid, 1);//收到状态查询报文，改变设备上线状态
-                device_json =  = get_device_status_json(db_deviceid);
+                device_json = get_device_status_json(db_deviceid);
                 if(device_json == NULL)
                 {
                     goto end;
