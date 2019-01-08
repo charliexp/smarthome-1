@@ -509,6 +509,7 @@ void change_devices_offline()
         if(online == 1)
         {
             cJSON_GetObjectItem(devicestatus, "online")->valueint = 0;
+            cJSON_GetObjectItem(devicestatus, "online")->valuedouble = 0;
         }
     }    
 }
@@ -529,6 +530,7 @@ void change_device_online(char* deviceid, char status)
         if(strncmp(deviceid, array_deviceid, 17) == 0)
         {
             cJSON_GetObjectItem(devicestatus, "online")->valueint = status;
+            cJSON_GetObjectItem(devicestatus, "online")->valuedouble = status;
             return;
         }
     }      
