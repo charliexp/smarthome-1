@@ -14,6 +14,8 @@ void addtimer(timer* t);
 
 int deltimer(timer* t);
 
+int rebuildtimer(timer* t);
+
 /*定时回调任务*/
 void sigalrm_fn(int sig);
 

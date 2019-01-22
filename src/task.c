@@ -12,6 +12,7 @@ sqlite3* g_db;
 char g_mac[20] = {0};
 char g_topicroot[20] = {0};
 char* g_topics[TOPICSNUM] ={0x0, 0x0, 0x0};
+timer* g_zgbtimer;
 int g_zgbmsgnum;
 cJSON* g_device_mqtt_json, *g_devices_status_json;
 ZGB_MSG_STATUS g_devicemsgstatus[ZGBMSG_MAX_NUM];
@@ -71,6 +72,7 @@ void zgbledtimerfun(timer* t)
 {
     ledcontrol(ZGB_LED, LED_ACTION_ON, 0);
     deltimer(t);
+    g_zgbtimer = NULL;
 }
 
 /*æ÷”ÚÕ¯º‡Ã˝»ŒŒÒ*/
@@ -251,9 +253,17 @@ void* devicemsgprocess(void *argc)
                     milliseconds_sleep(2000);
                     write(g_uartfd, AT_OPEN_NETWORK, strlen(AT_OPEN_NETWORK));
                     MYLOG_INFO("COO operation AT+PERMITJOIN=78");
-                    ledcontrol(ZGB_LED, LED_ACTION_TRIGGER, 1000);
-                    timer* zgbledtimer = createtimer(120, zgbledtimerfun);
-                    addtimer(zgbledtimer);
+                    if(g_zgbtimer == NULL)
+                    {
+                        ledcontrol(ZGB_LED, LED_ACTION_TRIGGER, 1000);
+                        timer* zgbledtimer = createtimer(120, zgbledtimerfun);
+                        addtimer(zgbledtimer);
+                        g_zgbtimer = zgbledtimer;
+                    }
+                    else
+                    {
+                        rebuildtimer(g_zgbtimer);
+                    }
                     reportdevices();
                     break;
                 case TYPE_DEVICE_LIST:
@@ -263,7 +273,15 @@ void* devicemsgprocess(void *argc)
                 case TYPE_NETWORK_NOCLOSE:
                     write(g_uartfd, AT_NETWORK_NOCLOSE, strlen(AT_NETWORK_NOCLOSE));
                     MYLOG_INFO("COO operation AT+PERMITJOIN=FF");
-                    ledcontrol(ZGB_LED, LED_ACTION_TRIGGER, 1000);
+                    if(g_zgbtimer == NULL)
+                    {
+                        ledcontrol(ZGB_LED, LED_ACTION_TRIGGER, 1000);    
+                    }
+                    else
+                    {
+                        deltimer(g_zgbtimer);
+                        g_zgbtimer = NULL;
+                    }
                     break;
                 case TYPE_CLOSE_NETWORK:
                     write(g_uartfd, AT_CLOSE_NETWORK, strlen(AT_CLOSE_NETWORK));

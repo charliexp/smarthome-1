@@ -91,6 +91,17 @@ int deltimer(timer* t)
     return 0;
 }
 
+int rebuildtimer(timer* t)
+{
+    if(t == NULL)
+    {
+        return 0;
+    }
+    
+    t->lefttime = t->timevalue;
+    return -1;
+}
+
 /*定时回调任务*/
 void sigalrm_fn(int sig)
 {
