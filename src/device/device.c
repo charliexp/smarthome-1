@@ -17,6 +17,7 @@
 extern int g_queueid;
 extern cJSON* g_devices_status_json;
 extern sqlite3* g_db;
+extern int g_system_mode;
 
 void zgbaddresstodbaddress(ZGBADDRESS addr, char* db_address)
 {
@@ -92,6 +93,9 @@ void deviceneedregister(ZGBADDRESS addr)
 
 void device_closeallfan()
 {
+    ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文
+    BYTE data[5] = {ATTR_DEVICESTATUS, 0x0, 0x0, 0x0, TLV_VALUE_POWER_OFF}
+    sendzgbmsg(address, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_FAN_COIL, 0xFF, getpacketid());    
 }
 
 void devices_status_query()
@@ -201,6 +205,18 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
 
     switch(devicetype)
     {
+        case DEV_GATEWAY:
+        {
+	        status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
+        	cJSON_AddNumberToObject(status, "value", DEV_GATEWAY);
+        	cJSON_AddItemToArray(statusarray, status); 
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_SYSMODE);
+        	cJSON_AddNumberToObject(status, "value", TLV_VALUE_COND_HEAT);
+        	cJSON_AddItemToArray(statusarray, status);     	
+            break;            
+        }
         case DEV_SOCKET:
         {
 	        status = cJSON_CreateObject();
@@ -451,11 +467,6 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
         else
             name = cJSON_GetObjectItem(item, "value")->valuestring;
 
-        if((devicetype == DEV_AIR_CON) && ((attr == ATTR_DEVICESTATUS )||(attr == ATTR_DEVICEMODE))) //如果空调状态变化需要同时关闭所有风机盘管
-        {
-            device_closeallfan();
-        }
-
         /*在此添加联动操作*/
         
         switch (attr)
@@ -492,6 +503,32 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
 
     return index--;
 }
+
+void gatewayproc(cJSON* op)
+{
+    cJSON* item=NULL;
+    int attr=0;
+    int value=0;
+    int opnum = cJSON_GetArraySize(op);   
+    for(int i=0 ; i<opnum; i++)
+    {
+        item = cJSON_GetArrayItem(op, i);
+        attr = cJSON_GetObjectItem(item, "type")->valueint;
+        if(attr == ATTR_SYSMODE)
+        {
+            value = cJSON_GetObjectItem(item, "value")->valueint;
+            if(value == 0 || value == 1 || value == 2)
+            {
+                if(g_system_mode != value)
+                {
+                    g_system_mode = value;
+                    device_closeallfan();
+                }
+            }
+        }
+    }
+}
+
 
 void change_devices_offline()
 {

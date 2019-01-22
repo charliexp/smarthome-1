@@ -51,4 +51,7 @@ int exec_sql_create(char* sql);
 /*检查程序是否已运行*/
 int already_running(const char *filename);
 
+/*LED控制接口*/
+int ledcontrol(int num, int action, int time);
+
 #endif

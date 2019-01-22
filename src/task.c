@@ -6,6 +6,7 @@
 int g_uartfd;
 int g_log_level = 2;
 int g_operationflag = 0;
+int g_system_mode = 0;
 int g_queueid;
 sqlite3* g_db;
 char g_mac[20] = {0};
@@ -66,6 +67,11 @@ int createmessagequeue()
     return 0;  
 }
 
+void zgbledtimerfun(timer* t)
+{
+    ledcontrol(ZGB_LED, LED_ACTION_ON, 0);
+    deltimer(t);
+}
 
 /*局域网监听任务*/
 void* lantask(void *argc)
@@ -123,6 +129,8 @@ void* lantask(void *argc)
 void init()
 {
 	int i = 0;
+    char db_zgbaddress[17] = "0000000000000000";
+    char db_deviceid[20] = "00000000000000000";; 	
 
     //获取网关mac地址
 	if(getmac(g_mac) == 0)
@@ -136,7 +144,8 @@ void init()
     {
         MYLOG_ERROR("init_uart fail!");
     }
-
+    ledcontrol(ZGB_LED, LED_ACTION_ON, 0);//点亮ZGB LED灯
+    
     if(createmessagequeue() == -1)
     {
         MYLOG_ERROR("CreateMessageQueue failed!");//这里后续要添加重启的功能
@@ -146,14 +155,21 @@ void init()
     {
         MYLOG_ERROR("Create db failed!");      
     }   
-    
+    sprintf(sql, "replace into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, DEV_GATEWAY, 0);
+    MYLOG_INFO("The sql is %s", sql);
+    rc = sqlite3_exec(g_db, sql, 0, 0, &zErrMsg);
+    if(rc != SQLITE_OK)
+    {
+        MYLOG_ERROR(zErrMsg);
+    }    
 	for(; i < TOPICSNUM; i++)
 	{
 		g_topics[i] = (char*)malloc(sizeof(g_topicroot) + strlen(g_topicthemes[i])-1);
 		sprintf(g_topics[i], "%s%s", g_topicroot, g_topicthemes[i]);
 	}
     devices_status_json_init();
-    gatewayregister(); 
+    gatewayregister();
+    ledcontrol(SYS_LED, LED_ACTION_ON, 0);//点亮SYS LED灯
 }
 
 
@@ -231,7 +247,10 @@ void* devicemsgprocess(void *argc)
                     MYLOG_INFO("COO operation AT+FORM=02");
                     milliseconds_sleep(2000);
                     write(g_uartfd, AT_OPEN_NETWORK, strlen(AT_OPEN_NETWORK));
-                    MYLOG_INFO("COO operation AT+PERMITJOIN=60");
+                    MYLOG_INFO("COO operation AT+PERMITJOIN=78");
+                    ledcontrol(ZGB_LED, LED_ACTION_TRIGGER, 1000);
+                    timer* zgbledtimer = createtimer(120, zgbledtimerfun);
+                    addtimer(pelecttimer);
                     reportdevices();
                     break;
                 case TYPE_DEVICE_LIST:
@@ -241,10 +260,12 @@ void* devicemsgprocess(void *argc)
                 case TYPE_NETWORK_NOCLOSE:
                     write(g_uartfd, AT_NETWORK_NOCLOSE, strlen(AT_NETWORK_NOCLOSE));
                     MYLOG_INFO("COO operation AT+PERMITJOIN=FF");
+                    ledcontrol(ZGB_LED, LED_ACTION_TRIGGER, 1000);
                     break;
                 case TYPE_CLOSE_NETWORK:
                     write(g_uartfd, AT_CLOSE_NETWORK, strlen(AT_CLOSE_NETWORK));
                     MYLOG_INFO("COO operation AT+PERMITJOIN=00");
+                    ledcontrol(ZGB_LED, LED_ACTION_ON, 0);
                     break;
                 case TYPE_NETWORK_INFO:
                     write(g_uartfd, AT_NETWORK_INFO, strlen(AT_NETWORK_INFO));
@@ -308,9 +329,9 @@ void* devicemsgprocess(void *argc)
                     MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
                     cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_UNKNOW_DEVICE);
                     cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
-                    goto response;
+                    goto response;          
                 }
-
+                
                 int online = check_device_online(deviceid);
                 if(online == 0)
                 {
@@ -329,6 +350,11 @@ void* devicemsgprocess(void *argc)
                     cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
                     cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
                     goto response;
+    		    }
+    		    if (devicetype == DEV_GATEWAY)
+    		    {
+    		        gatewayproc();
+    		        goto response;
     		    }
     		    
     		    BYTE data[125];
@@ -497,7 +523,7 @@ void* zgbmsgprocess(void* argc)
             if(nrow == 0) //数据库中没有该设备
             {
                 milliseconds_sleep(1000);
-                sendzgbmsg(src, NULL, 0, ZGB_MSGTYPE_DEVICEREGISTER, DEV_ANYONE , 0, getpacketid());//要求设备注册
+                sendzgbmsg(src, NULL, 0, ZGB_MSGTYPE_DEVICEREGISTER, DEV_ANYONE, 0, getpacketid());//要求设备注册
             }
             sqlite3_free_table(dbresult);
             continue;

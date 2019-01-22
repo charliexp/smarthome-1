@@ -268,15 +268,20 @@ int gatewayregister()
 {
     CURL *curl_handle;
     CURLcode res;
-
+    char info[30];
+    
+    sprintf(info, "{mac, \"%s\"}", g_mac);
     curl_global_init(CURL_GLOBAL_ALL);
     curl_handle = curl_easy_init();
 
     curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+    curl_easy_setopt(curl_handle, CURLOPT_POST,1);
+
+	//curl_easy_setopt(curl_handle,CURLOPT_VERBOSE,1); //打印调试信息
 
     curl_easy_setopt(curl_handle, CURLOPT_URL, "https://123.206.15.63:8443/manager/gatewayregister");
-    curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, g_mac);
+    curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, info);
 
     res = curl_easy_perform(curl_handle);
 
@@ -328,7 +333,7 @@ int updatefile(const char* filepath)
 		curl_easy_setopt(hCurl,CURLOPT_SSL_VERIFYPEER, 0);
 		curl_easy_setopt(hCurl,CURLOPT_SSL_VERIFYHOST, 0);
         curl_easy_setopt(hCurl, CURLOPT_HTTPPOST, pFormPost);
-        curl_easy_setopt(hCurl, CURLOPT_URL, HTTP_UPLOAD_UAR);
+        curl_easy_setopt(hCurl, CURLOPT_URL, HTTP_UPLOAD_URL);
 
         CURLcode res = curl_easy_perform(hCurl);
         if(res != CURLE_OK)
@@ -501,4 +506,56 @@ int already_running(const char *filename)
     sprintf(buf, "%ld\n", (long)getpid());
     write(fd, buf, strlen(buf) + 1);
     return 0;
+}
+
+int ledcontrol(int num, int action, int time)
+{
+    char* dir;
+    switch (num)
+    {
+        case ZGB_LED:
+            dir = ZGB_LED_DIR;
+            break;
+        case NET_LED:
+            dir = NET_LED_DIR;
+            break;
+        case SYS_LED:
+            dir = SYS_LED_DIR;
+            break;
+        default:
+            ;
+    }
+    
+    switch(action)
+    {
+        case LED_ACTION_ON:
+        case LED_ACTION_OFF:
+        {
+            char file[50];
+            char cmdline[100];
+            sprintf(file, "%s/brightness", dir);
+            sprintf(cmdline, "echo 0 > %s | echo %d > %s", file, action, file);
+            system(cmdline);
+            return 0;
+        }
+        case LED_ACTION_TRIGGER:
+        {
+            char trfile[50],onfile[50], offfile[50];
+            char cmdline[200];
+            sprintf(trfile, "%s/trigger", dir);
+            sprintf(onfile, "%s/delay_on", dir);
+            sprintf(offfile, "%s/delay_off", dir);
+
+            sprintf(cmdline, "echo timer > %s", trfile);
+            system(cmdline);
+            milliseconds_sleep(200);
+            memset(cmdline, 0 200);
+            sprintf(cmdline, "echo %d > %s | echo %d > %s", time, onfile, time, offfile);
+            system(cmdline);        
+            return 0;
+        }
+        default:
+        ;       
+    }
+    return -1;
 }

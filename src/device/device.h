@@ -34,6 +34,8 @@ void change_device_attr_value(char* deviceid, char attr, int value);
 
 void device_closeallfan();
 
+void gatewayproc(cJSON* op);
+
 /* MQTT的操作数据转为ZGB的DATA */
 /* 返回data的数据长度 */
 int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype);

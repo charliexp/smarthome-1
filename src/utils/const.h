@@ -3,7 +3,7 @@
 
 /*COO AT命令*/
 #define AT_CREATE_NETWORK       "AT+FORM=02"
-#define AT_OPEN_NETWORK         "AT+PERMITJOIN=120"
+#define AT_OPEN_NETWORK         "AT+PERMITJOIN=78"
 #define AT_DEVICE_LIST          "AT+LIST"
 #define AT_NETWORK_NOCLOSE      "AT+PERMITJOIN=FF"
 #define AT_CLOSE_NETWORK        "AT+PERMITJOIN=00"
@@ -70,7 +70,7 @@
 #define ZGB_VERSION_10 0x10
 
 /*设备类型*/
-#define DEV_BOOT			   0x00	// 空设备
+#define DEV_GATEWAY			   0x00	// 网关
 #define DEV_SOCKET		       0x01	// 插座
 #define DEV_AIR_CON		       0x02	// 空调
 #define DEV_BOILER			   0x03	// 锅炉
@@ -91,10 +91,12 @@
 #define SEN_ELECTRICITY_METER  0x54 // 电量计 
 #define SEN_GAS_METER          0x55 // 气量计
 #define SEN_ANEMOGRAPH         0x56 // 风速计
+#define SEN_WATER_MANOMETER    0x57 // 水压计
 #define DEV_ANYONE             0xFF // 任何设备
 
 
-
+#define DEV_ONLINE 1
+#define DEV_OFFLINE 0
 /*消息类型     对应msgtype*/
 #define ZGB_MSGTYPE_DEVICEREGISTER          0x00 //要求设备注册
 #define ZGB_MSGTYPE_DEVICEREGISTER_RESPONSE 0x01 //设备注册响应
@@ -135,9 +137,19 @@
 #define TLV_VALUE_FAULT_SOCKET    0x01 //插座保险丝损坏
 #define TLV_VALUE_FAULT_PURIFIER  0x02 //净水器滤芯更换
 
-#define TLV_VALUE_POWER_OFF  0x00 //断电
+#define TLV_VALUE_POWER_OFF  0x00 //关机
 #define TLV_VALUE_POWER_ON   0x01 //上电
 #define TLV_VALUE_STANDBY    0x02 //待机
+
+#define TLV_VALUE_HEAT  0 //制热
+#define TLV_VALUE_COLD  1 //制冷
+#define TLV_VALUE_HUMIDIFICATION 0 //加湿
+#define TLV_VALUE_DEHUMIDIFICATION 1 //除湿
+
+#define TLV_VALUE_COND_HEAT 0 //空调制热
+#define TLV_VALUE_COND_COLD 1 //空调制冷
+#define TLV_VALUE_BOILER_HEAT 2 //锅炉制热
+
 
 /*插座数据*/
 #define ATTR_SOCKET_E   0x10 //电量
@@ -151,7 +163,8 @@
 #define ATTR_DEVICETYPE     0x01      //设备类型
 #define ATTR_DEVICENAME     0x02      //设备名称
 #define ATTR_DEVICESTATUS   0x03      //设备工作状态：0关机 1工作 2待机 
-#define ATTR_DEVICEMODE     0x04      //工作模式 0无 1制冷 2制热
+#define ATTR_DEVICEMODE     0x04      //设备工作模式：（空调：0制热、1制冷，加湿机：0加湿、1除湿）
+#define ATTR_SYSMODE        0x05      //系统温控模式 0空调制热 1空调制冷 2锅炉制热
 
 #define ATTR_WINDSPEED         0x05               //设备风速 中低高三档
 #define ATTR_WINDSPEED_NUM     0x06               //设备风速 0~100
@@ -169,6 +182,20 @@
 **http常量
 **
 */
-#define HTTP_UPLOAD_UAR "http://123.206.15.63:8060/manager/upload"
+#define HTTP_UPLOAD_URL "http://123.206.15.63:8060/manager/upload"
+
+
+/*LED*/
+#define SYS_LED 1
+#define NET_LED 2
+#define ZGB_LED 3
+
+#define SYS_LED_DIR "/sys/class/leds/wrtnode:blue:sys"
+#define NET_LED_DIR "/sys/class/leds/wrtnode:blue:net"
+#define ZGB_LED_DIR "/sys/class/leds/wrtnode:blue:zigbee"
+
+#define LED_ACTION_OFF 0
+#define LED_ACTION_ON 1
+#define LED_ACTION_TRIGGER 2
 
 #endif

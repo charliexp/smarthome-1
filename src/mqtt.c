@@ -289,6 +289,7 @@ static void connectfailure(void* context, MQTTAsync_failureData* response)
     Clientcontext* clicontext = (Clientcontext*)context;
     //MQTTAsync client = clicontext->handle;
 	MYLOG_ERROR("Connect failed, rc %d", response ? response->code : 0);
+	ledcontrol(NET_LED, LED_ACTION_OFF, 0);//œ®√NET LEDµ∆
 	//MQTTAsync_reconnect(client);
 	mqtt_reconnect(clicontext);
 
@@ -301,6 +302,7 @@ static void connectlost(void *context, char *cause)
     Clientcontext* clicontext = (Clientcontext*)context;
     MQTTAsync client = clicontext->handle;
 	MYLOG_ERROR("Connection lost,the cause is %s", cause);
+	ledcontrol(NET_LED, LED_ACTION_OFF, 0);//œ®√NET LEDµ∆
 	//MQTTAsync_reconnect(client);
 	mqtt_reconnect(clicontext);
 
@@ -320,6 +322,7 @@ static void connectsuccess(void* context, MQTTAsync_successData* response)
 	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
 	int rc;
 	MYLOG_DEBUG("Successful connection");
+	ledcontrol(NET_LED, LED_ACTION_ON, 0);//µ„¡¡NET LEDµ∆
 
 	rc = MQTTAsync_subscribeMany(client, TOPICSNUM, g_topics, qoss, &opts);
 	if (rc != MQTTASYNC_SUCCESS)
