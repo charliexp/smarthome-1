@@ -253,7 +253,7 @@ void* devicemsgprocess(void *argc)
                     MYLOG_INFO("COO operation AT+PERMITJOIN=78");
                     ledcontrol(ZGB_LED, LED_ACTION_TRIGGER, 1000);
                     timer* zgbledtimer = createtimer(120, zgbledtimerfun);
-                    addtimer(pelecttimer);
+                    addtimer(zgbledtimer);
                     reportdevices();
                     break;
                 case TYPE_DEVICE_LIST:
