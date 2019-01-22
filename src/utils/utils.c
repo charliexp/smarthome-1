@@ -511,7 +511,7 @@ int already_running(const char *filename)
 int ledcontrol(int num, int action, int time)
 {
     char* dir;
-    switch (num)
+    switch(num)
     {
         case ZGB_LED:
             dir = ZGB_LED_DIR;
@@ -532,7 +532,7 @@ int ledcontrol(int num, int action, int time)
         case LED_ACTION_OFF:
         {
             char file[50];
-            char cmdline[100];
+            char cmdline[150];
             sprintf(file, "%s/brightness", dir);
             sprintf(cmdline, "echo 0 > %s | echo %d > %s", file, action, file);
             system(cmdline);
