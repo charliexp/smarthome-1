@@ -549,7 +549,7 @@ int ledcontrol(int num, int action, int time)
             sprintf(cmdline, "echo timer > %s", trfile);
             system(cmdline);
             milliseconds_sleep(200);
-            memset(cmdline, 0 200);
+            memset(cmdline, 0, 200);
             sprintf(cmdline, "echo %d > %s | echo %d > %s", time, onfile, time, offfile);
             system(cmdline);        
             return 0;

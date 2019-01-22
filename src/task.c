@@ -130,7 +130,10 @@ void init()
 {
 	int i = 0;
     char db_zgbaddress[17] = "0000000000000000";
-    char db_deviceid[20] = "00000000000000000";; 	
+    char db_deviceid[20] = "00000000000000000";
+    char sql[200];  
+    int rc; 
+    char *zErrMsg = NULL;
 
     //获取网关mac地址
 	if(getmac(g_mac) == 0)
@@ -353,7 +356,7 @@ void* devicemsgprocess(void *argc)
     		    }
     		    if (devicetype == DEV_GATEWAY)
     		    {
-    		        gatewayproc();
+    		        gatewayproc(operations);
     		        goto response;
     		    }
     		    
