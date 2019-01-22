@@ -532,9 +532,9 @@ int ledcontrol(int num, int action, int time)
         case LED_ACTION_OFF:
         {
             char file[50];
-            char cmdline[150];
+            char cmdline[150]={0};
             sprintf(file, "%s/brightness", dir);
-            sprintf(cmdline, "echo 0 > %s | echo %d > %s", file, action, file);
+            sprintf(cmdline, "echo 0 > %s && echo %d > %s", file, action, file);
             system(cmdline);
             return 0;
         }
@@ -550,7 +550,7 @@ int ledcontrol(int num, int action, int time)
             system(cmdline);
             milliseconds_sleep(200);
             memset(cmdline, 0, 200);
-            sprintf(cmdline, "echo %d > %s | echo %d > %s", time, onfile, time, offfile);
+            sprintf(cmdline, "echo %d > %s && echo %d > %s", time, onfile, time, offfile);
             system(cmdline);        
             return 0;
         }
