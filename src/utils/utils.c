@@ -268,19 +268,25 @@ int gatewayregister()
 {
     CURL *curl_handle;
     CURLcode res;
-    char info[30];
+    char info[100];
+    struct curl_slist *list = NULL;
     
-    sprintf(info, "{mac, \"%s\"}", g_mac);
+    sprintf(info, "{\"mac\":\"%s\",\n\"version\":\"0.1\"}", g_mac);
     curl_global_init(CURL_GLOBAL_ALL);
     curl_handle = curl_easy_init();
 
     curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
     curl_easy_setopt(curl_handle, CURLOPT_POST,1);
-
+    
 	//curl_easy_setopt(curl_handle,CURLOPT_VERBOSE,1); //打印调试信息
 
     curl_easy_setopt(curl_handle, CURLOPT_URL, "https://123.206.15.63:8443/manager/gatewayregister");
+    
+    list = curl_slist_append(list, "accept: */*");
+    list = curl_slist_append(list, "Content-Type: application/json");
+
+    curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, list);
     curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, info);
 
     res = curl_easy_perform(curl_handle);
@@ -290,6 +296,7 @@ int gatewayregister()
         MYLOG_ERROR("curl_easy_perform() failed: %s\n",
         curl_easy_strerror(res));
         curl_easy_cleanup(curl_handle);
+        curl_slist_free_all(list);
         curl_global_cleanup();        
         return -1;
     }
@@ -297,6 +304,7 @@ int gatewayregister()
     {
         MYLOG_INFO("Gateway register success!\n");     
         curl_easy_cleanup(curl_handle);
+        curl_slist_free_all(list);
         curl_global_cleanup();   
         return 0;
     }
