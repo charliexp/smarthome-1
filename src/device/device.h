@@ -46,4 +46,8 @@ void change_devices_offline();
 void change_device_online(char* deviceid, char status);
 
 int check_device_online(char* deviceid);
+
+int get_gateway_mode();
+
+void set_gateway_mode(int mode);
 #endif
