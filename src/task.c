@@ -873,7 +873,7 @@ void* uartlisten(void *argc)
             zmsg.payload.adf.opt      = msgbuf[i + (int)&zmsg.payload.adf.opt - (int)&zmsg];
             zmsg.payload.adf.length   = msgbuf[i + (int)&zmsg.payload.adf.length - (int)&zmsg];
 
-            memcpy((void*)zmsg.payload.adf.data, (void*)(msgbuf + i + 37), zmsg.payload.adf.length);
+            memcpy((void*)&zmsg.payload.adf.data, (void*)(msgbuf + i + 37), zmsg.payload.adf.length);
 
             zgbqmsg.msgtype = QUEUE_MSG_ZGB;
             memcpy((void*)&zgbqmsg.msg, (void*)&zmsg, sizeof(zgbmsg));

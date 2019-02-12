@@ -609,7 +609,7 @@ int get_gateway_mode()
     {
         MYLOG_DEBUG("Can not get gatewaycfg mode!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
-        return;
+        return -1;
     }
 
     int mode = atoi(dbresult[1]);
