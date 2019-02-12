@@ -25,8 +25,11 @@ char g_clientid[30], g_clientid_pub[30];
 /*创建需要的数据库表*/
 int sqlitedb_init()
 {
-    int rc; 
+    size_t rc; 
     char sql[512];  
+    size_t nrow = 0, ncolumn = 0;
+	char **dbresult;     
+    char* zErrMsg = NULL;
 
     rc = sqlite3_open("/usr/smarthome.db", &g_db);
     if(rc != SQLITE_OK)  
@@ -48,7 +51,17 @@ int sqlitedb_init()
 
     sprintf(sql,"CREATE TABLE [electricity_hour]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[hour] INT NOT NULL, primary key(deviceid, hour));");
     exec_sql_create(sql);
-    
+
+    sprintf(sql,"CREATE TABLE gatewaycfg (mode INTERGER NOT NULL DEFAULT 0);");
+    exec_sql_create(sql);
+
+    sprintf(sql,"select mode from gatewaycfg;");
+    sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+
+    if(nrow == 1)
+    {
+        set_gateway_mode(TLV_VALUE_COND_HEAT);
+    }    
     return 0;
 }
 
@@ -159,14 +172,11 @@ void init()
     if(sqlitedb_init() == -1)
     {
         MYLOG_ERROR("Create db failed!");      
-    }   
+    }
+
+    //把网关设备写入devices表
     sprintf(sql, "replace into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, DEV_GATEWAY, 0);
-    MYLOG_INFO("The sql is %s", sql);
-    rc = sqlite3_exec(g_db, sql, 0, 0, &zErrMsg);
-    if(rc != SQLITE_OK)
-    {
-        MYLOG_ERROR(zErrMsg);
-    }    
+    exec_sql_create(sql);  
 	for(; i < TOPICSNUM; i++)
 	{
 		g_topics[i] = (char*)malloc(sizeof(g_topicroot) + strlen(g_topicthemes[i])-1);
@@ -549,6 +559,29 @@ void* zgbmsgprocess(void* argc)
             sqlite3_free_table(dbresult);
             continue;
         }
+        else if(qmsg.msg.payload.adf.index[0] == 0xB8 && qmsg.msg.payload.adf.index[1] == 0x20) //设备离网消息
+        {   
+            MYLOG_INFO("[ZGB DEVICE]Get a device network leaving message.");
+            sprintf(sql,"DELETE FROM devices WHERE zgbaddress = '%s';", db_zgbaddress);            
+            exec_sql_create(sql);
+
+            int devicenum;
+            cJSON* devicestatus = NULL;
+            char* array_deviceid;
+
+            devicenum = cJSON_GetArraySize(g_devices_status_json);
+
+            for (int i=0; i < devicenum; i++)
+            {
+                devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
+                array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
+                if(strncmp(db_zgbaddress, array_deviceid, 16) == 0)
+                {
+                    cJSON_DeleteItemFromArray(g_devices_status_json, i);
+                }
+            }            
+            continue;
+        }
         
         zgbdata      = &qmsg.msg.payload.adf.data;
         msgtype      = zgbdata->msgtype;
@@ -786,21 +819,13 @@ void* uartlisten(void *argc)
                 int needbyte = (zmsg.msglength + 4) -  (bitnum - i);//构造当前报文还需接收的字节数
                         
                 nbyte = read(g_uartfd, msgbuf+bitnum, needbyte);
-                    
-                //MYLOG_INFO("Uart extern recv %d byte:", nbyte);
-                //MYLOG_BYTE(msgbuf+bitnum, nbyte);
                 bitnum = bitnum + nbyte;
-                
                 while(needbyte > nbyte)//循环读取直到全部读取
                 {
                     needbyte = needbyte - nbyte;
                     nbyte = read(g_uartfd, msgbuf+bitnum, needbyte);
-                    //MYLOG_INFO("Uart extern recv %d byte:", nbyte);
-                    //MYLOG_BYTE(msgbuf+bitnum, nbyte); 
                     bitnum = bitnum + nbyte;
                 }
-                //MYLOG_DEBUG("The complete msg is:");
-                //MYLOG_BYTE(msgbuf+i, zmsg.msglength + 4);
             }
 			zmsg.check = msgbuf[i + zmsg.msglength + 2];
 			sum = 0;
@@ -823,7 +848,7 @@ void* uartlisten(void *argc)
 			}
 
 			memcpy((void*)zmsg.payload.src, (void*)msgbuf + i + 10, ZGB_ADDRESS_LENGTH); //ZGB消息中src位于报文第10字节
-    		if(addresszero(zmsg.payload.src) == 0)//不是ROT发来的报文
+    		if(addresszero(zmsg.payload.src) == 0)//不是ROT发来的报文直接丢弃
     		{
                 //移除前一个报文
                 if((i + zmsg.msglength + 4)!= (bitnum -1))
@@ -834,43 +859,21 @@ void* uartlisten(void *argc)
                     i = 0;
                     continue;                    
                 }
+                else
+                {
+                    break;   
+                }     
             }
 
             zmsg.payload.cmdid[0]     = msgbuf[i + (int)&zmsg.payload.cmdid - (int)&zmsg];
             zmsg.payload.cmdid[1]     = msgbuf[i + 1 + (int)&zmsg.payload.cmdid - (int)&zmsg];            
-
             zmsg.payload.adf.index[0] = msgbuf[i + (int)&zmsg.payload.adf.index - (int)&zmsg];
             zmsg.payload.adf.index[1] = msgbuf[i + 1 + (int)&zmsg.payload.adf.index - (int)&zmsg]; 
+            zmsg.payload.adf.sub      = msgbuf[i + (int)&zmsg.payload.adf.sub - (int)&zmsg];
+            zmsg.payload.adf.opt      = msgbuf[i + (int)&zmsg.payload.adf.opt - (int)&zmsg];
+            zmsg.payload.adf.length   = msgbuf[i + (int)&zmsg.payload.adf.length - (int)&zmsg];
 
-            if(zmsg.payload.cmdid[0] != 0x20 && zmsg.payload.cmdid[1] == 0x98)//不是ROT发来的透传报文
-            {
-                //移除前一个报文
-                if((i + zmsg.msglength + 4)!= (bitnum -1))
-                {
-                    MYLOG_DEBUG("move a message!");
-                    memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
-                    bitnum = bitnum - (i + zmsg.msglength + 4);
-                    i = 0;
-                    continue;                    
-                }            
-            }
-
-            zmsg.payload.adf.sub    = msgbuf[i + (int)&zmsg.payload.adf.sub - (int)&zmsg];
-            zmsg.payload.adf.opt    = msgbuf[i + (int)&zmsg.payload.adf.opt - (int)&zmsg];
-            zmsg.payload.adf.length = msgbuf[i + (int)&zmsg.payload.adf.length - (int)&zmsg];
-            
-            if(zmsg.payload.adf.index[0] == 0xA0 && zmsg.payload.adf.index[1] == 0x0F)
-            {
-                zmsg.payload.adf.data.magicnum    = msgbuf[i + (int)&zmsg.payload.adf.data.magicnum - (int)&zmsg];
-                zmsg.payload.adf.data.length      = msgbuf[i + (int)&zmsg.payload.adf.data.length - (int)&zmsg];
-                zmsg.payload.adf.data.version     = msgbuf[i + (int)&zmsg.payload.adf.data.version - (int)&zmsg];
-                zmsg.payload.adf.data.devicetype  = msgbuf[i + (int)&zmsg.payload.adf.data.devicetype - (int)&zmsg];
-                zmsg.payload.adf.data.deviceindex = msgbuf[i + (int)&zmsg.payload.adf.data.deviceindex - (int)&zmsg];
-    			zmsg.payload.adf.data.packetid    = msgbuf[i + (int)&zmsg.payload.adf.data.packetid - (int)&zmsg];
-    			zmsg.payload.adf.data.msgtype     = msgbuf[i + (int)&zmsg.payload.adf.data.msgtype - (int)&zmsg];
-                
-    			memcpy((void*)zmsg.payload.adf.data.pdu, (void*)(msgbuf + i + 44), zmsg.payload.adf.data.length);                
-            }
+            memcpy((void*)zmsg.payload.adf.data, (void*)(msgbuf + i + 37), zmsg.payload.adf.length);
 
             zgbqmsg.msgtype = QUEUE_MSG_ZGB;
             memcpy((void*)&zgbqmsg.msg, (void*)&zmsg, sizeof(zgbmsg));

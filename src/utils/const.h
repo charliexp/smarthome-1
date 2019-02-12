@@ -46,9 +46,9 @@
 #define ZGB_ADDRESS_LENGTH 8
 #define ZGBMSG_MAX_NUM     20
 
-#define TOPIC_DEVICE_ADD "devices/add"
+#define TOPIC_DEVICE_ADD    "devices/add"
 #define TOPIC_DEVICE_STATUS "devices/status"
-#define TOPIC_DEVICE_SHOW "devices/show"
+#define TOPIC_DEVICE_SHOW   "devices/show"
 
 #define QOS_LEVEL_0 0
 #define QOS_LEVEL_1 1
@@ -150,6 +150,8 @@
 #define TLV_VALUE_COND_COLD 1 //空调制冷
 #define TLV_VALUE_BOILER_HEAT 2 //锅炉制热
 
+#define TLV_VALUE_ONLINE 1
+#define TLV_VALUE_OFFLINE 0
 
 /*插座数据*/
 #define ATTR_SOCKET_E   0x10 //电量

@@ -213,7 +213,8 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status); 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SYSMODE);
-        	cJSON_AddNumberToObject(status, "value", TLV_VALUE_COND_HEAT);
+        	int mode = get_gateway_mode();
+        	cJSON_AddNumberToObject(status, "value", mode);
         	cJSON_AddItemToArray(statusarray, status);     	
             break;            
         }
@@ -517,11 +518,12 @@ void gatewayproc(cJSON* op)
         if(attr == ATTR_SYSMODE)
         {
             value = cJSON_GetObjectItem(item, "value")->valueint;
-            if(value == 0 || value == 1 || value == 2)
+            if(value == TLV_VALUE_COND_HEAT || value == TLV_VALUE_COND_COLD || value == TLV_VALUE_BOILER_HEAT)
             {
                 if(g_system_mode != value)
                 {
                     g_system_mode = value;
+                    set_gateway_mode(value);
                     device_closeallfan();
                 }
             }
@@ -545,8 +547,8 @@ void change_devices_offline()
         online = cJSON_GetObjectItem(devicestatus, "online")->valueint;
         if(online == 1)
         {
-            cJSON_GetObjectItem(devicestatus, "online")->valueint = 0;
-            cJSON_GetObjectItem(devicestatus, "online")->valuedouble = 0;
+            cJSON_GetObjectItem(devicestatus, "online")->valueint = TLV_VALUE_OFFLINE;
+            cJSON_GetObjectItem(devicestatus, "online")->valuedouble = TLV_VALUE_OFFLINE;
         }
     }    
 }
@@ -594,4 +596,31 @@ int check_device_online(char* deviceid)
     return -1;
 }
 
+int get_gateway_mode()
+{
+    size_t nrow = 0, ncolumn = 0;
+	char **dbresult;     
+    char sql[]={"select mode from gatewaycfg;"};
+    char* zErrMsg = NULL;
+    
+    sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
 
+    if(nrow == 0)
+    {
+        MYLOG_DEBUG("Can not get gatewaycfg mode!");
+        MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
+        return;
+    }
+
+    int mode = atoi(dbresult[1]);
+
+    return mode;
+}
+
+void set_gateway_mode(int mode)
+{
+    char sql[100];
+    memset(sql, 0, 100);
+    sprintf(sql, "replace into gatewaycfg(rowid, mode) values(1, %d)", mode);
+    exec_sql_create(sql);
+}
