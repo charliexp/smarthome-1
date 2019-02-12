@@ -559,7 +559,7 @@ void* zgbmsgprocess(void* argc)
             sqlite3_free_table(dbresult);
             continue;
         }
-        else if(qmsg.msg.payload.adf.index[0] == 0x20 && qmsg.msg.payload.adf.index[1] == 0xB8) //设备离网消息
+        else if(qmsg.msg.payload.adf.index[0] == 0xF2 && qmsg.msg.payload.adf.index[1] == 0x03) //设备离网消息
         {   
             MYLOG_INFO("[ZGB DEVICE]Get a device network leaving message.");
             sprintf(sql,"DELETE FROM devices WHERE zgbaddress = '%s';", db_zgbaddress);            
@@ -582,7 +582,7 @@ void* zgbmsgprocess(void* argc)
             }            
             continue;
         }
-        
+
         zgbdata      = &qmsg.msg.payload.adf.data;
         msgtype      = zgbdata->msgtype;
         devicetype   = zgbdata->devicetype;
@@ -601,7 +601,7 @@ void* zgbmsgprocess(void* argc)
         }
 
         if(zgbdata->magicnum != 0xAA)
-        {
+        {         
             MYLOG_INFO("Drop a not own msg!");
             MYLOG_ZGBMSG(qmsg.msg);
             goto end;
