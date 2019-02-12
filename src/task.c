@@ -559,7 +559,7 @@ void* zgbmsgprocess(void* argc)
             sqlite3_free_table(dbresult);
             continue;
         }
-        else if(qmsg.msg.payload.adf.index[0] == 0xB8 && qmsg.msg.payload.adf.index[1] == 0x20) //设备离网消息
+        else if(qmsg.msg.payload.adf.index[0] == 0x20 && qmsg.msg.payload.adf.index[1] == 0xB8) //设备离网消息
         {   
             MYLOG_INFO("[ZGB DEVICE]Get a device network leaving message.");
             sprintf(sql,"DELETE FROM devices WHERE zgbaddress = '%s';", db_zgbaddress);            
