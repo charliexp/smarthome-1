@@ -454,6 +454,7 @@ void* devicemsgprocess(void *argc)
                 if (devicestatus == NULL)
                 {
                     MYLOG_ERROR("Can't find the device status!");
+                    goto response;
                 }              
                 cJSON* status = cJSON_GetObjectItem(devicestatus, "status");
                 cJSON_AddItemToObject(device, "status", status);

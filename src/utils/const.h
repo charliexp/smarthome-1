@@ -180,6 +180,8 @@
 #define ATTR_ENV_FORMALDEHYDE  0x44              //¼×È©
 #define ATTR_ENV_TV0C          0x45              //TVOC
 
+#define ATTR_SEN_WATERPRESSURE 0x50    //Ë®Ñ¹
+
 /*
 **http³£Á¿
 **

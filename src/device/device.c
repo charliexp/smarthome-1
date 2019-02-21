@@ -362,6 +362,45 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status);         	
             break;            
         }
+        case SEN_WATER_TEMPERATURE:
+        {
+	        status = cJSON_CreateObject(); 
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
+        	cJSON_AddNumberToObject(status, "value", SEN_WATER_TEMPERATURE);
+        	cJSON_AddItemToArray(statusarray, status); 	
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_ENV_TEMPERATURE);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddItemToArray(statusarray, status);           	
+            break;            
+        }
+        case DEV_HUMIDIFIER:
+        {
+	        status = cJSON_CreateObject(); 
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
+        	cJSON_AddNumberToObject(status, "value", DEV_HUMIDIFIER);
+        	cJSON_AddItemToArray(statusarray, status); 	
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICEMODE);
+        	cJSON_AddNumberToObject(status, "value", 0);        	
+        	cJSON_AddItemToArray(statusarray, status);           	
+            break;            
+        }
+        case SEN_WATER_MANOMETER:
+        {
+	        status = cJSON_CreateObject(); 
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
+        	cJSON_AddNumberToObject(status, "value", SEN_WATER_MANOMETER);
+        	cJSON_AddItemToArray(statusarray, status); 	
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_SEN_WATERPRESSURE);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddItemToArray(statusarray, status);           	
+            break;               
+        }
         default:
             device = NULL;
             
