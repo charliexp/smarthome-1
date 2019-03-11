@@ -287,10 +287,11 @@ end:
 static void connectfailure(void* context, MQTTAsync_failureData* response)
 {
     Clientcontext* clicontext = (Clientcontext*)context;
-    //MQTTAsync client = clicontext->handle;
+    int clientid = clicontext->clientid;   
 	MYLOG_ERROR("Connect failed, rc %d", response ? response->code : 0);
-	ledcontrol(NET_LED, LED_ACTION_OFF, 0);//熄灭NET LED灯
-	//MQTTAsync_reconnect(client);
+	if(clientid == WAN_CLIENT_ID)	
+    	ledcontrol(NET_LED, LED_ACTION_OFF, 0);//熄灭NET LED灯
+
 	mqtt_reconnect(clicontext);
 
 	return;
@@ -301,9 +302,12 @@ static void connectlost(void *context, char *cause)
 {
     Clientcontext* clicontext = (Clientcontext*)context;
     MQTTAsync client = clicontext->handle;
+    int clientid = clicontext->clientid;    
 	MYLOG_ERROR("Connection lost,the cause is %s", cause);
-	ledcontrol(NET_LED, LED_ACTION_OFF, 0);//熄灭NET LED灯
-	//MQTTAsync_reconnect(client);
+
+	if(clientid == WAN_CLIENT_ID)
+    	ledcontrol(NET_LED, LED_ACTION_OFF, 0);//熄灭NET LED灯
+
 	mqtt_reconnect(clicontext);
 
 	return;
@@ -314,15 +318,16 @@ static void connectsuccess(void* context, MQTTAsync_successData* response)
     Clientcontext* clicontext = (Clientcontext*)context;
     MQTTAsync client = clicontext->handle;
     int clientid = clicontext->clientid;
+	int rc;
 
     if((clientid == WAN_CLIENT_PUB_ID) || (clientid == LAN_CLIENT_PUB_ID)) //发布进程不需要订阅topic
         return;
 
     int qoss[TOPICSNUM] = {2, 1};
 	MQTTAsync_responseOptions opts = MQTTAsync_responseOptions_initializer;
-	int rc;
 	MYLOG_DEBUG("Successful connection");
-	ledcontrol(NET_LED, LED_ACTION_ON, 0);//点亮NET LED灯
+	if(clientid == WAN_CLIENT_ID)
+    	ledcontrol(NET_LED, LED_ACTION_ON, 0);//点亮NET LED灯
 
 	rc = MQTTAsync_subscribeMany(client, TOPICSNUM, g_topics, qoss, &opts);
 	if (rc != MQTTASYNC_SUCCESS)
@@ -348,7 +353,6 @@ void *mqttclient(void *argc)
     
 	MQTTAsync_setCallbacks(client, (void*)&context, connectlost, msgarrvd, NULL);  
 
-    
 	conn_opts.keepAliveInterval = 60;
 	conn_opts.cleansession = 1;
 	conn_opts.username = USERNAME;
@@ -368,7 +372,6 @@ void *mqttclient(void *argc)
 }
 
 
-
 /*局域网MQTT客户端进程*/
 void *lanmqttlient(void *argc)
 {
@@ -384,7 +387,6 @@ void *lanmqttlient(void *argc)
 
 	MQTTAsync_setCallbacks(client, (void*)&context, connectlost, msgarrvd, NULL);  
 	
-
 	conn_opts.keepAliveInterval = 60;
 	conn_opts.cleansession = 1;
 	conn_opts.username = USERNAME;
@@ -420,10 +422,8 @@ void* mqttqueueprocess(void *argc)
 
 	MQTTAsync_create(&client, ADDRESS, g_clientid_pub, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
-
 	context.clientid = WAN_CLIENT_PUB_ID;
 	context.handle = client;
-
 
 	MQTTAsync_setCallbacks(client, (void*)&context, connectlost, msgarrvd, NULL);  
 
@@ -446,34 +446,34 @@ void* mqttqueueprocess(void *argc)
 
 		switch(msg.msgtype)
 		{
-		case MQTT_MSG_TYPE_PUB:
-		    MYLOG_INFO("A msg need to pub.");
-			result = MQTTAsync_send(client, (const char*)msg.msg.topic, strlen(msg.msg.msgcontent),
-				(void *)msg.msg.msgcontent, msg.msg.qos, msg.msg.retained, NULL);
-			
-			if(result != MQTTASYNC_SUCCESS)
-			{		
-                MYLOG_ERROR("MQTTAsync_send fail! %d", result);
-			}
-			break;
-		case MQTT_MSG_TYPE_SUB:
-		    MYLOG_INFO("A msg need to sub.");
-			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, NULL);
-			if(result != MQTTASYNC_SUCCESS)
-			{		
-                MYLOG_ERROR("MQTTAsync_subscribe fail! %d", result);
-            }
-			break;
-		case MQTT_MSG_TYPE_UNSUB:
-		    MYLOG_INFO("A msg need to unsub.");
-			result = MQTTAsync_unsubscribe(client, (const char*)msg.msg.topic, NULL);
-			if(result != MQTTASYNC_SUCCESS)
-			{
-                MYLOG_ERROR("MQTTAsync_unsubscribe fail! %d\n", result);
-            }
-			break;
-		default:
-			MYLOG_INFO("unknow msg!\n");
+    		case MQTT_MSG_TYPE_PUB:
+    		    MYLOG_INFO("A msg need to pub.");
+    			result = MQTTAsync_send(client, (const char*)msg.msg.topic, strlen(msg.msg.msgcontent),
+    				(void *)msg.msg.msgcontent, msg.msg.qos, msg.msg.retained, NULL);
+    			
+    			if(result != MQTTASYNC_SUCCESS)
+    			{		
+                    MYLOG_ERROR("MQTTAsync_send fail! %d", result);
+    			}
+    			break;
+    		case MQTT_MSG_TYPE_SUB:
+    		    MYLOG_INFO("A msg need to sub.");
+    			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, NULL);
+    			if(result != MQTTASYNC_SUCCESS)
+    			{		
+                    MYLOG_ERROR("MQTTAsync_subscribe fail! %d", result);
+                }
+    			break;
+    		case MQTT_MSG_TYPE_UNSUB:
+    		    MYLOG_INFO("A msg need to unsub.");
+    			result = MQTTAsync_unsubscribe(client, (const char*)msg.msg.topic, NULL);
+    			if(result != MQTTASYNC_SUCCESS)
+    			{
+                    MYLOG_ERROR("MQTTAsync_unsubscribe fail! %d\n", result);
+                }
+    			break;
+    		default:
+			    MYLOG_INFO("unknow msg!\n");
 		}
 		if(msg.msgtype == MQTT_MSG_TYPE_PUB)
 		{
@@ -486,13 +486,12 @@ void* mqttqueueprocess(void *argc)
 }
 
 
-
 /*局域网MQTT消息队列的处理进程*/
 void* lanmqttqueueprocess(void *argc)
 {
 	mqttqueuemsg msg;
 	ssize_t ret;
-	int result;
+	ssize_t result;
 
 	MYLOG_DEBUG("Enter lanmqttqueueprocess pthread!");
 
@@ -505,11 +504,7 @@ void* lanmqttqueueprocess(void *argc)
 	context.handle = client;
 
 	MQTTAsync_create(&client, ADDRESS, g_clientid_pub, MQTTCLIENT_PERSISTENCE_NONE, NULL);
-
 	MQTTAsync_setCallbacks(client, (void*)&context, connectlost, msgarrvd, NULL);  
-
-
-
 
 	conn_opts.keepAliveInterval = 60;
 	conn_opts.cleansession = 1;
@@ -529,34 +524,34 @@ void* lanmqttqueueprocess(void *argc)
 		
 		switch(msg.msgtype)
 		{
-		case MQTT_MSG_TYPE_PUB:
-		    MYLOG_INFO("A msg need to pub.");
-			result = MQTTAsync_send(client, (const char*)msg.msg.topic, strlen(msg.msg.msgcontent),
-				(void *)msg.msg.msgcontent, msg.msg.qos, msg.msg.retained, NULL);
-			
-			if(result != MQTTASYNC_SUCCESS)
-			{		
-                MYLOG_ERROR("MQTTAsync_send fail! %d", result);
-			}
-			break;
-		case MQTT_MSG_TYPE_SUB:
-		    MYLOG_INFO("A msg need to sub.");
-			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, NULL);
-			if(result != MQTTASYNC_SUCCESS)
-			{		
-                MYLOG_ERROR("MQTTAsync_subscribe fail! %d", result);
-            }
-			break;
-		case MQTT_MSG_TYPE_UNSUB:
-		    MYLOG_INFO("A msg need to unsub.");
-			result = MQTTAsync_unsubscribe(client, (const char*)msg.msg.topic, NULL);
-			if(result != MQTTASYNC_SUCCESS)
-			{
-                MYLOG_ERROR("MQTTAsync_unsubscribe fail! %d\n", result);
-            }
-			break;
-		default:
-			MYLOG_INFO("unknow msg!\n");
+    		case MQTT_MSG_TYPE_PUB:
+    		    MYLOG_INFO("A msg need to pub.");
+    			result = MQTTAsync_send(client, (const char*)msg.msg.topic, strlen(msg.msg.msgcontent),
+    				(void *)msg.msg.msgcontent, msg.msg.qos, msg.msg.retained, NULL);
+    			
+    			if(result != MQTTASYNC_SUCCESS)
+    			{		
+                    MYLOG_ERROR("MQTTAsync_send fail! %d", result);
+    			}
+    			break;
+    		case MQTT_MSG_TYPE_SUB:
+    		    MYLOG_INFO("A msg need to sub.");
+    			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, NULL);
+    			if(result != MQTTASYNC_SUCCESS)
+    			{		
+                    MYLOG_ERROR("MQTTAsync_subscribe fail! %d", result);
+                }
+    			break;
+    		case MQTT_MSG_TYPE_UNSUB:
+    		    MYLOG_INFO("A msg need to unsub.");
+    			result = MQTTAsync_unsubscribe(client, (const char*)msg.msg.topic, NULL);
+    			if(result != MQTTASYNC_SUCCESS)
+    			{
+                    MYLOG_ERROR("MQTTAsync_unsubscribe fail! %d\n", result);
+                }
+    			break;
+    		default:
+    			MYLOG_INFO("unknow msg!\n");
 		}
 		if(msg.msgtype == MQTT_MSG_TYPE_PUB)
 		{
@@ -570,7 +565,7 @@ void* lanmqttqueueprocess(void *argc)
 //上报所有已注册设备
 void reportdevices()
 {
-    int nrow = 0, ncolumn = 0;
+    size_t nrow = 0,ncolumn = 0;
     char **azResult; 
     char *zErrMsg = NULL; 
     char sql[256] = {0};
@@ -592,7 +587,7 @@ void reportdevices()
         devicetype    = atoi(azResult[i*ncolumn+2]); 
         cJSON_AddStringToObject(root, "deviceid", deviceid);
         cJSON_AddNumberToObject(root, "devicetype", devicetype);        
-        sendmqttmsg(MQTT_MSG_TYPE_PUB,topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
+        sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
         cJSON_Delete(root);
     } 
     sqlite3_free_table(azResult);      

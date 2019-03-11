@@ -575,7 +575,11 @@ void* zgbmsgprocess(void* argc)
             for (int i=0; i < devicenum; i++)
             {
                 devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
-                array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
+                cJSON* deviceid = cJSON_GetObjectItem(devicestatus, "deviceid");
+                if(deviceid == NULL){
+                    continue;
+                }
+                array_deviceid = deviceid->valuestring;
                 if(strncmp(db_zgbaddress, array_deviceid, 16) == 0)
                 {
                     cJSON_DeleteItemFromArray(g_devices_status_json, i);
@@ -890,7 +894,7 @@ void* uartlisten(void *argc)
                 memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
                 bitnum = bitnum - (i + zmsg.msglength + 4);
                 i = 0;                   
-            } 
+            }
             else
             {
                 i = bitnum;

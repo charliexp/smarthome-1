@@ -42,5 +42,5 @@ int main(int argc, char* argv[])
 	//pthread_create(&threads[5], NULL, lanmqttlient,         NULL);
     //pthread_create(&threads[6], NULL, lanmqttqueueprocess,  NULL);    
 
-    pthread_join(threads[0],NULL);
+    pthread_join(threads[0],NULL);//防止主线程挂掉进入D模式
 }

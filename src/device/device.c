@@ -254,11 +254,11 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status);           	
             break;
         }        
-        case SEN_ENV_DATA:
+        case SEN_ENV_BOX:
         {
 	        status = cJSON_CreateObject(); 
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", SEN_ENV_DATA);
+        	cJSON_AddNumberToObject(status, "value", SEN_ENV_BOX);
         	cJSON_AddItemToArray(statusarray, status); 	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_TEMPERATURE);
@@ -342,12 +342,16 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status); 	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
-        	cJSON_AddNumberToObject(status, "value", 1);
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_WINDSPEED);
         	cJSON_AddNumberToObject(status, "value", 1);
-        	cJSON_AddItemToArray(statusarray, status);           	
+        	cJSON_AddItemToArray(statusarray, status); 
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_SETTING_TEMPERATURE);
+        	cJSON_AddNumberToObject(status, "value", 26);
+        	cJSON_AddItemToArray(statusarray, status);           	        	
             break;            
         }
         case DEV_FLOOR_HEAT:
@@ -401,6 +405,47 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status);           	
             break;               
         }
+        //ÈÈË®Æ÷
+        case DEV_WATER_HEAT:
+        {
+	        status = cJSON_CreateObject(); 
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
+        	cJSON_AddNumberToObject(status, "value", DEV_WATER_HEAT);
+        	cJSON_AddItemToArray(statusarray, status); 	
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_WATER_TEMPERATURE_TARGET);
+        	cJSON_AddNumberToObject(status, "value", 30);
+        	cJSON_AddItemToArray(statusarray, status);     
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_WATER_TEMPERATURE_CURRENT);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddItemToArray(statusarray, status);    
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_WATER_TEMPERATURE_CLEAN);
+        	cJSON_AddNumberToObject(status, "value", 80);
+        	cJSON_AddItemToArray(statusarray, status);    
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_WATER_TIME);
+        	cJSON_AddNumberToObject(status, "value", 60);
+        	cJSON_AddItemToArray(statusarray, status);            	
+            break;               
+        }
+        case DEV_WATER_PUMP:
+        {
+	        status = cJSON_CreateObject(); 
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
+        	cJSON_AddNumberToObject(status, "value", DEV_WATER_PUMP);
+        	cJSON_AddItemToArray(statusarray, status); 	
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_CONNECTED_SOCKET);
+        	cJSON_AddStringToObject(status, "value", "");
+        	cJSON_AddItemToArray(statusarray, status);
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_CONNECTED_WATER_SEN);
+        	cJSON_AddStringToObject(status, "value", "");
+        	cJSON_AddItemToArray(statusarray, status);           	
+            break;               
+        }        
         default:
             device = NULL;
             
@@ -515,7 +560,7 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
             case ATTR_DEVICEMODE:
             case ATTR_WINDSPEED:
             case ATTR_WINDSPEED_NUM:
-            case ATTR_TEMPERATURE:
+            case ATTR_SETTING_TEMPERATURE:
             {
                 int j = 4;
                 int attrvalue = value;
