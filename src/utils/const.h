@@ -76,7 +76,7 @@
 #define DEV_AIR_CON		              0x03	// 空调主机
 #define DEV_FAN_COIL		          0x04	// 风机盘管
 #define DEV_FLOOR_HEAT	              0x05	// 地暖
-#define DEV_FRESH			          0x06	// 新风
+#define DEV_FRESH_AIR			      0x06	// 新风
 #define DEV_HUMIDIFIER                0x07  // 加湿机
 #define DEV_DEHUMIDIFIER              0x08  // 除湿机
 #define DEV_BOILER			          0x09	// 锅炉

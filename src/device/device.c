@@ -354,6 +354,22 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status);           	        	
             break;            
         }
+        case DEV_FRESH_AIR:
+        {
+	        status = cJSON_CreateObject(); 
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
+        	cJSON_AddNumberToObject(status, "value", DEV_FRESH_AIR);
+        	cJSON_AddItemToArray(statusarray, status); 	 
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddItemToArray(statusarray, status);
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_WINDSPEED);
+        	cJSON_AddNumberToObject(status, "value", 2);
+        	cJSON_AddItemToArray(statusarray, status);        	        	
+            break;            
+        }        
         case DEV_FLOOR_HEAT:
         {
 	        status = cJSON_CreateObject(); 
