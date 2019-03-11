@@ -249,7 +249,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);
 	        status = cJSON_CreateObject();            
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICEMODE);
+        	cJSON_AddNumberToObject(status, "type", ATTR_AIR_CONDITION_MODE);
         	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);           	
             break;
@@ -388,16 +388,37 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
         	cJSON_AddNumberToObject(status, "value", 0);
         	status = cJSON_CreateObject();
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICEMODE);
+        	cJSON_AddNumberToObject(status, "type", ATTR_WINDSPEED);
         	cJSON_AddNumberToObject(status, "value", 0);        	
-        	cJSON_AddItemToArray(statusarray, status);           	
+        	cJSON_AddItemToArray(statusarray, status);
+        	cJSON_AddNumberToObject(status, "type", ATTR_ENV_HUMIDITY);
+        	cJSON_AddNumberToObject(status, "value", 0);        	
+        	cJSON_AddItemToArray(statusarray, status);        	
             break;            
         }
-        case SEN_WATER_MANOMETER:
+        case DEV_DEHUMIDIFIER:
         {
 	        status = cJSON_CreateObject(); 
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", SEN_WATER_MANOMETER);
+        	cJSON_AddNumberToObject(status, "value", DEV_DEHUMIDIFIER);
+        	cJSON_AddItemToArray(statusarray, status); 	
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_WINDSPEED);
+        	cJSON_AddNumberToObject(status, "value", 0);        	
+        	cJSON_AddItemToArray(statusarray, status);
+        	cJSON_AddNumberToObject(status, "type", ATTR_ENV_HUMIDITY);
+        	cJSON_AddNumberToObject(status, "value", 0);        	
+        	cJSON_AddItemToArray(statusarray, status);        	
+            break;            
+        }        
+        case DEV_WATER_PURIF:
+        {
+	        status = cJSON_CreateObject(); 
+        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
+        	cJSON_AddNumberToObject(status, "value", DEV_WATER_PURIF);
         	cJSON_AddItemToArray(statusarray, status); 	
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SEN_WATERPRESSURE);

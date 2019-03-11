@@ -71,7 +71,7 @@
 
 /*设备类型*/
 #define DEV_GATEWAY		              0x00	// 网关
-#define DEV_MULTI_PANEL               0x01  // 控制面板
+#define DEV_CONTROL_PANEL             0x01  // 控制面板
 #define DEV_SOCKET		              0x02	// 插座
 #define DEV_AIR_CON		              0x03	// 空调主机
 #define DEV_FAN_COIL		          0x04	// 风机盘管
