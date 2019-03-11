@@ -578,7 +578,7 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
         switch (attr)
         {
             case ATTR_DEVICESTATUS://如果做数据检查在每个枚举下面进行
-            case ATTR_DEVICEMODE:
+            case ATTR_AIR_CONDITION_MODE:
             case ATTR_WINDSPEED:
             case ATTR_WINDSPEED_NUM:
             case ATTR_SETTING_TEMPERATURE:
