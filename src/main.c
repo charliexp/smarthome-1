@@ -30,7 +30,6 @@ int main(int argc, char* argv[])
     }
     
     log_init();	
-    timerinit();
     init(); //程序启动初始任务
    
 	pthread_create(&threads[0], NULL, mqttclient,       NULL);
@@ -41,6 +40,7 @@ int main(int argc, char* argv[])
 
 	//pthread_create(&threads[5], NULL, lanmqttlient,         NULL);
     //pthread_create(&threads[6], NULL, lanmqttqueueprocess,  NULL);    
+    timerinit();
 
     pthread_join(threads[0],NULL);//防止主线程挂掉进入D模式
 }

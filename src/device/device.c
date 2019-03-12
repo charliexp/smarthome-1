@@ -177,14 +177,11 @@ void devices_status_json_init()
         return;
     }
 
-    MYLOG_DEBUG("The devicenum is %d", nrow);
     for(int i=1; i<= nrow; i++)
     {
         deviceid      = dbresult[i*ncolumn];
         devicetype    = atoi(dbresult[i*ncolumn+1]);
-        MYLOG_DEBUG("The deviceid is %s,the devicetype is %d", deviceid, devicetype);
-        device_status_json = create_device_status_json(deviceid, devicetype);
-        MYLOG_INFO("The device_status is %s", cJSON_PrintUnformatted(device_status_json));
+        device_status_json = create_device_status_json(deviceid, devicetype);     
         cJSON_AddItemToArray(g_devices_status_json, device_status_json);
     }
     MYLOG_INFO("The g_device_status is %s", cJSON_PrintUnformatted(g_devices_status_json));

@@ -572,7 +572,6 @@ void* zgbmsgprocess(void* argc)
 
             devicenum = cJSON_GetArraySize(g_devices_status_json);
 
-            for (int i=1; i < devicenum; i++)
             for (int i=0; i < devicenum; i++)
             {
                 devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
