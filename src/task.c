@@ -399,7 +399,7 @@ void* devicemsgprocess(void *argc)
     			int j = 0;
     			for (; j < g_zgbmsgnum; j++)
     			{
-    				if (g_devicemsgstatus[j].finish == 0)
+    				if (g_devicemsgstatus[j].finish == 1)//有未处理完的设备直接跳出
     					break;
     			}
     			if (j == g_zgbmsgnum)//所有的zgb消息都已处理完
@@ -660,8 +660,8 @@ void* zgbmsgprocess(void* argc)
                 {
                     if (g_devicemsgstatus[i].packetid == packetid)
                     {
-                        g_devicemsgstatus[i].finish = 1;
-                        g_devicemsgstatus[i].result = zgbdata->pdu[1];
+                        g_devicemsgstatus[i].finish = 0;
+                        g_devicemsgstatus[i].result = zgbdata->pdu[4];
                         break;
                     }
                 }                              
