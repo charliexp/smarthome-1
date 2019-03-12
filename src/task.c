@@ -572,7 +572,7 @@ void* zgbmsgprocess(void* argc)
 
             devicenum = cJSON_GetArraySize(g_devices_status_json);
 
-            for (int i=0; i < devicenum; i++)
+            for (int i=1; i < devicenum; i++)
             {
                 devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
                 cJSON* deviceid = cJSON_GetObjectItem(devicestatus, "deviceid");
@@ -701,6 +701,7 @@ void* zgbmsgprocess(void* argc)
                     switch(attr)
                     {
                         case ATTR_DEVICESTATUS:
+                        case ATTR_WINDSPEED:
                         case ATTR_ENV_TEMPERATURE:
                         case ATTR_ENV_HUMIDITY:
                         case ATTR_ENV_PM25:

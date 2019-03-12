@@ -346,7 +346,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status);
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_WINDSPEED);
-        	cJSON_AddNumberToObject(status, "value", 1);
+        	cJSON_AddNumberToObject(status, "value", 2);
         	cJSON_AddItemToArray(statusarray, status); 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SETTING_TEMPERATURE);
