@@ -98,6 +98,13 @@ void device_closeallfan()
     sendzgbmsg(address, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_FAN_COIL, 0xFF, getpacketid());    
 }
 
+void change_panel_mode(int mode)
+{
+    ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文
+    BYTE data[5] = {ATTR_SYSMODE, 0x0, 0x0, 0x0, mode};
+    sendzgbmsg(address, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_CONTROL_PANEL, 0xFF, getpacketid());        
+}
+
 void devices_status_query()
 {
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文
@@ -292,6 +299,10 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
 	        status = cJSON_CreateObject();            
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_HUMIDITY);
         	cJSON_AddNumberToObject(status, "value", 50);
+        	cJSON_AddItemToArray(statusarray, status); 
+	        status = cJSON_CreateObject();            
+        	cJSON_AddNumberToObject(status, "type", ATTR_SYSMODE);
+        	cJSON_AddNumberToObject(status, "value", TLV_VALUE_COND_COLD);
         	cJSON_AddItemToArray(statusarray, status);           	
             break;
         }  

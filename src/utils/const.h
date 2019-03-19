@@ -70,32 +70,32 @@
 #define ZGB_VERSION_10 0x10
 
 /*设备类型*/
-#define DEV_GATEWAY		              0x00	// 网关
-#define DEV_CONTROL_PANEL             0x01  // 控制面板
-#define DEV_SOCKET		              0x02	// 插座
-#define DEV_AIR_CON		              0x03	// 空调主机
-#define DEV_FAN_COIL		          0x04	// 风机盘管
-#define DEV_FLOOR_HEAT	              0x05	// 地暖
-#define DEV_FRESH_AIR			      0x06	// 新风
-#define DEV_HUMIDIFIER                0x07  // 加湿机
-#define DEV_DEHUMIDIFIER              0x08  // 除湿机
-#define DEV_BOILER			          0x09	// 锅炉
-#define DEV_WATER_PUMP	              0x0A	// 循环泵
-#define DEV_DUST_CLEAN	              0x0B  // 除尘器
+#define DEV_GATEWAY		              0x00	//网关
+#define DEV_CONTROL_PANEL             0x01  //控制面板
+#define DEV_SOCKET		              0x02	//插座
+#define DEV_AIR_CON		              0x03	//空调主机
+#define DEV_FAN_COIL		          0x04	//风机盘管
+#define DEV_FLOOR_HEAT	              0x05	//地暖
+#define DEV_FRESH_AIR			      0x06	//新风
+#define DEV_HUMIDIFIER                0x07  //加湿机
+#define DEV_DEHUMIDIFIER              0x08  //除湿机
+#define DEV_BOILER			          0x09	//锅炉
+#define DEV_WATER_PUMP	              0x0A	//循环泵
+#define DEV_DUST_CLEAN	              0x0B  //除尘器
 
-#define DEV_CURTAIN                   0x10  // 窗帘
-#define DEV_WATER_PURIF	              0x11	// 净水器
-#define DEV_WATER_HEAT	              0x12	// 热水器
-#define DEV_LIGHTER                   0x13  // 灯具
+#define DEV_CURTAIN                   0x10  //窗帘
+#define DEV_WATER_PURIF	              0x11	//净水器
+#define DEV_WATER_HEAT	              0x12	//热水器
+#define DEV_LIGHTER                   0x13  //灯具
 
-#define SEN_WIND_PRESSURE             0x50  // 风压传感器
-#define SEN_WATER_FLOW                0x51  // 水流量计
-#define SEN_WATER_TEMPERATURE         0x52  // 水温传感器
-#define SEN_ENV_BOX                   0x53  // 环境数据传感器(环境盒子)
-#define SEN_ELECTRICITY_METER         0x54  // 电量计 
-#define SEN_GAS_METER                 0x55  // 气量计
-#define SEN_ANEMOGRAPH                0x56  // 风速计
-#define DEV_ANYONE                    0xFF  // 任何设备
+#define SEN_WIND_PRESSURE             0x50  //风压传感器
+#define SEN_WATER_FLOW                0x51  //水流量计
+#define SEN_WATER_TEMPERATURE         0x52  //水温传感器
+#define SEN_ENV_BOX                   0x53  //环境数据传感器(环境盒子)
+#define SEN_ELECTRICITY_METER         0x54  //电量计 
+#define SEN_GAS_METER                 0x55  //气量计
+#define SEN_ANEMOGRAPH                0x56  //风速计
+#define DEV_ANYONE                    0xFF  //任何设备
 
 
 
@@ -117,23 +117,23 @@
 
 
 /*升级状态 msgtype对应ZGB_MSGTYPE_UPDATE_RESPONSE*/
-#define OTA_BEGIN          0x00 // 升级准备
-#define OTA_READY		   0x01	// 准备好接收
-#define OTA_ONE_OK         0x02 // 单个报文接收OK
-#define OTA_ONE_FAIL       0x03 // 单个报文接收失败，要求重传
-#define OTA_REUPDATE       0x04 // 重新升级
-#define OTA_END		       0x05 // 更新结束
-#define OTA_SUCCESS		   0x06 // 升级成功
+#define OTA_BEGIN          0x00 //升级准备
+#define OTA_READY		   0x01	//准备好接收
+#define OTA_ONE_OK         0x02 //单个报文接收OK
+#define OTA_ONE_FAIL       0x03 //单个报文接收失败，要求重传
+#define OTA_REUPDATE       0x04 //重新升级
+#define OTA_END		       0x05 //更新结束
+#define OTA_SUCCESS		   0x06 //升级成功
 
 /*系统消息 0x00~0x0f*/
 /*响应报文*/
 #define ATTR_RESPONSE     0x00 
 
-#define TLV_VALUE_RTN_OK			0x00	// 操作成功
-#define TLV_VALUE_RTN_FAIL		    0x01	// 操作失败
-#define TLV_VALUE_RTN_ILLEGAL       0x02	// 非法请求
-#define TLV_VALUE_RTN_PARAM		    0x03	// 参数错误
-#define TLV_VALUE_RTN_BUSY		    0x04	// 系统忙
+#define TLV_VALUE_RTN_OK			0x00	//操作成功
+#define TLV_VALUE_RTN_FAIL		    0x01	//操作失败
+#define TLV_VALUE_RTN_ILLEGAL       0x02	//非法请求
+#define TLV_VALUE_RTN_PARAM		    0x03	//参数错误
+#define TLV_VALUE_RTN_BUSY		    0x04	//系统忙
 
 /*故障上报*/
 #define ATTR_FAULT 0xFF 
@@ -147,7 +147,7 @@
 
 #define TLV_VALUE_HEAT  0 //制热
 #define TLV_VALUE_COLD  1 //制冷
-#define TLV_VALUE_HUMIDIFICATION 0 //加湿
+#define TLV_VALUE_HUMIDIFICATION 0   //加湿
 #define TLV_VALUE_DEHUMIDIFICATION 1 //除湿
 
 #define TLV_VALUE_COND_HEAT 0 //空调制热
@@ -176,6 +176,8 @@
 #define ATTR_SETTING_HUMIDITY         0x08  //设备设定湿度：0-100
 #define ATTR_SETTING_TEMPERATURE      0x09  //设备设定温度: 0-100
 
+#define ATTR_CONNECTED_AIRCONDITON    0x20  //面板是否连接了空调主机
+
 /*环境属性*/
 #define ATTR_ENV_TEMPERATURE   0x40              //温度
 #define ATTR_ENV_HUMIDITY      0x41              //湿度
@@ -186,16 +188,16 @@
 
 #define ATTR_SEN_WATERPRESSURE 0x50    //水压
 
-#define ATTR_WATER_TEMPERATURE_TARGET 0x51 //目标温度
+#define ATTR_WATER_TEMPERATURE_TARGET  0x51 //目标温度
 #define ATTR_WATER_TEMPERATURE_CURRENT 0x52 //当前温度
 #define ATTR_WATER_TEMPERATURE_CLEAN   0x53 //灭菌温度
 #define ATTR_WATER_TIME                0x54 //热水器灭菌时长
 
-#define ATTR_CONNECTED_SOCKET 0x55 //关联插座
+#define ATTR_CONNECTED_SOCKET    0x55 //关联插座
 #define ATTR_CONNECTED_WATER_SEN 0x56 //关联温度传感器
 
 
-#define TLV_VALUE_SPEED_HIGH   0x00     //风盘高速
+#define TLV_VALUE_SPEED_HIGH    0x00     //风盘高速
 #define TLV_VALUE_SPEED_MEDIU   0x01     //风盘中速
 #define TLV_VALUE_SPEED_LOW     0x02     //风盘低速
 
