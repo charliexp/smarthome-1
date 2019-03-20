@@ -664,6 +664,7 @@ void gatewayproc(cJSON* op)
                     change_device_attr_value(GATEWAY_ID, attr, value);
                     g_system_mode = value;
                     set_gateway_mode(value);
+                    change_panel_mode(value);
                     device_closeallfan();
                 }
             }
