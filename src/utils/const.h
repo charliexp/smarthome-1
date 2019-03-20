@@ -201,6 +201,8 @@
 #define TLV_VALUE_SPEED_MEDIU   0x01     //风盘中速
 #define TLV_VALUE_SPEED_LOW     0x02     //风盘低速
 
+
+#define GATEWAY_ID "00000000000000000"
 /*
 **http常量
 **

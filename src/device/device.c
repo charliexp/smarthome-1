@@ -527,7 +527,7 @@ cJSON* get_device_status_json(char* deviceid)
 
 cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
 {
-    cJSON* status,*attr;
+    cJSON* status,*attr, *temp;
     int arraynum = 0;
     char type;
 
@@ -542,13 +542,18 @@ cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
     for (int i=0; i < arraynum; i++)
     {
         attr = cJSON_GetArrayItem(status, i);
-        type = cJSON_GetObjectItem(attr, "type")->valueint;
-        if(type == attrtype)
+        temp = cJSON_GetObjectItem(attr, "type");
+        if(temp != NULL)
         {
-            return attr;
+            type = cJSON_GetObjectItem(attr, "type")->valueint;
+            if(type == attrtype)
+            {
+                return attr;
+            }        
         }
+
     }
-    MYLOG_ERROR("Cannot find the attr");
+    MYLOG_ERROR("Cannot find the attr,the attr is %d", attrtype);
     return NULL;
 }
 
@@ -643,7 +648,8 @@ void gatewayproc(cJSON* op)
     cJSON* item=NULL;
     int attr=0;
     int value=0;
-    int opnum = cJSON_GetArraySize(op);   
+    int opnum = cJSON_GetArraySize(op);
+    cJSON* device_json = get_device_status_json(GATEWAY_ID);
     for(int i=0 ; i<opnum; i++)
     {
         item = cJSON_GetArrayItem(op, i);
@@ -655,6 +661,7 @@ void gatewayproc(cJSON* op)
             {
                 if(g_system_mode != value)
                 {
+                    change_device_attr_value(GATEWAY_ID, attr, value);
                     g_system_mode = value;
                     set_gateway_mode(value);
                     device_closeallfan();

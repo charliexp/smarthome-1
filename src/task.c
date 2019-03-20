@@ -770,8 +770,8 @@ void* zgbmsgprocess(void* argc)
             default: 
                 ;
         }
-end:
-    ;
+        end:
+            ;
 	}
 	pthread_exit(NULL);        
 }
