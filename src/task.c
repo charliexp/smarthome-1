@@ -708,6 +708,8 @@ void* zgbmsgprocess(void* argc)
                         case ATTR_ENV_CO2:
                         case ATTR_ENV_FORMALDEHYDE:
                         case ATTR_SOCKET_V:
+                        case ATTR_SETTING_TEMPERATURE:
+                        case ATTR_SETTING_HUMIDITY:
                         {                           
                             oldvalue = cJSON_GetObjectItem(attr_json, "value")->valueint;
                             if(value == oldvalue)
