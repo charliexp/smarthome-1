@@ -150,9 +150,9 @@
 #define TLV_VALUE_HUMIDIFICATION 0   //加湿
 #define TLV_VALUE_DEHUMIDIFICATION 1 //除湿
 
-#define TLV_VALUE_COND_HEAT 0 //空调制热
-#define TLV_VALUE_COND_COLD 1 //空调制冷
-#define TLV_VALUE_BOILER_HEAT 2 //锅炉制热
+#define TLV_VALUE_COND_HEAT 1 //空调制热
+#define TLV_VALUE_COND_COLD 2 //空调制冷
+#define TLV_VALUE_BOILER_HEAT 3 //锅炉制热
 
 #define TLV_VALUE_ONLINE 1
 #define TLV_VALUE_OFFLINE 0
