@@ -387,7 +387,11 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
         	cJSON_AddNumberToObject(status, "value", 1);
-        	cJSON_AddItemToArray(statusarray, status);         	
+        	cJSON_AddItemToArray(statusarray, status); 
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_SETTING_TEMPERATURE);
+        	cJSON_AddNumberToObject(status, "value", 26);
+        	cJSON_AddItemToArray(statusarray, status);          	
             break;            
         }
         case SEN_WATER_TEMPERATURE:
