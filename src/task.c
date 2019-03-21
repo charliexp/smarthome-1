@@ -715,7 +715,7 @@ void* zgbmsgprocess(void* argc)
                             temp = cJSON_GetObjectItem(attr_json, "value");
                             if(temp == NULL)
                             {
-                                break;
+                                goto end;
                             }
                             oldvalue = temp->valueint;
                             if(value == oldvalue)
