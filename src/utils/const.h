@@ -176,7 +176,7 @@
 #define ATTR_SETTING_HUMIDITY         0x08  //设备设定湿度：0-100
 #define ATTR_SETTING_TEMPERATURE      0x09  //设备设定温度: 0-100
 
-#define ATTR_CONNECTED_AIRCONDITON    0x20  //面板是否连接了空调主机
+#define ATTR_CONNECTED_AIRCONDITON    0x20  //面板是否连接了空调主机  0-未连接 1-连接
 
 /*环境属性*/
 #define ATTR_ENV_TEMPERATURE   0x40              //温度

@@ -677,7 +677,7 @@ void* zgbmsgprocess(void* argc)
                 int i = 0;
                 BYTE attr; 
 
-                needmqtt = false;
+                needmqtt = false;//是否需要上报状态的标志
                 change_device_online(db_deviceid, 1);//收到状态查询报文，改变设备上线状态
                 device_json = get_device_status_json(db_deviceid);
                 if(device_json == NULL)
