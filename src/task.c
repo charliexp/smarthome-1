@@ -672,6 +672,7 @@ void* zgbmsgprocess(void* argc)
                 cJSON *device_json;
                 cJSON *attr_json;
                 cJSON *replace_value_json;
+                cJSON *temp;
                 int value,oldvalue;
                 int i = 0;
                 BYTE attr; 
@@ -710,8 +711,13 @@ void* zgbmsgprocess(void* argc)
                         case ATTR_SOCKET_V:
                         case ATTR_SETTING_TEMPERATURE:
                         case ATTR_SETTING_HUMIDITY:
-                        {                           
-                            oldvalue = cJSON_GetObjectItem(attr_json, "value")->valueint;
+                        {          
+                            temp = cJSON_GetObjectItem(attr_json, "value");
+                            if(temp == NULL)
+                            {
+                                break;
+                            }
+                            oldvalue = temp->valueint;
                             if(value == oldvalue)
                             {
                                 needmqtt = false || needmqtt;    
@@ -738,7 +744,7 @@ void* zgbmsgprocess(void* argc)
                             break;
                     }
                 }
-                if(needmqtt)
+                if(needmqtt)//是否需要发送mqtt消息
                 {
                     sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
                     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device_json), 0, 0);
@@ -798,8 +804,6 @@ void* uartlisten(void *argc)
 	while(1)
 	{
 		nbyte = read(g_uartfd, msgbuf, 110);
-        //MYLOG_INFO("Uart recv %d byte:", nbyte);
-        //MYLOG_BYTE(msgbuf, nbyte);
         bitnum = nbyte;
 		for(i = 0; i < bitnum; )
 		{

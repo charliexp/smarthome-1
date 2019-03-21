@@ -374,7 +374,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status);
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_WINDSPEED);
-        	cJSON_AddNumberToObject(status, "value", 2);
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);        	        	
             break;            
         }        
@@ -549,7 +549,7 @@ cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
         temp = cJSON_GetObjectItem(attr, "type");
         if(temp != NULL)
         {
-            type = cJSON_GetObjectItem(attr, "type")->valueint;
+            type = temp->valueint;
             if(type == attrtype)
             {
                 return attr;
