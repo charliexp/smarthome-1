@@ -691,7 +691,7 @@ void* zgbmsgprocess(void* argc)
                     
                     attr_json = get_attr_value_object_json(device_json, attr);
                     
-                    if(device_json == NULL)
+                    if(attr_json == NULL)
                     {
                         goto end;
                     }
