@@ -13,7 +13,7 @@
 #include "../utils/utils.h"
 #include "device.h"
 #include "../log/log.h"
-#include "mqtt.h"
+#include "../mqtt.h"
 
 extern g_queueid;
 extern g_devices_status_json;

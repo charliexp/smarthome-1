@@ -597,7 +597,7 @@ void* zgbmsgprocess(void* argc)
                      i++;
                 }
             } 
-            if(cJSON_GetArrayItem(device_array)>0){
+            if(cJSON_GetArraySize(device_array)>0){
                 sendmqttmsg(MQTT_MSG_TYPE_PUB, TOPIC_DEVICE_DELETE, cJSON_PrintUnformatted(device_array), 0, 0);
             }
             continue;
