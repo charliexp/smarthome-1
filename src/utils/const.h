@@ -49,6 +49,7 @@
 #define TOPIC_DEVICE_ADD    "devices/add"
 #define TOPIC_DEVICE_STATUS "devices/status"
 #define TOPIC_DEVICE_SHOW   "devices/show"
+#define TOPIC_DEVICE_DELETE "/server/device/delete"
 
 #define QOS_LEVEL_0 0
 #define QOS_LEVEL_1 1
@@ -186,7 +187,7 @@
 #define ATTR_ENV_FORMALDEHYDE  0x44              //甲醛
 #define ATTR_ENV_TV0C          0x45              //TVOC
 
-#define ATTR_SEN_WATERPRESSURE 0x50    //水压
+#define ATTR_SEN_WATERPRESSURE 0x50         //水压
 
 #define ATTR_WATER_TEMPERATURE_TARGET  0x51 //目标温度
 #define ATTR_WATER_TEMPERATURE_CURRENT 0x52 //当前温度

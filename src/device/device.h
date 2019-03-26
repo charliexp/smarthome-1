@@ -50,4 +50,6 @@ int check_device_online(char* deviceid);
 int get_gateway_mode();
 
 void set_gateway_mode(int mode);
+
+void change_system_mode(int mode);
 #endif

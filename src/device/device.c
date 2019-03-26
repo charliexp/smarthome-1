@@ -218,6 +218,8 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SYSMODE);
         	int mode = get_gateway_mode();
+        	g_system_mode = mode;
+        	change_panel_mode(mode);
         	cJSON_AddNumberToObject(status, "value", mode);
         	cJSON_AddItemToArray(statusarray, status);     	
             break;            
@@ -286,7 +288,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status);                	
             break;
         }
-        case DEV_CONTROL_PANEL:
+        case DEV_CONTROL_PANEL: //¿ØÖÆÃæ°å
         {
 	        status = cJSON_CreateObject(); 
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
@@ -669,8 +671,7 @@ void gatewayproc(cJSON* op)
             {
                 if(g_system_mode != value)
                 {
-                    change_device_attr_value(GATEWAY_ID, attr, value);
-                    g_system_mode = value;
+                    change_device_attr_value(GATEWAY_ID, attr, value);                
                     set_gateway_mode(value);
                     change_panel_mode(value);
                     device_closeallfan();
@@ -769,7 +770,21 @@ int get_gateway_mode()
 void set_gateway_mode(int mode)
 {
     char sql[100];
+    g_system_mode = value;
     memset(sql, 0, 100);
     sprintf(sql, "replace into gatewaycfg(rowid, mode) values(1, %d)", mode);
     exec_sql_create(sql);
 }
+
+void change_system_mode(int mode){
+    char topic[TOPIC_LENGTH] = {0};   
+    cJSON* device = get_device_status_json(GATEWAY_ID);
+    cJSON* attr = get_attr_value_object_json(device, ATTR_SYSMODE);
+    
+    sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
+
+    set_gateway_mode(int mode);
+    change_device_attr_value(GATEWAY_ID, ATTR_SYSMODE, mode);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device), 0, 0);
+}
+
