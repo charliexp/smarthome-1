@@ -13,11 +13,13 @@
 #include "../utils/utils.h"
 #include "device.h"
 #include "../log/log.h"
+#include "mqtt.h"
 
-extern int g_queueid;
-extern cJSON* g_devices_status_json;
-extern sqlite3* g_db;
-extern int g_system_mode;
+extern g_queueid;
+extern g_devices_status_json;
+extern g_db;
+extern g_system_mode;
+extern g_topicroot;
 
 void zgbaddresstodbaddress(ZGBADDRESS addr, char* db_address)
 {
@@ -770,7 +772,7 @@ int get_gateway_mode()
 void set_gateway_mode(int mode)
 {
     char sql[100];
-    g_system_mode = value;
+    g_system_mode = mode;
     memset(sql, 0, 100);
     sprintf(sql, "replace into gatewaycfg(rowid, mode) values(1, %d)", mode);
     exec_sql_create(sql);
@@ -783,7 +785,7 @@ void change_system_mode(int mode){
     
     sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
 
-    set_gateway_mode(int mode);
+    set_gateway_mode(mode);
     change_device_attr_value(GATEWAY_ID, ATTR_SYSMODE, mode);
     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device), 0, 0);
 }
