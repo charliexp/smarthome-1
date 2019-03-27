@@ -30,6 +30,11 @@ void sendmqttmsg(long messagetype, char* topic, char* message, int qos, int reta
 	msg.msgtype = QUEUE_MSG_MQTT;
 	msg.msg.qos = qos;
 	msg.msg.retained = retained;
+
+    if(topic == NULL || message == NULL){
+        return;
+    }
+	
 	if (topic != NULL)
 	{
 		msg.msg.topic = malloc(strlen(topic)+1);
@@ -201,7 +206,6 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 		if (g_operationflag) //检查当前是否有msg在处理
 		{
 			/*如果有消息在处理，则返回忙碌错误*/
-			cJSON_AddStringToObject(root, "result", MQTT_MSG_SYSTEM_BUSY);
 			cJSON_AddNumberToObject(root, "resultcode", MQTT_MSG_ERRORCODE_BUSY);
 			sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
 			goto end;
@@ -579,7 +583,6 @@ void reportdevices()
             
     sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_ADD);
     sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
-    //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
     for(int i=1;i<=nrow;i++)
     {
         root = cJSON_CreateObject();

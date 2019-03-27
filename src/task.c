@@ -6,16 +6,17 @@
 int g_uartfd;
 int g_log_level = 2;
 int g_operationflag = 0;
-int g_system_mode = 0;
+int g_system_mode = 1;
 int g_queueid;
 sqlite3* g_db;
 char g_mac[20] = {0};
 char g_topicroot[20] = {0};
 char* g_topics[TOPICSNUM] ={0x0, 0x0, 0x0};
 timer* g_zgbtimer;
-int g_zgbmsgnum;
-cJSON* g_device_mqtt_json, *g_devices_status_json;
+cJSON* g_devices_status_json;
 ZGB_MSG_STATUS g_devicemsgstatus[ZGBMSG_MAX_NUM];
+pthread_mutex_t g_devices_status_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 
 //程序启动后申请堆存放需要订阅的topic
 char g_topicthemes[TOPICSNUM][20] = {{"devices/operation"},{"devices/electric"},{"gateway"}};
@@ -195,7 +196,7 @@ void* devicemsgprocess(void *argc)
 	devicequeuemsg msg; //消息队列中取出的设备操作消息
 	char topic[TOPIC_LENGTH] = { 0 };//对操作的响应topic
 	int mqttid = 0;
-	cJSON *devices, *device, *operations, *operation, *tmp;
+	cJSON *devices, *device, *operations, *operation, *tmp, *device_mqtt_json, *result_json;
 	int devicenum = 0, operationnum = 0;
 	int i = 0;
 	int rcvret;
@@ -212,7 +213,8 @@ void* devicemsgprocess(void *argc)
     char sql[512]; 
     BYTE data[72];
     int rc;  
-    int len = 0;         
+    int len = 0;   
+    cJSON* devicestatus;
 
 	while(1)
 	{
@@ -225,14 +227,25 @@ void* devicemsgprocess(void *argc)
 		MYLOG_INFO("devicemsgprocess recive a msg");
 		MYLOG_INFO("the msg is %s", cJSON_PrintUnformatted(msg.p_operation_json));
         
-		g_device_mqtt_json = msg.p_operation_json;
-		cJSON_AddNumberToObject(g_device_mqtt_json, "resultcode", 0);
-        tmp = cJSON_GetObjectItem(g_device_mqtt_json, "operation");
+		device_mqtt_json = msg.p_operation_json;
+
+        tmp = cJSON_GetObjectItem(device_mqtt_json, "mqttid");
+        if (tmp != NULL)
+        {
+        	mqttid = tmp->valueint;
+     		sprintf(topic, "%s%s/response/%d", g_topicroot, g_topicthemes[0], mqttid);
+     
+        }
+        
+		result_json = cJSON_CreateObject();
+		cJSON_AddNumberToObject(result_json, "mqttid", mqttid);
+		cJSON_AddNumberToObject(result_json, "resultcode", MQTT_MSG_ERRORCODE_SUCCESS);
+		
+        tmp = cJSON_GetObjectItem(device_mqtt_json, "operation");
         if (tmp == NULL)
         {
-            MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-            cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
-            cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+            MYLOG_ERROR("Wrong MQTT msg, NO 'operation:'!");
+            cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
             goto response;
         }          
         operationtype = tmp->valueint;//操作类型
@@ -241,12 +254,10 @@ void* devicemsgprocess(void *argc)
         if(operationtype == 0)
         {
             int actiontype;
-            tmp = cJSON_GetObjectItem(g_device_mqtt_json, "cmdid");
+            tmp = cJSON_GetObjectItem(device_mqtt_json, "cmdid");
             if (tmp == NULL)
             {
-                MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
-                cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+                cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
                 goto response;
             }             
             actiontype = tmp->valueint;//coo操作值
@@ -272,7 +283,7 @@ void* devicemsgprocess(void *argc)
                     }
                     else
                     {
-                        rebuildtimer(g_zgbtimer);
+                        rebuildtimer(g_zgbtimer); //zigbee灯闪烁时间重新计时
                     }
                     reportdevices();
                     break;
@@ -304,18 +315,15 @@ void* devicemsgprocess(void *argc)
                     break;   
                 default:
                     MYLOG_ERROR("Unknow actiontype!");
-                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
-                    cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+                    cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
             }
             goto response;
         }
         
-		devices = cJSON_GetObjectItem(g_device_mqtt_json, "devices");
+		devices = cJSON_GetObjectItem(device_mqtt_json, "devices");
 		if (devices == NULL)
 		{
-			MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-            cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
-            cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+            cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
             goto response;
 		} 
         
@@ -333,16 +341,13 @@ void* devicemsgprocess(void *argc)
                 ***/
     			packetid = getpacketid(); //packetid是用来跟zgb设备通信使用的
     			g_devicemsgstatus[i].packetid = packetid;
-    			g_devicemsgstatus[i].result = 1; //1代表未响应，0代表成功，2代表设备不在线
+    			g_devicemsgstatus[i].result = 1; //1代表失败，0代表成功，2代表设备未响应
     			g_devicemsgstatus[i].finish = 1; //1代表未处理完
-    			g_zgbmsgnum++;
                 
                 tmp = cJSON_GetObjectItem(device, "deviceid");
                 if(tmp == NULL)
     		    {
-                    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
-                    cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+                    cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
                     goto response;
     			}                
                 
@@ -357,16 +362,15 @@ void* devicemsgprocess(void *argc)
                 sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
                 if(nrow == 0) //数据库中没有该设备
                 {
-                    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_UNKNOW_DEVICE);
-                    cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
+                    MYLOG_ERROR("MQTT:The device is not exist! id:%d", deviceid);
+                    cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
                     goto response;          
                 }
                 
                 int online = check_device_online(deviceid);
                 if(online == 0)
                 {
-                    g_devicemsgstatus[i].result = 2;
+                    g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_DEVICEOFFLINE;
                     g_devicemsgstatus[i].finish = 0;
                 }
 
@@ -377,9 +381,7 @@ void* devicemsgprocess(void *argc)
                 operations  = cJSON_GetObjectItem(device, "operations");
     		    if (operations == NULL)
     		    {
-    			    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
-                    cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+                    cJSON_ReplaceItemInObject(device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
                     goto response;
     		    }
     		    if (devicetype == DEV_GATEWAY)
@@ -397,12 +399,12 @@ void* devicemsgprocess(void *argc)
     		for(i=0; i<RESPONSE_WAIT/50; i++)  //50毫秒循环一次
     		{
     			int j = 0;
-    			for (; j < g_zgbmsgnum; j++)
+    			for (; j < devicenum; j++)
     			{
     				if (g_devicemsgstatus[j].finish == 1)//有未处理完的设备直接跳出
     					break;
     			}
-    			if (j == g_zgbmsgnum)//所有的zgb消息都已处理完
+    			if (j == devicenum)//所有的zgb消息都已处理完
     			{
     				break;
     			}
@@ -426,56 +428,30 @@ void* devicemsgprocess(void *argc)
                 MYLOG_DEBUG("The device is %s", cJSON_PrintUnformatted(device));
                 if(tmp == NULL)
     		    {
-                    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
-                    cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+                    cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
                     goto response;
     			}                
                 
     			deviceid = tmp->valuestring;
-
-                int nrow = 0, ncolumn = 0;
-    	        char **dbresult; 
                 
-                sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", deviceid);
-                MYLOG_INFO(sql);
-                
-                sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-                MYLOG_DEBUG("query db over!");
-                if(nrow == 0) //数据库中没有该设备
-                {
-                    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
-                    cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_UNKNOW_DEVICE);
-                    cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
-                    goto response;
-                }
-                
-                cJSON* devicestatus = get_device_status_json(deviceid);
+                devicestatus = dup_device_status_json(deviceid);
                 if (devicestatus == NULL)
                 {
                     MYLOG_ERROR("Can't find the device status!");
+                    cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
                     goto response;
                 }              
                 cJSON* status = cJSON_GetObjectItem(devicestatus, "status");
                 cJSON_AddItemToObject(device, "status", status);
-                //MYLOG_DEBUG("The status is %s", cJSON_PrintUnformatted(status));
+                MYLOG_DEBUG("MQTT: Device status query,The status is %s", cJSON_PrintUnformatted(status));
             }   	    	
         }
-        cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_SUCCESS);
         
 response:
-        tmp = cJSON_GetObjectItem(g_device_mqtt_json, "mqttid");
-        if (tmp != NULL)
-        {
-        	mqttid = tmp->valueint;
-     		sprintf(topic, "%s%s/response/%d", g_topicroot, g_topicthemes[0], mqttid);
-    		sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(g_device_mqtt_json), QOS_LEVEL_2, 0);       
-        }
-
-		cJSON_Delete(g_device_mqtt_json);
-        g_zgbmsgnum = 0;
+    	sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(result_json), QOS_LEVEL_2, 0);  
+		cJSON_Delete(device_mqtt_json);
+		cJSON_Delete(result_json);
 		g_operationflag = 0;
-        g_device_mqtt_json = NULL;
 	}
 	pthread_exit(NULL);
 }
@@ -572,6 +548,7 @@ void* zgbmsgprocess(void* argc)
             cJSON* device_array = cJSON_CreateArray();
             cJSON* id;
 
+            pthread_mutex_lock(&g_devices_status_mutex);
             devicenum = cJSON_GetArraySize(g_devices_status_json);
 
             for (int i=0; i < devicenum;)
@@ -600,6 +577,7 @@ void* zgbmsgprocess(void* argc)
             if(cJSON_GetArraySize(device_array)>0){
                 sendmqttmsg(MQTT_MSG_TYPE_PUB, TOPIC_DEVICE_DELETE, cJSON_PrintUnformatted(device_array), 0, 0);
             }
+            pthread_mutex_unlock(&g_devices_status_mutex);
             continue;
         }
 
@@ -694,7 +672,7 @@ void* zgbmsgprocess(void* argc)
 
                 needmqtt = false;//是否需要上报状态的标志
                 change_device_online(db_deviceid, 1);//收到状态查询报文，改变设备上线状态
-                device_json = get_device_status_json(db_deviceid);
+                device_json = dup_device_status_json(db_deviceid);
                 if(device_json == NULL)
                 {
                     goto end;
@@ -730,6 +708,9 @@ void* zgbmsgprocess(void* argc)
                             temp = cJSON_GetObjectItem(attr_json, "value");
                             if(temp == NULL)
                             {
+                                if(device_json != NULL){
+                                    cJSON_Delete(device_json);
+                                }
                                 goto end;
                             }
                             oldvalue = temp->valueint;
@@ -753,25 +734,6 @@ void* zgbmsgprocess(void* argc)
                             needmqtt = false || needmqtt;
                             MYLOG_INFO("Get a socket electricity report msg!the value is %lu", value);
                             electricity_stat(db_deviceid, value);
-                            break;
-                        }
-                        case ATTR_SYSMODE:
-                        {                       
-                            if(value != g_system_mode){
-                                MYLOG_ERROR("Systemmode change");
-                                change_system_mode(value);                                
-                            }
-                            temp = cJSON_GetObjectItem(attr_json, "value");
-                            if(temp == NULL)
-                            {
-                                goto end;
-                            }
-                            oldvalue = temp->valueint;
-                            if(value != oldvalue)
-                            {
-                                change_device_attr_value(db_deviceid, attr, value);   
-                            }                             
-                            needmqtt = false || needmqtt;
                             break;
                         }
                         default:

@@ -15,11 +15,12 @@
 #include "../log/log.h"
 #include "../mqtt.h"
 
-extern g_queueid;
-extern g_devices_status_json;
-extern g_db;
-extern g_system_mode;
-extern g_topicroot;
+extern int g_queueid;
+extern cJSON* g_devices_status_json;
+extern sqlite3* g_db;
+extern int g_system_mode;
+extern char* g_topicroot;
+extern pthread_mutex_t g_devices_status_mutex; 
 
 void zgbaddresstodbaddress(ZGBADDRESS addr, char* db_address)
 {
@@ -175,6 +176,8 @@ void devices_status_json_init()
     char* deviceid;
     size_t devicetype;
 
+    pthread_mutex_lock(&g_devices_status_mutex);
+
     g_devices_status_json = cJSON_CreateArray();
 
     sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
@@ -193,8 +196,8 @@ void devices_status_json_init()
         device_status_json = create_device_status_json(deviceid, devicetype);     
         cJSON_AddItemToArray(g_devices_status_json, device_status_json);
     }
-    MYLOG_INFO("The g_device_status is %s", cJSON_PrintUnformatted(g_devices_status_json));
-    devices_status_query();
+    pthread_mutex_unlock(&g_devices_status_mutex);
+    //devices_status_query();
     sqlite3_free_table(dbresult);
 }
 
@@ -221,7 +224,6 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddNumberToObject(status, "type", ATTR_SYSMODE);
         	int mode = get_gateway_mode();
         	g_system_mode = mode;
-        	change_panel_mode(mode);
         	cJSON_AddNumberToObject(status, "value", mode);
         	cJSON_AddItemToArray(statusarray, status);     	
             break;            
@@ -516,12 +518,13 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
 }
 
 
-cJSON* get_device_status_json(char* deviceid)
+cJSON* dup_device_status_json(char* deviceid)
 {
     int devicenum;
     cJSON* devicestatus = NULL;
     char* array_deviceid;
 
+    pthread_mutex_lock(&g_devices_status_mutex);
     devicenum = cJSON_GetArraySize(g_devices_status_json);
 
     for (int i=0; i < devicenum; i++)
@@ -530,10 +533,11 @@ cJSON* get_device_status_json(char* deviceid)
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
         if(strncmp(deviceid, array_deviceid, 17) == 0)
         {
+            pthread_mutex_unlock(&g_devices_status_mutex);
             return cJSON_Duplicate(devicestatus, 1);
         }
     }
-
+    pthread_mutex_lock(&g_devices_status_mutex);
     return NULL;
 }
 
@@ -577,6 +581,7 @@ void change_device_attr_value(char* deviceid, char attr, int value)
     cJSON* replace_value_json = cJSON_CreateNumber(value);
     char* array_deviceid;
 
+    pthread_mutex_lock(&g_devices_status_mutex);
     devicenum = cJSON_GetArraySize(g_devices_status_json);
 
     for (int i=0; i < devicenum; i++)
@@ -585,10 +590,15 @@ void change_device_attr_value(char* deviceid, char attr, int value)
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
         if(strncmp(deviceid, array_deviceid, 17) == 0)
         {
-            attr_json = get_attr_value_object_json(devicestatus, attr); 
-            cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);            
+            attr_json = get_attr_value_object_json(devicestatus, attr);
+            if(attr_json != NULL){
+                cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);                
+            }
+            pthread_mutex_unlock(&g_devices_status_mutex);
+            return;
         }
-    }    
+    }
+    pthread_mutex_unlock(&g_devices_status_mutex);
 }
 
 /* MQTT的操作数据转为ZGB的DATA */
@@ -661,7 +671,7 @@ void gatewayproc(cJSON* op)
     int attr=0;
     int value=0;
     int opnum = cJSON_GetArraySize(op);
-    cJSON* device_json = get_device_status_json(GATEWAY_ID);
+
     for(int i=0 ; i<opnum; i++)
     {
         item = cJSON_GetArrayItem(op, i);
@@ -691,6 +701,7 @@ void change_devices_offline()
     char* array_deviceid;
     cJSON* offline = cJSON_CreateNumber(0);
 
+    pthread_mutex_lock(&g_devices_status_mutex);
     devicenum = cJSON_GetArraySize(g_devices_status_json);
 
     for (int i=0; i < devicenum; i++)
@@ -702,7 +713,8 @@ void change_devices_offline()
             cJSON_GetObjectItem(devicestatus, "online")->valueint = TLV_VALUE_OFFLINE;
             cJSON_GetObjectItem(devicestatus, "online")->valuedouble = TLV_VALUE_OFFLINE;
         }
-    }    
+    } 
+    pthread_mutex_unlock(&g_devices_status_mutex);
 }
 
 void change_device_online(char* deviceid, char status)
@@ -711,7 +723,7 @@ void change_device_online(char* deviceid, char status)
     cJSON* devicestatus = NULL;
     char* array_deviceid;
     cJSON* offline = cJSON_CreateNumber(status);
-
+    pthread_mutex_lock(&g_devices_status_mutex);
     devicenum = cJSON_GetArraySize(g_devices_status_json);
 
     for (int i=0; i < devicenum; i++)
@@ -722,15 +734,17 @@ void change_device_online(char* deviceid, char status)
         {
             cJSON_GetObjectItem(devicestatus, "online")->valueint = status;
             cJSON_GetObjectItem(devicestatus, "online")->valuedouble = status;
+            pthread_mutex_unlock(&g_devices_status_mutex);
             return;
         }
-    }      
+    } 
+    pthread_mutex_unlock(&g_devices_status_mutex);
 }
 
 int check_device_online(char* deviceid)
 {
     int devicenum;
-    cJSON* devicestatus = NULL;
+    cJSON* devicestatus,* tmp;
     char* array_deviceid;
 
     devicenum = cJSON_GetArraySize(g_devices_status_json);
@@ -740,11 +754,15 @@ int check_device_online(char* deviceid)
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
         if(strncmp(deviceid, array_deviceid, 17) == 0)
-        {            
-            return cJSON_GetObjectItem(devicestatus, "online")->valueint;
+        {   
+            tmp = cJSON_GetObjectItem(devicestatus, "online");
+            if(tmp != NULL){
+                return tmp->valueint;
+            }
+            return -1;
         }
     }
-
+    
     return -1;
 }
 
@@ -780,13 +798,14 @@ void set_gateway_mode(int mode)
 
 void change_system_mode(int mode){
     char topic[TOPIC_LENGTH] = {0};   
-    cJSON* device = get_device_status_json(GATEWAY_ID);
-    cJSON* attr = get_attr_value_object_json(device, ATTR_SYSMODE);
     
     sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
 
     set_gateway_mode(mode);
     change_device_attr_value(GATEWAY_ID, ATTR_SYSMODE, mode);
+
+    cJSON* device = dup_device_status_json(GATEWAY_ID);    
     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device), 0, 0);
+    cJSON_Delete(device);
 }
 
