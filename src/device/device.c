@@ -569,7 +569,6 @@ cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
         }
 
     }
-    MYLOG_ERROR("Cannot find the attr,the attr is %d", attrtype);
     return NULL;
 }
 
@@ -681,12 +680,11 @@ void gatewayproc(cJSON* op)
             value = cJSON_GetObjectItem(item, "value")->valueint;
             if(value == TLV_VALUE_COND_HEAT || value == TLV_VALUE_COND_COLD || value == TLV_VALUE_BOILER_HEAT)
             {
+                MYLOG_ERROR("1");
                 if(g_system_mode != value)
-                {
-                    change_device_attr_value(GATEWAY_ID, attr, value);                
-                    set_gateway_mode(value);
-                    change_panel_mode(value);
-                    device_closeallfan();
+                {          
+                    MYLOG_ERROR("2");
+                    change_system_mode(value);                   
                 }
             }
         }
@@ -798,14 +796,16 @@ void set_gateway_mode(int mode)
 
 void change_system_mode(int mode){
     char topic[TOPIC_LENGTH] = {0};   
-    
-    sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
-
+    MYLOG_ERROR("%s\n%s\n", g_topicroot, TOPIC_DEVICE_STATUS);
+    sprintf(topic, "%sdevices/status", g_topicroot);
+    MYLOG_ERROR("3");
     set_gateway_mode(mode);
     change_device_attr_value(GATEWAY_ID, ATTR_SYSMODE, mode);
-
-    cJSON* device = dup_device_status_json(GATEWAY_ID);    
+    MYLOG_ERROR("4");
+    cJSON* device = dup_device_status_json(GATEWAY_ID);
+    MYLOG_ERROR("the status is %s", cJSON_PrintUnformatted(device));
     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device), 0, 0);
+    device_closeallfan();
     cJSON_Delete(device);
 }
 
