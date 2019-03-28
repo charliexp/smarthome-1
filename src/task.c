@@ -331,9 +331,12 @@ void* devicemsgprocess(void *argc)
 
         //设备操作
         if (operationtype == 1)
-        {
+        {   
+            cJSON* devs = cJSON_CreateArray();
+            cJSON* dev;
     		for (i=0; i< devicenum; i++)
     		{
+    		    dev = cJSON_CreateObject();
     			device = cJSON_GetArrayItem(devices, i);
                 /***
                 **全局的设备操作数组中添加一个新的未处理的
@@ -341,7 +344,7 @@ void* devicemsgprocess(void *argc)
                 ***/
     			packetid = getpacketid(); //packetid是用来跟zgb设备通信使用的
     			g_devicemsgstatus[i].packetid = packetid;
-    			g_devicemsgstatus[i].result = 1; //1代表失败，0代表成功，2代表设备未响应
+    			g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_OPERATIONFAIL; //1代表失败，0代表成功，2代表设备未响应
     			g_devicemsgstatus[i].finish = 1; //1代表未处理完
                 
                 tmp = cJSON_GetObjectItem(device, "deviceid");
@@ -352,6 +355,7 @@ void* devicemsgprocess(void *argc)
     			}                
                 
     			deviceid = tmp->valuestring;
+                cJSON_AddItemToObject(dev, "deviceid", cJSON_CreateString(deviceid));
 
                 int nrow = 0, ncolumn = 0;
     	        char **dbresult; 
@@ -363,17 +367,13 @@ void* devicemsgprocess(void *argc)
                 if(nrow == 0) //数据库中没有该设备
                 {
                     MYLOG_ERROR("MQTT:The device is not exist! id:%s", deviceid);
-                    cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
-                    goto response;          
+                    g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_DEVICENOEXIST;
+                    g_devicemsgstatus[i].finish = 0;
+                    cJSON_AddItemToArray(devs, dev);
+                    sqlite3_free_table(dbresult);        			    
+    		        continue;                    
                 }
                 
-                int online = check_device_online(deviceid);
-                if(online == 0)
-                {
-                    g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_DEVICEOFFLINE;
-                    g_devicemsgstatus[i].finish = 0;
-                }
-
                 strncpy(db_zgbaddress, dbresult[ncolumn+1], 20);
                 dbaddresstozgbaddress(db_zgbaddress, src);
                 devicetype  = dbresult[ncolumn+2][0] - '0';
@@ -381,18 +381,40 @@ void* devicemsgprocess(void *argc)
                 operations  = cJSON_GetObjectItem(device, "operations");
     		    if (operations == NULL)
     		    {
-                    cJSON_ReplaceItemInObject(device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
-                    goto response;
+                    g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_FORMATERROR;
+                    g_devicemsgstatus[i].finish = 0;
+                    cJSON_AddItemToArray(devs, dev);
+                    sqlite3_free_table(dbresult);        			    
+    		        continue;
     		    }
+    		    cJSON_AddItemToObject(dev, "operations", cJSON_Duplicate(operations, 1));
+
+                //操作的设备是网关本身
     		    if (devicetype == DEV_GATEWAY)
     		    {
     		        gatewayproc(operations);
-    		        goto response;
-    		    }
-    		    
+    			    g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_SUCCESS; 
+    			    g_devicemsgstatus[i].finish = 0; //0代表已处理完   
+                    cJSON_AddItemToArray(devs, dev);
+                    sqlite3_free_table(dbresult);        			    
+    		        continue;
+    		    }    		    
+
+                //检查设备是否在线
+                int online = check_device_online(deviceid);
+                if(online == 0)
+                {
+                    g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_DEVICEOFFLINE;
+                    g_devicemsgstatus[i].finish = 0;
+                    cJSON_AddItemToArray(devs, dev);
+                    sqlite3_free_table(dbresult);        			    
+    		        continue;                    
+                }    		    
+    		  
     		    BYTE data[125];
                 int datalen = mqtttozgb(operations, data, devicetype);
                 sendzgbmsg(src, data, datalen, ZGB_MSGTYPE_DEVICE_OPERATION, devicetype, deviceindex, packetid);
+                cJSON_AddItemToArray(devs, dev);
                 sqlite3_free_table(dbresult);             
     		}
 
@@ -413,9 +435,10 @@ void* devicemsgprocess(void *argc)
 
     		for (i=0; i<devicenum; i++)
     		{
-    			device = cJSON_GetArrayItem(devices, i);
-    			cJSON_AddNumberToObject(device, "result", g_devicemsgstatus[i].result);
-    		}            
+    			device = cJSON_GetArrayItem(devs, i);
+    			cJSON_AddNumberToObject(device, "result", g_devicemsgstatus[i].result);    			
+    		}
+    		cJSON_AddItemToObject(result_json, "devices", devs);
         }
         
         //设备状态查询
