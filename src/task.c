@@ -362,7 +362,7 @@ void* devicemsgprocess(void *argc)
                 sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
                 if(nrow == 0) //数据库中没有该设备
                 {
-                    MYLOG_ERROR("MQTT:The device is not exist! id:%d", deviceid);
+                    MYLOG_ERROR("MQTT:The device is not exist! id:%s", deviceid);
                     cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
                     goto response;          
                 }
@@ -421,6 +421,7 @@ void* devicemsgprocess(void *argc)
         //设备状态查询
         if (operationtype == 2)
         {
+            cJSON* statusarray = cJSON_CreateArray();
     		for (i=0; i< devicenum; i++)
     		{
     			device = cJSON_GetArrayItem(devices, i); 
@@ -433,18 +434,22 @@ void* devicemsgprocess(void *argc)
     			}                
                 
     			deviceid = tmp->valuestring;
-                
+
                 devicestatus = dup_device_status_json(deviceid);
                 if (devicestatus == NULL)
                 {
-                    MYLOG_ERROR("Can't find the device status!");
-                    cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
-                    goto response;
-                }              
-                cJSON* status = cJSON_GetObjectItem(devicestatus, "status");
-                cJSON_AddItemToObject(device, "status", status);
-                MYLOG_DEBUG("MQTT: Device status query,The status is %s", cJSON_PrintUnformatted(status));
-            }   	    	
+    			    cJSON* status = cJSON_CreateObject();
+                    cJSON_AddItemToObject(status, "deviceid", cJSON_CreateString(deviceid));
+                    cJSON_AddItemToObject(status, "status", cJSON_CreateArray());
+                    cJSON_AddItemToArray(statusarray, status);
+                    MYLOG_ERROR("Can't find the device status!,id:%s", deviceid);
+                }else{
+                    cJSON_AddItemToArray(statusarray, devicestatus);
+                    MYLOG_DEBUG("MQTT: Device status query,The status is %s", cJSON_PrintUnformatted(devicestatus));                   
+                }
+            }
+            cJSON_AddItemToObject(result_json, "devices", statusarray);
+            
         }
         
 response:

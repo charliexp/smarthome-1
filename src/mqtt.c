@@ -583,6 +583,7 @@ void reportdevices()
             
     sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_ADD);
     sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
+    //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
     for(int i=1;i<=nrow;i++)
     {
         root = cJSON_CreateObject();

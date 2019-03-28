@@ -537,7 +537,7 @@ cJSON* dup_device_status_json(char* deviceid)
             return cJSON_Duplicate(devicestatus, 1);
         }
     }
-    pthread_mutex_lock(&g_devices_status_mutex);
+    pthread_mutex_unlock(&g_devices_status_mutex);
     return NULL;
 }
 
