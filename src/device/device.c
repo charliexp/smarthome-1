@@ -19,7 +19,7 @@ extern int g_queueid;
 extern cJSON* g_devices_status_json;
 extern sqlite3* g_db;
 extern int g_system_mode;
-extern char* g_topicroot;
+extern char g_topicroot[20];
 extern pthread_mutex_t g_devices_status_mutex; 
 
 void zgbaddresstodbaddress(ZGBADDRESS addr, char* db_address)
@@ -796,14 +796,12 @@ void set_gateway_mode(int mode)
 
 void change_system_mode(int mode){
     char topic[TOPIC_LENGTH] = {0};   
-    MYLOG_ERROR("%s\n%s\n", g_topicroot, TOPIC_DEVICE_STATUS);
     sprintf(topic, "%sdevices/status", g_topicroot);
-    MYLOG_ERROR("3");
+
     set_gateway_mode(mode);
+    change_panel_mode(mode);
     change_device_attr_value(GATEWAY_ID, ATTR_SYSMODE, mode);
-    MYLOG_ERROR("4");
     cJSON* device = dup_device_status_json(GATEWAY_ID);
-    MYLOG_ERROR("the status is %s", cJSON_PrintUnformatted(device));
     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device), 0, 0);
     device_closeallfan();
     cJSON_Delete(device);

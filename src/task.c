@@ -709,6 +709,7 @@ void* zgbmsgprocess(void* argc)
                         case ATTR_SOCKET_V:
                         case ATTR_SETTING_TEMPERATURE:
                         case ATTR_SETTING_HUMIDITY:
+                        case ATTR_SYSMODE:
                         {          
                             temp = cJSON_GetObjectItem(attr_json, "value");
                             if(temp == NULL)
@@ -730,6 +731,15 @@ void* zgbmsgprocess(void* argc)
                                 //修改的是全局的设备属性表
                                 change_device_attr_value(db_deviceid, attr, value);
                                 needmqtt = true || needmqtt;
+                                switch (attr)
+                                {
+                                    case ATTR_SYSMODE:
+                                        if(value != g_system_mode)
+                                            change_system_mode(value);
+                                        break;
+                                    default:
+                                        break;
+                                }
                             }
                             break;
                         }
