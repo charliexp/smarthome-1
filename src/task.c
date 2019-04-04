@@ -10,9 +10,9 @@ int g_system_mode = 1;
 int g_queueid;
 sqlite3* g_db;
 char g_mac[20] = {0};
-char g_boilerid[20];
+char g_boilerid[20] = {0};
 char g_topicroot[20] = {0};
-char* g_topics[TOPICSNUM] ={0x0, 0x0, 0x0};
+char g_topics[TOPICSNUM][50] ={{0},{0},{0}};
 timer* g_zgbtimer;
 cJSON* g_devices_status_json;
 ZGB_MSG_STATUS g_devicemsgstatus[ZGBMSG_MAX_NUM];
@@ -110,7 +110,8 @@ void* lantask(void *argc)
     char text[] = "smarthome app";
     int listenfd,sendfd;
     char buf[128];               
-                         
+
+    MYLOG_INFO("Thread lantask begin!");                         
     listenfd = socket(AF_INET,SOCK_DGRAM,0);
     sendfd = socket(AF_INET,SOCK_DGRAM,0);
     int set = 1;
@@ -189,8 +190,7 @@ void init()
 
 	for(; i < TOPICSNUM; i++)
 	{
-		g_topics[i] = (char*)malloc(sizeof(g_topicroot) + strlen(g_topicthemes[i])-1);
-		sprintf(g_topics[i], "%s%s", g_topicroot, g_topicthemes[i]);
+		sprintf(g_topics[i], "%s%s\0", g_topicroot, g_topicthemes[i]);
 	}
     devices_status_json_init();
     gatewayregister();
@@ -202,6 +202,7 @@ void init()
 /*APP下发的设备消息的处理进程*/
 void* devicemsgprocess(void *argc)
 {
+    MYLOG_INFO("Thread devicemsgprocess begin!");
 	devicequeuemsg msg; //消息队列中取出的设备操作消息
 	char topic[TOPIC_LENGTH] = { 0 };//对操作的响应topic
 	int mqttid = 0;
@@ -873,6 +874,7 @@ void* uartlisten(void *argc)
 	int i, j, sum;
     int ret;
 
+    MYLOG_INFO("Thread uartlisten begin!");
     pthread_create(&threads[0], NULL, uartsend, NULL);
     pthread_create(&threads[1], NULL, zgbmsgprocess, NULL);
 

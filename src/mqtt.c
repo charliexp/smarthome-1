@@ -3,7 +3,7 @@
 
 extern int g_queueid;
 extern int g_operationflag;
-extern char* g_topics[TOPICSNUM];
+extern char g_topics[TOPICSNUM][50];
 extern char g_clientid[30], g_clientid_pub[30];
 extern char g_topicroot[20];
 extern sqlite3* g_db;
@@ -333,7 +333,14 @@ static void connectsuccess(void* context, MQTTAsync_successData* response)
 	if(clientid == WAN_CLIENT_ID)
     	ledcontrol(NET_LED, LED_ACTION_ON, 0);//µ„¡¡NET LEDµ∆
 
-	rc = MQTTAsync_subscribeMany(client, TOPICSNUM, g_topics, qoss, &opts);
+    char* topic[TOPICSNUM];
+
+    for(int i=0;i<TOPICSNUM;i++)
+    {
+        topic[i] = (char*)&g_topics[i];
+    }
+    
+	rc = MQTTAsync_subscribeMany(client, TOPICSNUM, (char * const*)topic, qoss, &opts);
 	if (rc != MQTTASYNC_SUCCESS)
 	{
 		MYLOG_ERROR("sub error!");
@@ -350,6 +357,7 @@ void *mqttclient(void *argc)
 	MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
 	int rc;
 
+    MYLOG_INFO("Thread mqttclient begin!");
 	MQTTAsync_create(&client, ADDRESS, g_clientid, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
 	context.clientid = WAN_CLIENT_ID;
@@ -583,7 +591,7 @@ void reportdevices()
             
     sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_ADD);
     sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
-    //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+    
     for(int i=1;i<=nrow;i++)
     {
         root = cJSON_CreateObject();
