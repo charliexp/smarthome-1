@@ -65,7 +65,7 @@ int sqlitedb_init()
         sprintf(sql, "replace into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, DEV_GATEWAY, 0);
         exec_sql_create(sql);
 
-        sprintf(sql, "replace into gatewaycfg values(1, 2, \"\");");
+        sprintf(sql, "replace into gatewaycfg values(2, \"\");");
         exec_sql_create(sql);          
     }
 
