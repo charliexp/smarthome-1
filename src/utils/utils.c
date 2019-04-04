@@ -516,20 +516,6 @@ int already_running(const char *filename)
     return 0;
 }
 
-/*判断文件是否存在*/
-int is_file_exist(const char* file)
-{
-    if(file == NULL)
-    {
-        return -1;
-    }
-
-    if(access(file, F_OK) == 0)
-        return 0;
-
-    return -1;
-}
-
 int ledcontrol(int num, int action, int time)
 {
     char* dir;
