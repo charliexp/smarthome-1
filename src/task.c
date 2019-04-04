@@ -10,6 +10,7 @@ int g_system_mode = 1;
 int g_queueid;
 sqlite3* g_db;
 char g_mac[20] = {0};
+char g_boilerid[20];
 char g_topicroot[20] = {0};
 char* g_topics[TOPICSNUM] ={0x0, 0x0, 0x0};
 timer* g_zgbtimer;
@@ -27,41 +28,54 @@ char g_clientid[30], g_clientid_pub[30];
 int sqlitedb_init()
 {
     size_t rc; 
-    char sql[512];  
+    char sql[512];
+    char db_zgbaddress[17] = "0000000000000000";
+    char db_deviceid[20] = "00000000000000000";
     size_t nrow = 0, ncolumn = 0;
 	char **dbresult;     
     char* zErrMsg = NULL;
 
-    rc = sqlite3_open("/usr/smarthome.db", &g_db);
-    if(rc != SQLITE_OK)  
-    {  
-        MYLOG_ERROR("open smarthome.db error!");  
-        return -1;  
+    if(is_file_exist("/usr/smarthome.db") == -1)
+    {
+        rc = sqlite3_open("/usr/smarthome.db", &g_db);
+        if(rc != SQLITE_OK)
+        {
+            MYLOG_ERROR("open smarthome.db error!");
+            return -1;
+        }
+        sprintf(sql,"CREATE TABLE devices (deviceid TEXT, zgbaddress TEXT, devicetype CHAR(1), deviceindex CHAR(1), online CHAR(1), primary key(deviceid));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [electricity_day]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[day] INT NOT NULL, primary key(deviceid, day));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [electricity_month]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[month] INT NOT NULL, primary key(deviceid, month));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [electricity_year]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[year] INT NOT NULL, primary key(deviceid, year));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [electricity_hour]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[hour] INT NOT NULL, primary key(deviceid, hour));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE gatewaycfg (mode INTERGER NOT NULL DEFAULT 0, boilerid TEXT DEFAULT \"\");");
+        exec_sql_create(sql);
+
+        //把网关设备写入devices表
+        sprintf(sql, "replace into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, DEV_GATEWAY, 0);
+        exec_sql_create(sql);
+
+        sprintf(sql, "replace into gatewaycfg values(1, 2, \"\");");
+        exec_sql_create(sql);          
     }
-    sprintf(sql,"CREATE TABLE devices (deviceid TEXT, zgbaddress TEXT, devicetype CHAR(1), deviceindex CHAR(1), online CHAR(1), primary key(deviceid));");
-    exec_sql_create(sql);
-        
-    sprintf(sql,"CREATE TABLE [electricity_day]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[day] INT NOT NULL, primary key(deviceid, day));");
-    exec_sql_create(sql);
 
-    sprintf(sql,"CREATE TABLE [electricity_month]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[month] INT NOT NULL, primary key(deviceid, month));");
-    exec_sql_create(sql);
-
-    sprintf(sql,"CREATE TABLE [electricity_year]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[year] INT NOT NULL, primary key(deviceid, year));");
-    exec_sql_create(sql);
-
-    sprintf(sql,"CREATE TABLE [electricity_hour]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[hour] INT NOT NULL, primary key(deviceid, hour));");
-    exec_sql_create(sql);
-
-    sprintf(sql,"CREATE TABLE gatewaycfg (mode INTERGER NOT NULL DEFAULT 0);");
-    exec_sql_create(sql);
 
     sprintf(sql,"select mode from gatewaycfg;");
     sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
 
     if(nrow == 1)
     {
-        set_gateway_mode(TLV_VALUE_COND_HEAT);
+        set_gateway_mode(TLV_VALUE_COND_COLD);
     }    
     return 0;
 }
@@ -145,8 +159,6 @@ void* lantask(void *argc)
 void init()
 {
 	int i = 0;
-    char db_zgbaddress[17] = "0000000000000000";
-    char db_deviceid[20] = "00000000000000000";
     char sql[200];  
     int rc; 
     char *zErrMsg = NULL;
@@ -175,9 +187,6 @@ void init()
         MYLOG_ERROR("Create db failed!");      
     }
 
-    //把网关设备写入devices表
-    sprintf(sql, "replace into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, DEV_GATEWAY, 0);
-    exec_sql_create(sql);  
 	for(; i < TOPICSNUM; i++)
 	{
 		g_topics[i] = (char*)malloc(sizeof(g_topicroot) + strlen(g_topicthemes[i])-1);
@@ -390,15 +399,15 @@ void* devicemsgprocess(void *argc)
     		    cJSON_AddItemToObject(dev, "operations", cJSON_Duplicate(operations, 1));
 
                 //操作的设备是网关本身
-    		    if (devicetype == DEV_GATEWAY)
-    		    {
-    		        gatewayproc(operations);
-    			    g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_SUCCESS; 
-    			    g_devicemsgstatus[i].finish = 0; //0代表已处理完   
+                if (devicetype == DEV_GATEWAY)
+                {
+                    int ret = gatewayproc(operations);
+                    g_devicemsgstatus[i].result = ret;
+                    g_devicemsgstatus[i].finish = 0; //0代表已处理完
                     cJSON_AddItemToArray(devs, dev);
-                    sqlite3_free_table(dbresult);        			    
-    		        continue;
-    		    }    		    
+                    sqlite3_free_table(dbresult);
+                    continue;
+                }
 
                 //检查设备是否在线
                 int online = check_device_online(deviceid);
@@ -466,7 +475,9 @@ void* devicemsgprocess(void *argc)
                     cJSON_AddItemToObject(status, "status", cJSON_CreateArray());
                     cJSON_AddItemToArray(statusarray, status);
                     MYLOG_ERROR("Can't find the device status!,id:%s", deviceid);
-                }else{
+                }
+                else
+                {
                     cJSON_AddItemToArray(statusarray, devicestatus);
                     MYLOG_DEBUG("MQTT: Device status query,The status is %s", cJSON_PrintUnformatted(devicestatus));                   
                 }
@@ -582,11 +593,13 @@ void* zgbmsgprocess(void* argc)
             for (int i=0; i < devicenum;)
             {
                 devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
-                if(devicestatus == NULL){
+                if(devicestatus == NULL)
+                {
                     break;
                 }
                 cJSON* deviceid = cJSON_GetObjectItem(devicestatus, "deviceid");
-                if(deviceid == NULL){
+                if(deviceid == NULL)
+                {
                     continue;
                 }
                 array_deviceid = deviceid->valuestring;
@@ -601,8 +614,9 @@ void* zgbmsgprocess(void* argc)
                 {
                      i++;
                 }
-            } 
-            if(cJSON_GetArraySize(device_array)>0){
+            }
+            if(cJSON_GetArraySize(device_array)>0)
+            {
                 sendmqttmsg(MQTT_MSG_TYPE_PUB, TOPIC_DEVICE_DELETE, cJSON_PrintUnformatted(device_array), 0, 0);
             }
             pthread_mutex_unlock(&g_devices_status_mutex);
@@ -718,89 +732,96 @@ void* zgbmsgprocess(void* argc)
                     }
                     value = zgbdata->pdu[i++]*256*256*256 + zgbdata->pdu[i++]*256*256 
                         + zgbdata->pdu[i++]*256 + zgbdata->pdu[i++];
-                    replace_value_json = cJSON_CreateNumber(value);
-                    
-                    switch(attr)
+                replace_value_json = cJSON_CreateNumber(value);
+
+                switch(attr)
+                {
+                case ATTR_DEVICESTATUS:
+                case ATTR_WINDSPEED:
+                case ATTR_ENV_TEMPERATURE:
+                case ATTR_ENV_HUMIDITY:
+                case ATTR_ENV_PM25:
+                case ATTR_ENV_CO2:
+                case ATTR_ENV_FORMALDEHYDE:
+                case ATTR_SOCKET_V:
+                case ATTR_SETTING_TEMPERATURE:
+                case ATTR_SETTING_HUMIDITY:
+                case ATTR_SYSMODE:
+                {
+                    temp = cJSON_GetObjectItem(attr_json, "value");
+                    if(temp == NULL)
                     {
-                        case ATTR_DEVICESTATUS:
-                        case ATTR_WINDSPEED:
-                        case ATTR_ENV_TEMPERATURE:
-                        case ATTR_ENV_HUMIDITY:
-                        case ATTR_ENV_PM25:
-                        case ATTR_ENV_CO2:
-                        case ATTR_ENV_FORMALDEHYDE:
-                        case ATTR_SOCKET_V:
-                        case ATTR_SETTING_TEMPERATURE:
-                        case ATTR_SETTING_HUMIDITY:
+                        if(device_json != NULL)
+                        {
+                            cJSON_Delete(device_json);
+                        }
+                        goto end;
+                    }
+                    oldvalue = temp->valueint;
+                    if(value == oldvalue)
+                    {
+                        needmqtt = false || needmqtt;
+                    }
+                    else
+                    {
+                        //修改的是复制出来的设备属性表
+                        cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);
+                        //修改的是全局的设备属性表
+                        change_device_attr_value(db_deviceid, attr, value);
+                        needmqtt = true || needmqtt;
+                        switch (attr)
+                        {
                         case ATTR_SYSMODE:
-                        {          
-                            temp = cJSON_GetObjectItem(attr_json, "value");
-                            if(temp == NULL)
+                            if(value != g_system_mode)
+                                change_system_mode(value);
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case ATTR_SOCKET_E:
+                {
+                    change_device_attr_value(db_deviceid, attr, value);
+                    needmqtt = false || needmqtt;
+                    MYLOG_INFO("Get a socket electricity report msg!the value is %lu", value);
+                    electricity_stat(db_deviceid, value);
+                    break;
+                }
+                default:
+                    break;
+                }
+            }
+            if(needmqtt)//是否需要发送mqtt消息
+            {
+                sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
+                //如果是设备状态关闭，则不上报其他属性
+                attr_json = get_attr_value_object_json(device_json, ATTR_DEVICESTATUS);
+                if(attr_json != NULL)
+                {
+                    int value = cJSON_GetObjectItem(attr_json, "value")->valueint;
+                    if(value == TLV_VALUE_POWER_OFF)
+                    {
+                        cJSON* status = cJSON_GetObjectItem(device_json, "status");
+                        int sum = cJSON_GetArraySize(status);
+                        cJSON* tmp;
+                        for(int i = 0; i < sum; )
+                        {
+                            tmp = cJSON_GetArrayItem(status, i);
+                            attr = cJSON_GetObjectItem(tmp, "type")->valueint;
+                            //如果不是类型和状态属性全部删除
+                            if(attr != ATTR_DEVICESTATUS                                    && attr != ATTR_DEVICETYPE)
                             {
-                                if(device_json != NULL){
-                                    cJSON_Delete(device_json);
-                                }
-                                goto end;
-                            }
-                            oldvalue = temp->valueint;
-                            if(value == oldvalue)
-                            {
-                                needmqtt = false || needmqtt;    
+                                cJSON_DeleteItemFromArray(status, i);
+                                sum--;
                             }
                             else
                             {
-                                //修改的是复制出来的设备属性表
-                                cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);
-                                //修改的是全局的设备属性表
-                                change_device_attr_value(db_deviceid, attr, value);
-                                needmqtt = true || needmqtt;
-                                switch (attr)
-                                {
-                                    case ATTR_SYSMODE:
-                                        if(value != g_system_mode)
-                                            change_system_mode(value);
-                                        break;
-                                    default:
-                                        break;
-                                }
+                                i++;
                             }
-                            break;
                         }
-                        case ATTR_SOCKET_E:
-                        {
-                            change_device_attr_value(db_deviceid, attr, value);                        
-                            needmqtt = false || needmqtt;
-                            MYLOG_INFO("Get a socket electricity report msg!the value is %lu", value);
-                            electricity_stat(db_deviceid, value);
-                            break;
-                        }
-                        default:
-                            break;
                     }
-                }
-                if(needmqtt)//是否需要发送mqtt消息
-                {
-                    sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
-                    //如果是设备状态关闭，则不上报其他属性
-                    attr_json = get_attr_value_object_json(device_json, ATTR_DEVICESTATUS);
-                    if(attr_json != NULL){
-                        int value = cJSON_GetObjectItem(attr_json, "value")->valueint;
-                        if(value == TLV_VALUE_POWER_OFF){
-                            cJSON* status = cJSON_GetObjectItem(device_json, "status");
-                            int sum = cJSON_GetArraySize(status);
-                            cJSON* tmp;
-                            for(int i = 0; i < sum; ){
-                                tmp = cJSON_GetArrayItem(status, i);
-                                attr = cJSON_GetObjectItem(tmp, "type")->valueint;
-                                //如果不是类型和状态属性全部删除
-                                if(attr != ATTR_DEVICESTATUS && attr != ATTR_DEVICETYPE){
-                                    cJSON_DeleteItemFromArray(status, i);
-                                    sum--;
-                                }else{
-                                    i++;
-                                }
-                            }                       
-                        }
 
                     }
                     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device_json), 0, 0);

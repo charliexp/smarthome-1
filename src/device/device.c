@@ -20,7 +20,8 @@ extern cJSON* g_devices_status_json;
 extern sqlite3* g_db;
 extern int g_system_mode;
 extern char g_topicroot[20];
-extern pthread_mutex_t g_devices_status_mutex; 
+extern char g_boilerid[20];
+extern pthread_mutex_t g_devices_status_mutex;
 
 void zgbaddresstodbaddress(ZGBADDRESS addr, char* db_address)
 {
@@ -106,6 +107,14 @@ void change_panel_mode(int mode)
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //¹ã²¥±¨ÎÄ
     BYTE data[5] = {ATTR_SYSMODE, 0x0, 0x0, 0x0, mode};
     sendzgbmsg(address, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_CONTROL_PANEL, 0xFF, getpacketid());        
+}
+
+void change_boiler_mode(int mode)
+{   
+    ZGBADDRESS addr;
+    dbaddresstozgbaddress(g_boilerid, addr);
+    BYTE data[5] = {ATTR_DEVICESTATUS, 0x0, 0x0, 0x0, mode};
+    sendzgbmsg(addr, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_SOCKET, 0x0, getpacketid());    
 }
 
 void devices_status_query()
@@ -226,6 +235,18 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	g_system_mode = mode;
         	cJSON_AddNumberToObject(status, "value", mode);
         	cJSON_AddItemToArray(statusarray, status);     	
+        status = cJSON_CreateObject();
+        cJSON_AddNumberToObject(status, "type", ATTR_SYSTEM_BOILER);
+        int ret = get_system_boiler(g_boilerid);
+        if(ret == -1)
+        {
+            cJSON_AddStringToObject(status, "value", "");
+        }
+        else
+        {
+            cJSON_AddStringToObject(status, "value", g_boilerid);
+        }
+        cJSON_AddItemToArray(statusarray, status);
             break;            
         }
         case DEV_SOCKET:
@@ -385,7 +406,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_WINDSPEED);
         	cJSON_AddNumberToObject(status, "value", 0);
-        	cJSON_AddItemToArray(statusarray, status);        	        	
+        	cJSON_AddItemToArray(statusarray, status);        	        	     
             break;            
         }        
         case DEV_FLOOR_HEAT:
@@ -541,6 +562,29 @@ cJSON* dup_device_status_json(char* deviceid)
     return NULL;
 }
 
+cJSON* get_device_status_json(char* deviceid)
+{
+    int devicenum;
+    cJSON* devicestatus = NULL;
+    char* array_deviceid;
+
+    pthread_mutex_lock(&g_devices_status_mutex);
+    devicenum = cJSON_GetArraySize(g_devices_status_json);
+
+    for (int i=0; i < devicenum; i++)
+    {
+        devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
+        array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
+        if(strncmp(deviceid, array_deviceid, 17) == 0)
+        {
+            pthread_mutex_unlock(&g_devices_status_mutex);
+            return devicestatus;
+        }
+    }
+    pthread_mutex_unlock(&g_devices_status_mutex);
+    return NULL;
+}
+
 cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
 {
     cJSON* status,*attr, *temp;
@@ -664,9 +708,9 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
     return index--;
 }
 
-void gatewayproc(cJSON* op)
+int gatewayproc(cJSON* op)
 {
-    cJSON* item=NULL;
+    cJSON* item,* temp;
     int attr=0;
     int value=0;
     int opnum = cJSON_GetArraySize(op);
@@ -677,18 +721,43 @@ void gatewayproc(cJSON* op)
         attr = cJSON_GetObjectItem(item, "type")->valueint;
         if(attr == ATTR_SYSMODE)
         {
-            value = cJSON_GetObjectItem(item, "value")->valueint;
+            temp = cJSON_GetObjectItem(item, "value");
+            if(temp == NULL)
+            {
+                return MQTT_MSG_ERRORCODE_FORMATERROR;
+            }
+            value = temp->valueint;
             if(value == TLV_VALUE_COND_HEAT || value == TLV_VALUE_COND_COLD || value == TLV_VALUE_BOILER_HEAT)
             {
-                MYLOG_ERROR("1");
                 if(g_system_mode != value)
                 {          
-                    MYLOG_ERROR("2");
                     change_system_mode(value);                   
                 }
             }
         }
+        else if(attr == ATTR_SYSTEM_BOILER)
+        {
+            temp = cJSON_GetObjectItem(item, "value");
+            if(temp == NULL)
+            {
+                return MQTT_MSG_ERRORCODE_FORMATERROR;
+            }
+            char *id = temp->valuestring;
+            temp = dup_device_status_json(id);
+            if(temp == NULL)
+            {
+                return MQTT_MSG_ERRORCODE_DEVICENOEXIST;
+            }
+            temp = get_attr_value_object_json(temp, ATTR_DEVICETYPE);
+            int type = cJSON_GetObjectItem(temp, "value")->valueint;
+            if(type != DEV_SOCKET)
+            {
+                return MQTT_MSG_ERRORCODE_FORMATERROR;
+            }
+            change_system_boiler(id);
+        }
     }
+    return MQTT_MSG_ERRORCODE_SUCCESS;
 }
 
 
@@ -777,7 +846,7 @@ int get_gateway_mode()
     {
         MYLOG_DEBUG("Can not get gatewaycfg mode!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
-        return -1;
+        return TLV_VALUE_COND_COLD;
     }
 
     int mode = atoi(dbresult[1]);
@@ -794,16 +863,60 @@ void set_gateway_mode(int mode)
     exec_sql_create(sql);
 }
 
-void change_system_mode(int mode){
-    char topic[TOPIC_LENGTH] = {0};   
+void change_system_mode(int mode)
+{
+    char topic[TOPIC_LENGTH] = {0};
     sprintf(topic, "%sdevices/status", g_topicroot);
 
     set_gateway_mode(mode);
     change_panel_mode(mode);
     change_device_attr_value(GATEWAY_ID, ATTR_SYSMODE, mode);
-    cJSON* device = dup_device_status_json(GATEWAY_ID);
+
+    if(mode == TLV_VALUE_BOILER_HEAT)
+    {
+        change_boiler_mode(TLV_VALUE_POWER_ON);
+    }else{
+        change_boiler_mode(TLV_VALUE_POWER_OFF);
+    }
+    
+    cJSON* device = get_device_status_json(GATEWAY_ID);
     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device), 0, 0);
     device_closeallfan();
-    cJSON_Delete(device);
 }
 
+int get_system_boiler(char* id)
+{
+    size_t nrow = 0, ncolumn = 0;
+    char **dbresult;
+    char sql[]= {"select boilerid from gatewaycfg;"};
+    char* zErrMsg = NULL;
+
+    sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+
+    if(nrow == 0)
+    {
+        MYLOG_DEBUG("Can not get system boiler!");
+        MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
+        return -1;
+    }
+
+    memcpy(id, dbresult[1], strlen(dbresult[1]));
+    return 0;
+}
+
+void set_system_boiler(char* id)
+{
+    char sql[100] = {0};
+    sprintf(sql, "replace into gatewaycfg(rowid, boilerid) values(1, %s)", id);
+    exec_sql_create(sql);
+}
+
+void change_system_boiler(char* id)
+{
+    cJSON* dev = get_device_status_json(GATEWAY_ID);
+    cJSON* devid = get_attr_value_object_json(dev, ATTR_SYSTEM_BOILER);
+    cJSON* boiler = cJSON_CreateString(id);
+    cJSON_ReplaceItemInObject(devid, "value", boiler);
+    set_system_boiler(id);
+
+}

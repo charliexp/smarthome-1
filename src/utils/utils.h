@@ -48,10 +48,12 @@ void electricity_stat(char* deviceid, int num);
 /*sql语句执行*/
 int exec_sql_create(char* sql);
 
+/*判断文件是否存在*/
+int is_file_exist(const char* file);
+
 /*检查程序是否已运行*/
 int already_running(const char *filename);
 
 /*LED控制接口*/
 int ledcontrol(int num, int action, int time);
-
 #endif

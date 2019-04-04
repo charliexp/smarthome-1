@@ -34,7 +34,9 @@ void change_device_attr_value(char* deviceid, char attr, int value);
 
 void device_closeallfan();
 
-void gatewayproc(cJSON* op);
+void change_boiler_mode(int mode);
+
+int gatewayproc(cJSON* op);
 
 /* MQTT的操作数据转为ZGB的DATA */
 /* 返回data的数据长度 */
@@ -52,4 +54,10 @@ int get_gateway_mode();
 void set_gateway_mode(int mode);
 
 void change_system_mode(int mode);
+
+int get_system_boiler(char* id);
+
+void set_system_boiler(char* id);
+
+void change_system_boiler(char* id);
 #endif

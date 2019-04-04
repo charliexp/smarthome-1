@@ -178,6 +178,7 @@
 #define ATTR_SETTING_TEMPERATURE      0x09  //设备设定温度: 0-100
 
 #define ATTR_CONNECTED_AIRCONDITON    0x20  //面板是否连接了空调主机  0-未连接 1-连接
+#define ATTR_SYSTEM_BOILER            0x21  //系统控制锅炉的插座
 
 /*环境属性*/
 #define ATTR_ENV_TEMPERATURE   0x40              //温度
@@ -223,5 +224,9 @@
 #define LED_ACTION_OFF 0
 #define LED_ACTION_ON 1
 #define LED_ACTION_TRIGGER 2
+
+#define CHECK_NULL_RETURN(obj)  if(!obj) return;
+#define CHECK_NULL_CONTINUE(obj) if(!obj) continue;
+#define CHECK_NULL_BREAK(obj)   if(!obj) break; 
 
 #endif
