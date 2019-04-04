@@ -206,7 +206,6 @@ void devices_status_json_init()
         cJSON_AddItemToArray(g_devices_status_json, device_status_json);
     }
     pthread_mutex_unlock(&g_devices_status_mutex);
-    //devices_status_query();
     sqlite3_free_table(dbresult);
 }
 
@@ -743,7 +742,7 @@ int gatewayproc(cJSON* op)
                 return MQTT_MSG_ERRORCODE_FORMATERROR;
             }
             char *id = temp->valuestring;
-            temp = dup_device_status_json(id);
+            temp = get_device_status_json(id);
             if(temp == NULL)
             {
                 return MQTT_MSG_ERRORCODE_DEVICENOEXIST;

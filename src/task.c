@@ -811,7 +811,7 @@ void* zgbmsgprocess(void* argc)
                             tmp = cJSON_GetArrayItem(status, i);
                             attr = cJSON_GetObjectItem(tmp, "type")->valueint;
                             //如果不是类型和状态属性全部删除
-                            if(attr != ATTR_DEVICESTATUS                                    && attr != ATTR_DEVICETYPE)
+                            if(attr != ATTR_DEVICESTATUS&& attr != ATTR_DEVICETYPE)
                             {
                                 cJSON_DeleteItemFromArray(status, i);
                                 sum--;
@@ -823,9 +823,9 @@ void* zgbmsgprocess(void* argc)
                         }
                     }
 
-                    }
+                 }
                     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device_json), 0, 0);
-                }
+              }
                 cJSON_Delete(device_json);
                 break;
             }
