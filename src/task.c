@@ -68,6 +68,15 @@ int sqlitedb_init()
         sprintf(sql, "replace into gatewaycfg values(2, \"\");");
         exec_sql_create(sql);          
     }
+    else
+    {
+        rc = sqlite3_open("/usr/smarthome.db", &g_db);
+        if(rc != SQLITE_OK)
+        {
+            MYLOG_ERROR("open smarthome.db error!");
+            return -1;
+        }        
+    }
 
 
     sprintf(sql,"select mode from gatewaycfg;");
