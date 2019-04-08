@@ -195,6 +195,8 @@ void devices_status_json_init()
     {
         MYLOG_DEBUG("There are not any device!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
+        pthread_mutex_unlock(&g_devices_status_mutex); 
+        sqlite3_free_table(dbresult);
         return;
     }
 

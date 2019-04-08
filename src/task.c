@@ -245,6 +245,10 @@ void* devicemsgprocess(void *argc)
         	mqttid = tmp->valueint;
      		sprintf(topic, "%s%s/response/%d", g_topicroot, g_topicthemes[0], mqttid);
      
+        }else{
+		    cJSON_Delete(device_mqtt_json);
+		    g_operationflag = 0;
+            continue;
         }
         
 		result_json = cJSON_CreateObject();
