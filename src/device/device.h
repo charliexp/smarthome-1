@@ -60,4 +60,6 @@ int get_system_boiler(char* id);
 void set_system_boiler(char* id);
 
 void change_system_boiler(char* id);
+
+void report_device_status(cJSON* stat);
 #endif

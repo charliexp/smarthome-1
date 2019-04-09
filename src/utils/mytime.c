@@ -21,6 +21,12 @@
 #include "../device/device.h"
 #include "../log/log.h"
 
+extern char g_airconditionid[20];
+extern int g_airconditionindex;
+extern pthread_mutex_t g_devices_status_mutex;
+extern cJSON* g_devices_status_json;
+
+
 timer* g_timer_manager;
 
 timer* createtimer(int timevlaue,void(*fun)())
@@ -123,30 +129,15 @@ void sigalrm_fn(int sig)
 
 void timerinit()
 {
-    time_t time_now;
-    struct tm* t;
-    int sec,min;
-    int time_sec;//需要定时的秒数 
-    
-    time(&time_now);
-    t = localtime(&time_now);
-    sec = t->tm_sec;
-    min = t->tm_min;
-
-    if(min >= 58)
-    {
-        time_sec = 1;
-    }
-    else
-    {
-        time_sec = (58*60 - min*60 -sec);
-    }
 
     timer* pelecttimer = createtimer(10, electtimerfun);
     addtimer(pelecttimer);
     
     timer* pstatustimer = createtimer(10, statustimerfun);
     addtimer(pstatustimer);
+
+    timer* pairconditiontimer = createtimer(10, airconditiontimerfun);
+    addtimer(pairconditiontimer);    
     signal(SIGALRM, sigalrm_fn); 
     alarm(1);    
 }
@@ -171,6 +162,56 @@ void electtimerfun(timer* t)
     t->timevalue = time_sec;
     t->lefttime = time_sec;
     return;    
+}
+
+void airconditiontimerfun(timer* t)
+{
+    int openflag = 0;//风机盘管是否全部关闭的标志
+    int isexist = 0; //空调主机是否存在
+    cJSON* dev,*status;
+    int aircond_status = -1;
+    pthread_mutex_lock(&g_devices_status_mutex);
+    int size = cJSON_GetArraySize(g_devices_status_json);
+    int type,value;
+    ZGBADDRESS airconaddr;
+    BYTE close_payload[] = {ATTR_DEVICESTATUS, 0, 0, 0, 0};//关闭操作报文内容
+    BYTE open_payload[] = {ATTR_DEVICESTATUS, 0, 0, 0, 1};//打开操作报文内容
+    for(int i=0; i<size; i++)
+    {
+        dev = cJSON_GetArrayItem(g_devices_status_json, i);
+        type = cJSON_GetObjectItem(dev, "devicetype")->valueint;
+        if(type == DEV_FAN_COIL)
+        {
+            status = cJSON_GetObjectItem(dev, "status");
+            value = cJSON_GetArrayItem(status, 0)->valueint;
+            if(value == 1)
+            {
+                openflag = 1;
+            }
+        }
+        if(type == DEV_AIR_CON)
+        {
+            isexist = 1;
+            status = cJSON_GetObjectItem(dev, "status");
+            aircond_status = cJSON_GetArrayItem(status, 0)->valueint;
+        }
+    }
+    if(isexist)
+    {
+        if((openflag == 1) && (aircond_status == 0))
+        {
+            dbaddresstozgbaddress(g_airconditionid, airconaddr);   
+            //通知空调打开
+            sendzgbmsg(airconaddr, open_payload, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_AIR_CON, g_airconditionindex, getpacketid());
+        }
+        else if((openflag == 0) && (aircond_status == 1))
+        {
+            dbaddresstozgbaddress(g_airconditionid, airconaddr);
+            sendzgbmsg(airconaddr, close_payload, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_AIR_CON, g_airconditionindex, getpacketid());
+        }        
+    }
+
+    pthread_mutex_unlock(&g_devices_status_mutex);      
 }
 
 void statustimerfun(timer* t)

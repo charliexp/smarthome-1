@@ -221,41 +221,36 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
     cJSON_AddStringToObject(device, "deviceid", deviceid);
 	cJSON_AddItemToObject(device, "status", statusarray);
 	cJSON_AddItemToObject(device, "online", cJSON_CreateNumber(0));	
+	cJSON_AddItemToObject(device, "online-check", cJSON_CreateNumber(0));	
 
     switch(devicetype)
     {
         case DEV_GATEWAY:
         {
-	        status = cJSON_CreateObject();
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_GATEWAY);
-        	cJSON_AddItemToArray(statusarray, status); 
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_GATEWAY);
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SYSMODE);
         	int mode = get_gateway_mode();
         	g_system_mode = mode;
         	cJSON_AddNumberToObject(status, "value", mode);
         	cJSON_AddItemToArray(statusarray, status);     	
-        status = cJSON_CreateObject();
-        cJSON_AddNumberToObject(status, "type", ATTR_SYSTEM_BOILER);
-        int ret = get_system_boiler(g_boilerid);
-        if(ret == -1)
-        {
-            cJSON_AddStringToObject(status, "value", "");
-        }
-        else
-        {
-            cJSON_AddStringToObject(status, "value", g_boilerid);
-        }
-        cJSON_AddItemToArray(statusarray, status);
-            break;            
-        }
+            status = cJSON_CreateObject();
+            cJSON_AddNumberToObject(status, "type", ATTR_SYSTEM_BOILER);
+            int ret = get_system_boiler(g_boilerid);
+            if(ret == -1)
+            {
+                cJSON_AddStringToObject(status, "value", "");
+            }
+            else
+            {
+                cJSON_AddStringToObject(status, "value", g_boilerid);
+            }
+            cJSON_AddItemToArray(statusarray, status);
+                break;            
+            }
         case DEV_SOCKET:
         {
-	        status = cJSON_CreateObject();
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_SOCKET);
-        	cJSON_AddItemToArray(statusarray, status); 
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_SOCKET);
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
         	cJSON_AddNumberToObject(status, "value", 0);
@@ -271,11 +266,8 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
             break;
         }
         case DEV_AIR_CON:
-        {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_AIR_CON);
-        	cJSON_AddItemToArray(statusarray, status); 	 
+        {    	
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_AIR_CON);	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
         	cJSON_AddNumberToObject(status, "value", 0);
@@ -288,10 +280,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         }        
         case SEN_ENV_BOX:
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", SEN_ENV_BOX);
-        	cJSON_AddItemToArray(statusarray, status); 	 
+        	cJSON_AddNumberToObject(device, "devicetype", SEN_ENV_BOX);	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_TEMPERATURE);
         	cJSON_AddNumberToObject(status, "value", 0);
@@ -316,10 +305,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         }
         case DEV_CONTROL_PANEL: //控制面板
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_CONTROL_PANEL);
-        	cJSON_AddItemToArray(statusarray, status); 	
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_CONTROL_PANEL);	
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_TEMPERATURE);
         	cJSON_AddNumberToObject(status, "value", 20);
@@ -338,24 +324,9 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status);          	
             break;
         }  
-        case DEV_BOILER:
-        {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_BOILER);
-        	cJSON_AddItemToArray(statusarray, status); 	 
-        	status = cJSON_CreateObject();
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
-        	cJSON_AddNumberToObject(status, "value", 0);
-        	cJSON_AddItemToArray(statusarray, status);          	
-            break;
-        }
         case SEN_WATER_FLOW:
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", SEN_WATER_FLOW);
-        	cJSON_AddItemToArray(statusarray, status); 	 
+        	cJSON_AddNumberToObject(device, "devicetype", SEN_WATER_FLOW); 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
         	cJSON_AddNumberToObject(status, "value", 0);
@@ -364,10 +335,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         }
         case SEN_WIND_PRESSURE:
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", SEN_WIND_PRESSURE);
-        	cJSON_AddItemToArray(statusarray, status); 	 
+        	cJSON_AddNumberToObject(device, "devicetype", SEN_WIND_PRESSURE);
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SOCKET_V);
         	cJSON_AddNumberToObject(status, "value", 0);
@@ -376,10 +344,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         }
         case DEV_FAN_COIL:
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_FAN_COIL);
-        	cJSON_AddItemToArray(statusarray, status); 	 
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_FAN_COIL); 	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
         	cJSON_AddNumberToObject(status, "value", 0);
@@ -396,10 +361,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         }
         case DEV_FRESH_AIR:
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_FRESH_AIR);
-        	cJSON_AddItemToArray(statusarray, status); 	 
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_FRESH_AIR);	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
         	cJSON_AddNumberToObject(status, "value", 0);
@@ -412,10 +374,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         }        
         case DEV_FLOOR_HEAT:
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_FLOOR_HEAT);
-        	cJSON_AddItemToArray(statusarray, status); 	 
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_FLOOR_HEAT);	 
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
         	cJSON_AddNumberToObject(status, "value", 1);
@@ -428,10 +387,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         }
         case SEN_WATER_TEMPERATURE:
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", SEN_WATER_TEMPERATURE);
-        	cJSON_AddItemToArray(statusarray, status); 	
+        	cJSON_AddNumberToObject(device, "devicetype", SEN_WATER_TEMPERATURE);	
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_TEMPERATURE);
         	cJSON_AddNumberToObject(status, "value", 0);
@@ -440,10 +396,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         }
         case DEV_HUMIDIFIER:
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_HUMIDIFIER);
-        	cJSON_AddItemToArray(statusarray, status); 	
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_HUMIDIFIER);
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
         	cJSON_AddNumberToObject(status, "value", 0);
@@ -460,10 +413,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         }
         case DEV_DEHUMIDIFIER:
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_DEHUMIDIFIER);
-        	cJSON_AddItemToArray(statusarray, status); 	
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_DEHUMIDIFIER); 	
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_DEVICESTATUS);
         	cJSON_AddNumberToObject(status, "value", 0);
@@ -480,10 +430,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         }        
         case DEV_WATER_PURIF:
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_WATER_PURIF);
-        	cJSON_AddItemToArray(statusarray, status); 	
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_WATER_PURIF);	
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SEN_WATERPRESSURE);
         	cJSON_AddNumberToObject(status, "value", 0);
@@ -493,10 +440,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         //热水器
         case DEV_WATER_HEAT:
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_WATER_HEAT);
-        	cJSON_AddItemToArray(statusarray, status); 	
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_WATER_HEAT);	
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_WATER_TEMPERATURE_TARGET);
         	cJSON_AddNumberToObject(status, "value", 30);
@@ -517,10 +461,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         }
         case DEV_WATER_PUMP:
         {
-	        status = cJSON_CreateObject(); 
-        	cJSON_AddNumberToObject(status, "type", ATTR_DEVICETYPE);
-        	cJSON_AddNumberToObject(status, "value", DEV_WATER_PUMP);
-        	cJSON_AddItemToArray(statusarray, status); 	
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_WATER_PUMP);
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_CONNECTED_SOCKET);
         	cJSON_AddStringToObject(status, "value", "");
@@ -764,7 +705,7 @@ int gatewayproc(cJSON* op)
 
 void change_devices_offline()
 {
-    int devicenum, online;
+    int devicenum, online, onlinecheck;
     cJSON* devicestatus = NULL;
     char* array_deviceid;
     cJSON* offline = cJSON_CreateNumber(0);
@@ -775,11 +716,18 @@ void change_devices_offline()
     for (int i=0; i < devicenum; i++)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
+        onlinecheck = cJSON_GetObjectItem(devicestatus, "online-check")->valueint;
         online = cJSON_GetObjectItem(devicestatus, "online")->valueint;
-        if(online == 1)
+        if(online != onlinecheck)
         {
-            cJSON_GetObjectItem(devicestatus, "online")->valueint = TLV_VALUE_OFFLINE;
-            cJSON_GetObjectItem(devicestatus, "online")->valuedouble = TLV_VALUE_OFFLINE;
+            cJSON_GetObjectItem(devicestatus, "online")->valueint = onlinecheck;
+            cJSON_GetObjectItem(devicestatus, "online")->valuedouble = onlinecheck;
+            report_device_status(devicestatus);
+        }
+        if(onlinecheck == 1)
+        {
+            cJSON_GetObjectItem(devicestatus, "online-check")->valueint = TLV_VALUE_OFFLINE;
+            cJSON_GetObjectItem(devicestatus, "online-check")->valuedouble = TLV_VALUE_OFFLINE;
         }
     } 
     pthread_mutex_unlock(&g_devices_status_mutex);
@@ -800,8 +748,8 @@ void change_device_online(char* deviceid, char status)
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
         if(strncmp(deviceid, array_deviceid, 17) == 0)
         {
-            cJSON_GetObjectItem(devicestatus, "online")->valueint = status;
-            cJSON_GetObjectItem(devicestatus, "online")->valuedouble = status;
+            cJSON_GetObjectItem(devicestatus, "online-check")->valueint = status;
+            cJSON_GetObjectItem(devicestatus, "online-check")->valuedouble = status;
             pthread_mutex_unlock(&g_devices_status_mutex);
             return;
         }
@@ -832,6 +780,14 @@ int check_device_online(char* deviceid)
     }
     
     return -1;
+}
+
+void report_device_status(cJSON* stat)
+{   
+    char topic[TOPIC_LENGTH] = {0};
+    
+    sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(stat), 0, 0);
 }
 
 int get_gateway_mode()

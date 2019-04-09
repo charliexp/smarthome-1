@@ -25,4 +25,7 @@ void electtimerfun(timer* t);
 
 void statustimerfun(timer* t);
 
+void airconditiontimerfun(timer* t);
+
+
 #endif
