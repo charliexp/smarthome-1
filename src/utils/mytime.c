@@ -21,11 +21,8 @@
 #include "../device/device.h"
 #include "../log/log.h"
 
-extern char g_airconditionid[20];
-extern int g_airconditionindex;
 extern pthread_mutex_t g_devices_status_mutex;
 extern cJSON* g_devices_status_json;
-
 
 timer* g_timer_manager;
 
@@ -168,6 +165,8 @@ void airconditiontimerfun(timer* t)
 {
     int openflag = 0;//风机盘管是否全部关闭的标志
     int isexist = 0; //空调主机是否存在
+    char* id = NULL;
+    int index;
     cJSON* dev,*status;
     int aircond_status = -1;
     pthread_mutex_lock(&g_devices_status_mutex);
@@ -193,6 +192,8 @@ void airconditiontimerfun(timer* t)
         {
             isexist = 1;
             status = cJSON_GetObjectItem(dev, "status");
+            id = cJSON_GetObjectItem(dev, "deviceid")->valuestring;
+            index = atoi(id+16);
             aircond_status = cJSON_GetArrayItem(status, 0)->valueint;
         }
     }
@@ -200,14 +201,14 @@ void airconditiontimerfun(timer* t)
     {
         if((openflag == 1) && (aircond_status == 0))
         {
-            dbaddresstozgbaddress(g_airconditionid, airconaddr);   
+            dbaddresstozgbaddress(id, airconaddr);   
             //通知空调打开
-            sendzgbmsg(airconaddr, open_payload, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_AIR_CON, g_airconditionindex, getpacketid());
+            sendzgbmsg(airconaddr, open_payload, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_AIR_CON, index, getpacketid());
         }
         else if((openflag == 0) && (aircond_status == 1))
         {
-            dbaddresstozgbaddress(g_airconditionid, airconaddr);
-            sendzgbmsg(airconaddr, close_payload, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_AIR_CON, g_airconditionindex, getpacketid());
+            dbaddresstozgbaddress(id, airconaddr);
+            sendzgbmsg(airconaddr, close_payload, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_AIR_CON, index, getpacketid());
         }        
     }
 

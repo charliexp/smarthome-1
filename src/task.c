@@ -11,8 +11,6 @@ int g_queueid;
 sqlite3* g_db;
 char g_mac[20] = {0};
 char g_boilerid[20] = {0};
-char g_airconditionid[20] = {0};
-int g_airconditionindex;
 char g_topicroot[20] = {0};
 char g_topics[TOPICSNUM][50] ={{0},{0},{0}};
 timer* g_zgbtimer;
@@ -694,11 +692,7 @@ void* zgbmsgprocess(void* argc)
                      MYLOG_ERROR(zErrMsg);
                      break;
                  }
-                 if(devicetype == DEV_AIR_CON)
-                 {
-                    memcpy(g_airconditionid, db_deviceid, sizeof(db_deviceid));//全局空调设备ID
-                    g_airconditionindex = deviceindex;
-                 }
+
                  cJSON* devicestatus = create_device_status_json(db_deviceid, devicetype);
                  cJSON_AddItemToArray(g_devices_status_json, devicestatus);
                  MYLOG_INFO("The devices status is %s", cJSON_PrintUnformatted(g_devices_status_json));
