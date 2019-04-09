@@ -182,13 +182,13 @@ void airconditiontimerfun(timer* t)
         if(type == DEV_FAN_COIL)
         {
             status = cJSON_GetObjectItem(dev, "status");
-            value = cJSON_GetArrayItem(status, 0)->valueint;
+            value = cJSON_GetObjectItem(cJSON_GetArrayItem(status, 0), "value")->valueint;
             if(value == 1)
             {
                 openflag = 1;
             }
         }
-        if(type == DEV_AIR_CON)
+        else if(type == DEV_AIR_CON)
         {
             isexist = 1;
             status = cJSON_GetObjectItem(dev, "status");
