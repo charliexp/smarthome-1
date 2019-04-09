@@ -411,6 +411,7 @@ void* devicemsgprocess(void *argc)
     		        continue;
     		    }
     		    cJSON_AddItemToObject(dev, "operations", cJSON_Duplicate(operations, 1));
+    		    cJSON_AddItemToObject(dev, "devicetype", cJSON_CreateNumber(devicetype));
 
                 //操作的设备是网关本身
                 if (devicetype == DEV_GATEWAY)
