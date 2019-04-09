@@ -194,7 +194,7 @@ void airconditiontimerfun(timer* t)
             status = cJSON_GetObjectItem(dev, "status");
             id = cJSON_GetObjectItem(dev, "deviceid")->valuestring;
             index = atoi(id+16);
-            aircond_status = cJSON_GetArrayItem(status, 0)->valueint;
+            aircond_status = cJSON_GetObjectItem(cJSON_GetArrayItem(status, 0), "value")->valueint;
         }
     }
     if(isexist)
