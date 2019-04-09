@@ -82,7 +82,7 @@ int sqlitedb_init()
     sprintf(sql,"select mode from gatewaycfg;");
     sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
 
-    if(nrow == 1)
+    if(nrow == 0)
     {
         set_gateway_mode(TLV_VALUE_COND_COLD);
     }    
