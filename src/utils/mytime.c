@@ -181,7 +181,7 @@ void airconditiontimerfun(timer* t)
         type = cJSON_GetObjectItem(dev, "devicetype")->valueint;
         if(type == DEV_FAN_COIL)
         {
-            status = cJSON_GetObjectItem(dev, "status");
+            status = cJSON_GetObjectItem(dev, "status");            
             value = cJSON_GetObjectItem(cJSON_GetArrayItem(status, 0), "value")->valueint;
             if(value == 1)
             {
@@ -206,13 +206,16 @@ void airconditiontimerfun(timer* t)
             sendzgbmsg(airconaddr, open_payload, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_AIR_CON, index, getpacketid());
         }
         else if((openflag == 0) && (aircond_status == 1))
-        {
+        {      
             dbaddresstozgbaddress(id, airconaddr);
             sendzgbmsg(airconaddr, close_payload, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_AIR_CON, index, getpacketid());
         }        
     }
 
-    pthread_mutex_unlock(&g_devices_status_mutex);      
+    pthread_mutex_unlock(&g_devices_status_mutex); 
+    t->timevalue = 10;
+    t->lefttime = 10;
+    return;     
 }
 
 void statustimerfun(timer* t)
