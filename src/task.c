@@ -399,8 +399,8 @@ void* devicemsgprocess(void *argc)
                 
                 strncpy(db_zgbaddress, dbresult[ncolumn+1], 20);
                 dbaddresstozgbaddress(db_zgbaddress, src);
-                devicetype  = dbresult[ncolumn+2][0] - '0';
-                deviceindex = dbresult[ncolumn+3][0] - '0';
+                devicetype  = atoi(dbresult[ncolumn+2]);
+                deviceindex = atoi(dbresult[ncolumn+3]) ;
                 operations  = cJSON_GetObjectItem(device, "operations");
     		    if (operations == NULL)
     		    {

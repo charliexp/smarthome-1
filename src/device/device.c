@@ -483,7 +483,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
 
 cJSON* dup_device_status_json(char* deviceid)
 {
-    int devicenum;
+    int devicenum,length;
     cJSON* devicestatus = NULL;
     char* array_deviceid;
 
@@ -494,7 +494,8 @@ cJSON* dup_device_status_json(char* deviceid)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
-        if(strncmp(deviceid, array_deviceid, 17) == 0)
+        length = strlen(deviceid);
+        if(strncmp(deviceid, array_deviceid, length) == 0)
         {
             pthread_mutex_unlock(&g_devices_status_mutex);
             return cJSON_Duplicate(devicestatus, 1);
@@ -506,7 +507,7 @@ cJSON* dup_device_status_json(char* deviceid)
 
 cJSON* get_device_status_json(char* deviceid)
 {
-    int devicenum;
+    int devicenum,length;
     cJSON* devicestatus = NULL;
     char* array_deviceid;
 
@@ -517,7 +518,8 @@ cJSON* get_device_status_json(char* deviceid)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
-        if(strncmp(deviceid, array_deviceid, 17) == 0)
+        length = strlen(deviceid);
+        if(strncmp(deviceid, array_deviceid, length) == 0)
         {
             pthread_mutex_unlock(&g_devices_status_mutex);
             return devicestatus;
@@ -560,7 +562,7 @@ cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
 
 void change_device_attr_value(char* deviceid, char attr, int value)
 {
-    int devicenum;
+    int devicenum,length;
     cJSON* devicestatus = NULL;
     cJSON* attr_json = NULL;
     cJSON* replace_value_json = cJSON_CreateNumber(value);
@@ -573,7 +575,8 @@ void change_device_attr_value(char* deviceid, char attr, int value)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
-        if(strncmp(deviceid, array_deviceid, 17) == 0)
+        length = strlen(deviceid);
+        if(strncmp(deviceid, array_deviceid, length) == 0)
         {
             attr_json = get_attr_value_object_json(devicestatus, attr);
             if(attr_json != NULL){
@@ -735,7 +738,7 @@ void change_devices_offline()
 
 void change_device_online(char* deviceid, char status)
 {
-    int devicenum;
+    int devicenum,length;
     cJSON* devicestatus = NULL;
     char* array_deviceid;
     cJSON* offline = cJSON_CreateNumber(status);
@@ -746,7 +749,8 @@ void change_device_online(char* deviceid, char status)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
-        if(strncmp(deviceid, array_deviceid, 17) == 0)
+        length = strlen(deviceid);
+        if(strncmp(deviceid, array_deviceid, length) == 0)
         {
             cJSON_GetObjectItem(devicestatus, "online-check")->valueint = status;
             cJSON_GetObjectItem(devicestatus, "online-check")->valuedouble = status;
@@ -759,7 +763,7 @@ void change_device_online(char* deviceid, char status)
 
 int check_device_online(char* deviceid)
 {
-    int devicenum;
+    int devicenum,length;
     cJSON* devicestatus,* tmp;
     char* array_deviceid;
 
@@ -769,7 +773,8 @@ int check_device_online(char* deviceid)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
-        if(strncmp(deviceid, array_deviceid, 17) == 0)
+        length = strlen(deviceid);
+        if(strncmp(deviceid, array_deviceid, length) == 0)
         {   
             tmp = cJSON_GetObjectItem(devicestatus, "online");
             if(tmp != NULL){
