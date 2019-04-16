@@ -800,6 +800,21 @@ void* zgbmsgprocess(void* argc)
                 }
                 case ATTR_SOCKET_E:
                 {
+                    temp = cJSON_GetObjectItem(attr_json, "value");
+                    if(temp == NULL)
+                    {
+                        if(device_json != NULL)
+                        {
+                            cJSON_Delete(device_json);
+                        }
+                        goto end;
+                    }
+                    oldvalue = temp->valueint;
+                    if(value == oldvalue)
+                    {
+                        needmqtt = false || needmqtt;
+                        break;
+                    }                    
                     change_device_attr_value(db_deviceid, attr, value);
                     needmqtt = false || needmqtt;
                     MYLOG_INFO("Get a socket electricity report msg!the value is %lu", value);

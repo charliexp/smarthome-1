@@ -625,6 +625,12 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
             case ATTR_WINDSPEED:
             case ATTR_WINDSPEED_NUM:
             case ATTR_SETTING_TEMPERATURE:
+            case ATTR_SYSMODE:
+            case ATTR_SETTING_HUMIDITY:
+            case ATTR_SOCKET_E:
+            case ATTR_SOCKET_WORKTIME:
+            case ATTR_WATER_TEMPERATURE_TARGET:
+            case ATTR_WATER_TEMPERATURE_CLEAN:
             {
                 int j = 4;
                 int attrvalue = value;

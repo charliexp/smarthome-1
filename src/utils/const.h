@@ -211,6 +211,11 @@
 */
 #define HTTP_UPLOAD_URL "http://123.206.15.63:8060/manager/upload"
 
+#define OP_TYPE_HOUR 10
+#define OP_TYPE_DAY 11
+#define OP_TYPE_MONTH 12
+#define OP_TYPE_YEAR 13
+
 
 /*LED*/
 #define SYS_LED 1

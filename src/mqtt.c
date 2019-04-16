@@ -114,7 +114,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
     if(strstr(topicName, "electric") != 0)
     {
         MYLOG_INFO("An electric qury!");
-        cJSON* t = cJSON_GetObjectItem(root, "type");        
+        cJSON* t = cJSON_GetObjectItem(root, "operation");        
 	    if(t == NULL)
 	    {
             MYLOG_ERROR("Wrong format MQTT message!");
@@ -148,16 +148,16 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             char *zErrMsg = NULL;
             switch(type)
             {
-                case 1:
+                case OP_TYPE_HOUR:
                     sprintf(sql, "select electricity,hour from electricity_hour where deviceid='%s';", deviceid);
                     break;
-                case 2:
+                case OP_TYPE_DAY:
                     sprintf(sql, "select electricity,day from electricity_day where deviceid='%s';", deviceid);
                     break;
-                case 3:
+                case OP_TYPE_MONTH:
                     sprintf(sql, "select electricity,month from electricity_month where deviceid='%s';", deviceid);
                     break;
-                case 4:
+                case OP_TYPE_YEAR:
                     sprintf(sql, "select electricity,year from electricity_year where deviceid='%s';", deviceid);
                     break;
                 default:
