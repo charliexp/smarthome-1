@@ -194,9 +194,11 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
                 }
                 cJSON_AddItemToArray(records, record);            
             }
-            cJSON_AddItemToObject(device, "records", records);	
+            cJSON_AddItemToObject(device, "records", records);
+            cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(DEV_SOCKET));
             sqlite3_free_table(dbresult);
 	    }
+	    cJSON_AddItemToObject(root, "result", cJSON_CreateNumber(0));
         sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
 		goto end;        	   
     }
