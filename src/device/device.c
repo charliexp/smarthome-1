@@ -494,7 +494,7 @@ cJSON* dup_device_status_json(char* deviceid)
     {
         devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
         array_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
-        length = strlen(deviceid);
+        length = (strlen(array_deviceid) > strlen(deviceid))?strlen(array_deviceid):strlen(deviceid);
         if(strncmp(deviceid, array_deviceid, length) == 0)
         {
             pthread_mutex_unlock(&g_devices_status_mutex);

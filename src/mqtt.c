@@ -136,6 +136,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	    for(int i=0;i<num;i++){
 	        cJSON* device = cJSON_GetArrayItem(devices, i);
 	        cJSON* deviceidjson = cJSON_GetObjectItem(device, "deviceid");
+	        cJSON_AddItemToObject(device, "result", cJSON_CreateNumber(0));
     	    if(deviceidjson == NULL)
     	    {
                 MYLOG_ERROR("Wrong format MQTT message!");
@@ -176,29 +177,29 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
                 cJSON_AddNumberToObject(record, "electricity", atoi(num));
                 switch (type)
                 {
-                    case 1:
+                    case OP_TYPE_HOUR:
                         cJSON_AddNumberToObject(record, "hour", atoi(time));
                         break;
-                    case 2:
+                    case OP_TYPE_DAY:
                         cJSON_AddNumberToObject(record, "day", atoi(time));
                         break;                
-                    case 3:
+                    case OP_TYPE_MONTH:
                         cJSON_AddNumberToObject(record, "month", atoi(time));
                         break;                
-                    case 4:
+                    case OP_TYPE_YEAR:
                         cJSON_AddNumberToObject(record, "year", atoi(time));
                         break;
                     default:
                         break;                
                  
                 }
-                cJSON_AddItemToArray(records, record);            
+                cJSON_AddItemToArray(records, record);          
             }
             cJSON_AddItemToObject(device, "records", records);
             cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(DEV_SOCKET));
             sqlite3_free_table(dbresult);
 	    }
-	    cJSON_AddItemToObject(root, "result", cJSON_CreateNumber(0));
+	    cJSON_AddItemToObject(root, "resultcode", cJSON_CreateNumber(0));
         sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
 		goto end;        	   
     }
