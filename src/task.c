@@ -648,7 +648,7 @@ void* zgbmsgprocess(void* argc)
             goto end;
         }
 
-        if(qmsg.msg.payload.cmdid[0] != 0xA0 || qmsg.msg.payload.cmdid[1] != 0x0F)
+        if(qmsg.msg.payload.adf.index[0] != 0xA0 || qmsg.msg.payload.adf.index[1] != 0x0F)
         {
             MYLOG_INFO("Drop a not own msg!");
             goto end;            
