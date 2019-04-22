@@ -187,6 +187,7 @@
 #define ATTR_ENV_CO2           0x43              //CO2
 #define ATTR_ENV_FORMALDEHYDE  0x44              //¼×È©
 #define ATTR_ENV_TV0C          0x45              //TVOC
+#define ATTR_SEN_WATER_YIELD   0x46              //Ë®Á¿
 
 #define ATTR_SEN_WATERPRESSURE 0x50         //Ë®Ñ¹
 

@@ -566,8 +566,7 @@ void* zgbmsgprocess(void* argc)
             MYLOG_ERROR("recive zgbqueuemsg fail!");
             MYLOG_ERROR("rcvret = %d", rcvret);
 		}
-		MYLOG_INFO("zgbmsgprocess recive a msg");
-		MYLOG_ZGBMSG(qmsg.msg);
+
         memcpy(src, qmsg.msg.payload.src, 8);
         zgbaddresstodbaddress(src, db_zgbaddress);
 
@@ -575,13 +574,14 @@ void* zgbmsgprocess(void* argc)
         {
             int nrow = 0, ncolumn = 0;
 	        char **dbresult;
-        
+	                
             MYLOG_INFO("[ZGB DEVICE]Get a device network joining message.");
+		    MYLOG_ZGBMSG(qmsg.msg);            
             sprintf(sql,"SELECT * FROM devices WHERE zgbaddress = '%s';", db_zgbaddress);
             MYLOG_INFO(sql);
             
             sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-            MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+            //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
             if(nrow == 0) //数据库中没有该设备
             {
                 milliseconds_sleep(1000);
@@ -593,6 +593,7 @@ void* zgbmsgprocess(void* argc)
         else if(qmsg.msg.payload.adf.index[0] == 0xF2 && qmsg.msg.payload.adf.index[1] == 0x03) //设备离网消息
         {   
             MYLOG_INFO("[ZGB DEVICE]Get a device network leaving message.");
+            MYLOG_ZGBMSG(qmsg.msg);
             sprintf(sql,"DELETE FROM devices WHERE zgbaddress = '%s';", db_zgbaddress);            
             exec_sql_create(sql);
 
@@ -638,29 +639,28 @@ void* zgbmsgprocess(void* argc)
             continue;
         }
 
-        zgbdata      = &qmsg.msg.payload.adf.data;
-        msgtype      = zgbdata->msgtype;
-        devicetype   = zgbdata->devicetype;
-        deviceindex  = zgbdata->deviceindex;
-        packetid     = zgbdata->packetid;
-        
-        sprintf(db_deviceid, "%s%d", db_zgbaddress, deviceindex);
 
         //如果是广播报文，直接丢弃
         ZGBADDRESS broadcastaddr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
         if(memcmp(src, broadcastaddr, 8) == 0)
         {
             MYLOG_INFO("Drop a broadcast msg!");
-            MYLOG_ZGBMSG(qmsg.msg);
             goto end;
         }
 
-        if(zgbdata->magicnum != 0xAA)
-        {         
+        if(qmsg.msg.payload.cmdid[0] != 0xA0 || qmsg.msg.payload.cmdid[1] != 0x0F)
+        {
             MYLOG_INFO("Drop a not own msg!");
-            MYLOG_ZGBMSG(qmsg.msg);
-            goto end;
+            goto end;            
         }
+
+        zgbdata      = &qmsg.msg.payload.adf.data;
+        msgtype      = zgbdata->msgtype;
+        devicetype   = zgbdata->devicetype;
+        deviceindex  = zgbdata->deviceindex;
+        packetid     = zgbdata->packetid;
+        
+        sprintf(db_deviceid, "%s%d", db_zgbaddress, deviceindex);        
         
         switch (msgtype)
         {
@@ -671,7 +671,7 @@ void* zgbmsgprocess(void* argc)
                  char **azResult; 
                  
                  MYLOG_INFO("[ZGB DEVICE]Get a device network joining response message.");
-                 
+                 MYLOG_ZGBMSG(qmsg.msg);
                  sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", db_deviceid);
                  MYLOG_INFO(sql);
             
@@ -706,7 +706,9 @@ void* zgbmsgprocess(void* argc)
                  break;
             }
             case ZGB_MSGTYPE_DEVICE_OPERATION_RESULT:
-            {                
+            {
+                MYLOG_INFO("[ZGB DEVICE]Get a device operation response message.");
+                MYLOG_ZGBMSG(qmsg.msg);            
                 for (int i = 0; i < ZGBMSG_MAX_NUM; ++i)
                 {
                     if (g_devicemsgstatus[i].packetid == packetid)
@@ -720,6 +722,8 @@ void* zgbmsgprocess(void* argc)
             } 
             case ZGB_MSGTYPE_DEVICE_STATUS_REPORT://设备状态上报
             {
+                MYLOG_INFO("[ZGB DEVICE]Get a device status message.");
+                MYLOG_ZGBMSG(qmsg.msg);             
                 cJSON *device_json;
                 cJSON *attr_json;
                 cJSON *replace_value_json;
@@ -863,26 +867,28 @@ void* zgbmsgprocess(void* argc)
             }
             case ZGB_MSGTYPE_DEVICE_LOCATION:
             {
-                 cJSON* root = cJSON_CreateObject();
-                 int nrow = 0, ncolumn = 0;
-                 char **azResult; 
+                MYLOG_INFO("[ZGB DEVICE]Get a device location message.");
+                MYLOG_ZGBMSG(qmsg.msg);             
+                cJSON* root = cJSON_CreateObject();
+                int nrow = 0, ncolumn = 0;
+                char **azResult; 
                  
-                 MYLOG_INFO("[ZGB DEVICE]Get a device location message.");
+                MYLOG_INFO("[ZGB DEVICE]Get a device location message.");
                  
-                 sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", db_deviceid);
+                sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", db_deviceid);
                             
-                 sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
-                 //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
-                 if(nrow == 0) //数据库中没有该设备
-                 {
-                    MYLOG_INFO("The device has been registered!");
-                    break;
-                 }
-                 sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_SHOW);
-                 cJSON_AddStringToObject(root, "deviceid", db_deviceid);
-                 cJSON_AddNumberToObject(root, "type", devicetype);
-                 sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), 0, 0);
-                 sqlite3_free_table(azResult);                
+                sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
+                //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+                if(nrow == 0) //数据库中没有该设备
+                {
+                   MYLOG_INFO("The device has been registered!");
+                   break;
+                }
+                sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_SHOW);
+                cJSON_AddStringToObject(root, "deviceid", db_deviceid);
+                cJSON_AddNumberToObject(root, "type", devicetype);
+                sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), 0, 0);
+                sqlite3_free_table(azResult);                
             }
             default: 
                 ;
@@ -1007,7 +1013,6 @@ void* uartlisten(void *argc)
             //移除前一个报文
             if((i + zmsg.msglength + 4)!= bitnum)
             {
-                MYLOG_DEBUG("move a message!");
                 memmove(msgbuf, msgbuf + i + zmsg.msglength + 4, bitnum - (i + zmsg.msglength + 4));
                 bitnum = bitnum - (i + zmsg.msglength + 4);
                 i = 0;                   

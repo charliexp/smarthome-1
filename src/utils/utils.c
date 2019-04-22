@@ -376,7 +376,7 @@ void electricity_stat(char* deviceid, int num)
 	month = t->tm_mon;
 	year  = t->tm_year + 1900;
 
-	MYLOG_INFO("The time is %4d-%2d-%2d %2d:%2d", year, month, day, hour, min);
+	MYLOG_ERROR("The time is %4d-%2d-%2d %2d:%2d", year, month, day, hour, min);
 
 	sprintf(sql, "replace into electricity_hour(deviceid, electricity, hour) values('%s', %2d, %2d);", deviceid, num, hour);
     exec_sql_create(sql);
@@ -390,7 +390,7 @@ void electricity_stat(char* deviceid, int num)
     {
     	sprintf(sql, "select electricity from electricity_day where deviceid = '%s' and day = %d", deviceid, day);
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+        MYLOG_ERROR("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
         if(ncolumn==1&&nrow==1)
         {
             day_sum = atoi(dbresult[1]);
@@ -416,7 +416,7 @@ void electricity_stat(char* deviceid, int num)
 	{
     	sprintf(sql, "select electricity from electricity_month where deviceid = '%s' and month = %d", deviceid, month);
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+        MYLOG_ERROR("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
         if(ncolumn==1&&nrow==1)
         {
             month_sum = atoi(dbresult[1]);
@@ -442,7 +442,7 @@ void electricity_stat(char* deviceid, int num)
 	{
     	sprintf(sql, "select electricity from electricity_year where deviceid = '%s' and year = %d", deviceid, year);
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+        MYLOG_ERROR("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
         if(ncolumn==1&&nrow==1)
         {
             year_sum = atoi(dbresult[1]);
