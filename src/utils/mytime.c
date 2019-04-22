@@ -169,9 +169,10 @@ void airconditiontimerfun(timer* t)
     int index;
     cJSON* dev,*status;
     int aircond_status = -1;
+    int aircond_online = -1;
     pthread_mutex_lock(&g_devices_status_mutex);
     int size = cJSON_GetArraySize(g_devices_status_json);
-    int type,value;
+    int type,value,online;
     ZGBADDRESS airconaddr;
     BYTE close_payload[] = {ATTR_DEVICESTATUS, 0, 0, 0, 0};//关闭操作报文内容
     BYTE open_payload[] = {ATTR_DEVICESTATUS, 0, 0, 0, 1};//打开操作报文内容
@@ -181,9 +182,10 @@ void airconditiontimerfun(timer* t)
         type = cJSON_GetObjectItem(dev, "devicetype")->valueint;
         if(type == DEV_FAN_COIL)
         {
-            status = cJSON_GetObjectItem(dev, "status");            
+            status = cJSON_GetObjectItem(dev, "status");  
+            online = cJSON_GetObjectItem(dev, "online")->valueint;
             value = cJSON_GetObjectItem(cJSON_GetArrayItem(status, 0), "value")->valueint;
-            if(value == 1)
+            if(value == 1 && online == 1)
             {
                 openflag = 1;
             }
@@ -194,10 +196,11 @@ void airconditiontimerfun(timer* t)
             status = cJSON_GetObjectItem(dev, "status");
             id = cJSON_GetObjectItem(dev, "deviceid")->valuestring;
             index = atoi(id+16);
+            aircond_online = cJSON_GetObjectItem(dev, "online")->valueint;
             aircond_status = cJSON_GetObjectItem(cJSON_GetArrayItem(status, 0), "value")->valueint;
         }
     }
-    if(isexist)
+    if(isexist && aircond_online) //空调主机存在且在线
     {
         if((openflag == 1) && (aircond_status == 0))
         {
