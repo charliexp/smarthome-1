@@ -606,6 +606,7 @@ void* zgbmsgprocess(void* argc)
             pthread_mutex_lock(&g_devices_status_mutex);
             devicenum = cJSON_GetArraySize(g_devices_status_json);
 
+            //删除内存设备状态表中相关的设备
             for (int i=0; i < devicenum;)
             {
                 devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
@@ -619,7 +620,7 @@ void* zgbmsgprocess(void* argc)
                     continue;
                 }
                 array_deviceid = deviceid->valuestring;
-                if(strncmp(db_zgbaddress, array_deviceid, 16) == 0)
+                if(strncmp(db_zgbaddress, array_deviceid, 16) == 0)//同一个ZGB设备上的设备
                 {
                     id = cJSON_CreateString(array_deviceid);
                     cJSON_AddItemToArray(device_array, id);
@@ -804,24 +805,9 @@ void* zgbmsgprocess(void* argc)
                 }
                 case ATTR_SOCKET_E:
                 {
-                    temp = cJSON_GetObjectItem(attr_json, "value");
-                    if(temp == NULL)
-                    {
-                        if(device_json != NULL)
-                        {
-                            cJSON_Delete(device_json);
-                        }
-                        goto end;
-                    }
-                    oldvalue = temp->valueint;
-                    if(value == oldvalue)
-                    {
-                        needmqtt = false || needmqtt;
-                        break;
-                    }                    
-                    change_device_attr_value(db_deviceid, attr, value);
+                    MYLOG_ERROR("Get a socket electricity report msg, the deviceid is %s", db_zgbaddress);
                     needmqtt = false || needmqtt;
-                    MYLOG_INFO("Get a socket electricity report msg!the value is %lu", value);
+                    change_device_attr_value(db_deviceid, attr, value);
                     electricity_stat(db_deviceid, value);
                     break;
                 }

@@ -390,7 +390,7 @@ void electricity_stat(char* deviceid, int num)
     {
     	sprintf(sql, "select electricity from electricity_day where deviceid = '%s' and day = %d", deviceid, day);
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        MYLOG_ERROR("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
         if(ncolumn==1&&nrow==1)
         {
             day_sum = atoi(dbresult[1]);
@@ -400,7 +400,7 @@ void electricity_stat(char* deviceid, int num)
         else
         {
             day_sum = num;
-            MYLOG_ERROR("can not find right electricity from electricity_day!");
+            MYLOG_DEBUG("can not find right electricity from electricity_day!");
         }
         sqlite3_free_table(dbresult);
     }
@@ -416,7 +416,7 @@ void electricity_stat(char* deviceid, int num)
 	{
     	sprintf(sql, "select electricity from electricity_month where deviceid = '%s' and month = %d", deviceid, month);
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        MYLOG_ERROR("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
         if(ncolumn==1&&nrow==1)
         {
             month_sum = atoi(dbresult[1]);
@@ -442,7 +442,7 @@ void electricity_stat(char* deviceid, int num)
 	{
     	sprintf(sql, "select electricity from electricity_year where deviceid = '%s' and year = %d", deviceid, year);
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        MYLOG_ERROR("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
         if(ncolumn==1&&nrow==1)
         {
             year_sum = atoi(dbresult[1]);
