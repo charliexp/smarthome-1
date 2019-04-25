@@ -58,8 +58,20 @@ int sqlitedb_init()
         sprintf(sql,"CREATE TABLE [electricity_hour]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[hour] INT NOT NULL, primary key(deviceid, hour));");
         exec_sql_create(sql);
 
-        sprintf(sql,"CREATE TABLE gatewaycfg (mode INTERGER NOT NULL DEFAULT 0, boilerid TEXT DEFAULT \"\");");
+        sprintf(sql,"CREATE TABLE [wateryield_day]([deviceid] TEXT NOT NULL,[wateryield] INT NOT NULL,[day] INT NOT NULL, primary key(deviceid, day));");
         exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [wateryield_month]([deviceid] TEXT NOT NULL,[wateryield] INT NOT NULL,[month] INT NOT NULL, primary key(deviceid, month));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [wateryield_year]([deviceid] TEXT NOT NULL,[wateryield] INT NOT NULL,[year] INT NOT NULL, primary key(deviceid, year));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [wateryield_hour]([deviceid] TEXT NOT NULL,[wateryield] INT NOT NULL,[hour] INT NOT NULL, primary key(deviceid, hour));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE gatewaycfg (mode INTERGER NOT NULL DEFAULT 0, boilerid TEXT DEFAULT \"\");");
+        exec_sql_create(sql);        
 
         //把网关设备写入devices表
         sprintf(sql, "replace into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, DEV_GATEWAY, 0);
@@ -769,7 +781,6 @@ void* zgbmsgprocess(void* argc)
                 case ATTR_SETTING_TEMPERATURE:
                 case ATTR_SETTING_HUMIDITY:
                 case ATTR_SYSMODE:
-                case ATTR_SEN_WATER_YIELD:
                 {
                     temp = cJSON_GetObjectItem(attr_json, "value");
                     if(temp == NULL)
@@ -804,6 +815,14 @@ void* zgbmsgprocess(void* argc)
                     }
                     break;
                 }
+                case ATTR_SEN_WATER_YIELD:
+                {
+                    MYLOG_ERROR("Get a water yield report msg, the deviceid is %s", db_deviceid);
+                    needmqtt = false || needmqtt;
+                    change_device_attr_value(db_deviceid, attr, value);                 
+                    wateryield_stat(db_deviceid, value);
+                    break;
+                }                
                 case ATTR_SOCKET_E:
                 {
                     MYLOG_ERROR("Get a socket electricity report msg, the deviceid is %s", db_deviceid);

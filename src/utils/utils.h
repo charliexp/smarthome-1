@@ -45,6 +45,9 @@ int updatefile(const char* filepath);
 /*电量统计*/
 void electricity_stat(char* deviceid, int num);
 
+/*水量统计*/
+void wateryield_stat(char* deviceid, int num);
+
 /*sql语句执行*/
 int exec_sql_create(char* sql);
 

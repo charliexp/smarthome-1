@@ -460,6 +460,111 @@ void electricity_stat(char* deviceid, int num)
     exec_sql_create(sql);    	
 }
 
+/*水量数据处理*/
+void wateryield_stat(char* deviceid, int num)
+{
+    time_t time_now;
+    int min,hour,day,month,year;
+    int day_sum=0,month_sum=0,year_sum=0;
+    char sql[250]={0};   
+    int nrow = 0, ncolumn = 0;
+    char **dbresult;
+    char *zErrMsg = NULL;
+    struct tm* t;
+    time(&time_now);
+    t = localtime(&time_now);
+
+    min   = t->tm_min;
+	hour  = t->tm_hour;
+	day   = t->tm_mday;
+	month = t->tm_mon;
+	year  = t->tm_year + 1900;
+
+	MYLOG_ERROR("The time is %4d-%2d-%2d %2d:%2d", year, month, day, hour, min);
+
+	sprintf(sql, "replace into wateryield_hour(deviceid, wateryield, hour) values('%s', %2d, %2d);", deviceid, num, hour);
+    exec_sql_create(sql);
+
+    /*天电量处理*/
+    if(hour == 0)
+    {
+        day_sum = num;
+    }
+    else
+    {
+    	sprintf(sql, "select wateryield from wateryield_day where deviceid = '%s' and day = %d", deviceid, day);
+        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+        if(ncolumn==1&&nrow==1)
+        {
+            day_sum = atoi(dbresult[1]);
+            MYLOG_INFO("The day_sum is %d", day_sum);
+            day_sum += num;
+        }
+        else
+        {
+            day_sum = num;
+            MYLOG_DEBUG("can not find right wateryield from wateryield_day!");
+        }
+        sqlite3_free_table(dbresult);
+    }
+	sprintf(sql, "replace into wateryield_day(deviceid, wateryield, day) values('%s', %2d, %2d);", deviceid, day_sum, day);
+    exec_sql_create(sql); 
+	
+	/*月电量处理*/
+	if(day == 1 && hour == 0)
+	{
+	    month_sum = num;
+	}
+	else
+	{
+    	sprintf(sql, "select wateryield from wateryield_month where deviceid = '%s' and month = %d", deviceid, month);
+        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+        if(ncolumn==1&&nrow==1)
+        {
+            month_sum = atoi(dbresult[1]);
+            MYLOG_INFO("The month_sum is %d", month_sum);
+            month_sum += num;
+        }
+        else
+        {
+            month_sum = num;
+            MYLOG_ERROR("can not find right wateryield from wateryield_month!");
+        }
+        sqlite3_free_table(dbresult);
+	}
+	sprintf(sql, "replace into wateryield_month(deviceid, wateryield, month) values('%s', %2d, %2d);", deviceid, month_sum, month);
+    exec_sql_create(sql);   
+
+	/*年电量处理*/
+	if(month == 1 && day == 1 && hour == 0)
+	{
+	    year_sum = num;
+	}
+	else
+	{
+    	sprintf(sql, "select wateryield from wateryield_year where deviceid = '%s' and year = %d", deviceid, year);
+        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+        if(ncolumn==1&&nrow==1)
+        {
+            year_sum = atoi(dbresult[1]);
+            MYLOG_INFO("The year_sum is %d", year_sum);
+            year_sum += num;
+        }
+        else
+        {
+            year_sum = num;
+            MYLOG_ERROR("can not find right wateryield from wateryield_year!");
+        }
+        sqlite3_free_table(dbresult);
+	}
+	sprintf(sql, "replace into wateryield_year(deviceid, wateryield, year) values('%s', %2d, %4d);", deviceid, year_sum, year);
+    exec_sql_create(sql);    	
+}
+
+
 int exec_sql_create(char* sql)
 {
     char *zErrMsg = 0; 
