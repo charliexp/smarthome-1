@@ -769,6 +769,7 @@ void* zgbmsgprocess(void* argc)
                 case ATTR_SETTING_TEMPERATURE:
                 case ATTR_SETTING_HUMIDITY:
                 case ATTR_SYSMODE:
+                case ATTR_SEN_WATER_YIELD:
                 {
                     temp = cJSON_GetObjectItem(attr_json, "value");
                     if(temp == NULL)
@@ -805,9 +806,9 @@ void* zgbmsgprocess(void* argc)
                 }
                 case ATTR_SOCKET_E:
                 {
-                    MYLOG_ERROR("Get a socket electricity report msg, the deviceid is %s", db_zgbaddress);
+                    MYLOG_ERROR("Get a socket electricity report msg, the deviceid is %s", db_deviceid);
                     needmqtt = false || needmqtt;
-                    change_device_attr_value(db_deviceid, attr, value);
+                    change_device_attr_value(db_deviceid, attr, value);                 
                     electricity_stat(db_deviceid, value);
                     break;
                 }
