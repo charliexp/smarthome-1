@@ -151,6 +151,7 @@ void electtimerfun(timer* t)
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文
     BYTE payload[] = {ATTR_SOCKET_E};
     sendzgbmsg(address, payload, 1, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, getpacketid());
+    milliseconds_sleep(500);
     payload[0] = ATTR_SEN_WATER_YIELD;
     sendzgbmsg(address, payload, 1, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, SEN_WATER_FLOW, 0, getpacketid());    
     time(&time_now);
@@ -228,7 +229,7 @@ void statustimerfun(timer* t)
     MYLOG_DEBUG("device status query!");
     change_devices_offline();
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文
-    sendzgbmsg(address, 0, 0, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, getpacketid());  
+    sendzgbmsg(address, 0, 0, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, getpacketid());    
     t->timevalue = 10;
     t->lefttime = 10;
     return;      

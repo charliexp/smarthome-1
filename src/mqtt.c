@@ -203,6 +203,99 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
         sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
 		goto end;        	   
     }
+    /*设备电量查询*/
+    else if(strstr(topicName, "wateryield") != 0)
+    {
+        MYLOG_INFO("An wateryield qury!");
+        cJSON* t = cJSON_GetObjectItem(root, "operation");        
+	    if(t == NULL)
+	    {
+            MYLOG_ERROR("Wrong format MQTT message!");
+            goto end;    	        
+	    }
+	    int type = t->valueint;
+	    cJSON* devices = cJSON_GetObjectItem(root, "devices");
+	    if(devices == NULL)
+	    {
+            MYLOG_ERROR("Wrong format MQTT message!");
+            goto end;	        
+	    }
+	    int num = cJSON_GetArraySize(devices);
+	    if(num == 0)
+	    {
+            MYLOG_ERROR("Wrong format MQTT message!");
+            goto end;	        
+	    }	    
+	    for(int i=0;i<num;i++){
+	        cJSON* device = cJSON_GetArrayItem(devices, i);
+	        cJSON* deviceidjson = cJSON_GetObjectItem(device, "deviceid");
+	        cJSON_AddItemToObject(device, "result", cJSON_CreateNumber(0));
+    	    if(deviceidjson == NULL)
+    	    {
+                MYLOG_ERROR("Wrong format MQTT message!");
+                goto end;	        
+    	    }	        
+    	    char* deviceid = deviceidjson->valuestring;
+    	    char sql[250]={0};   
+            int nrow = 0, ncolumn = 0;
+            char **dbresult;
+            char *zErrMsg = NULL;
+            switch(type)
+            {
+                case OP_TYPE_HOUR:
+                    sprintf(sql, "select wateryield,hour from wateryield_hour where deviceid='%s';", deviceid);
+                    break;
+                case OP_TYPE_DAY:
+                    sprintf(sql, "select wateryield,day from wateryield_day where deviceid='%s';", deviceid);
+                    break;
+                case OP_TYPE_MONTH:
+                    sprintf(sql, "select wateryield,month from wateryield_month where deviceid='%s';", deviceid);
+                    break;
+                case OP_TYPE_YEAR:
+                    sprintf(sql, "select wateryield,year from wateryield_year where deviceid='%s';", deviceid);
+                    break;
+                default:
+                    break;
+            }    
+            sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+            cJSON* records = cJSON_CreateArray();
+            cJSON* record;
+            const char* num;
+            const char* time;
+            for(int i=1;i<nrow;i++)
+            {
+                record = cJSON_CreateObject();
+                num = (const char*)dbresult[i*2];
+                time = (const char*)dbresult[i*2+1];
+                cJSON_AddNumberToObject(record, "wateryield", atoi(num));
+                switch (type)
+                {
+                    case OP_TYPE_HOUR:
+                        cJSON_AddNumberToObject(record, "hour", atoi(time));
+                        break;
+                    case OP_TYPE_DAY:
+                        cJSON_AddNumberToObject(record, "day", atoi(time));
+                        break;                
+                    case OP_TYPE_MONTH:
+                        cJSON_AddNumberToObject(record, "month", atoi(time));
+                        break;                
+                    case OP_TYPE_YEAR:
+                        cJSON_AddNumberToObject(record, "year", atoi(time));
+                        break;
+                    default:
+                        break;                
+                 
+                }
+                cJSON_AddItemToArray(records, record);          
+            }
+            cJSON_AddItemToObject(device, "records", records);
+            cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(DEV_SOCKET));
+            sqlite3_free_table(dbresult);
+	    }
+	    cJSON_AddItemToObject(root, "resultcode", cJSON_CreateNumber(0));
+        sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
+		goto end;        	   
+    }
     /*设备操作*/
 	else if (strstr(topicName, "operation") != 0)
 	{
