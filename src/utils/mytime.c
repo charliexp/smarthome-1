@@ -150,6 +150,7 @@ void electtimerfun(timer* t)
     MYLOG_DEBUG("electric statistics!");
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //¹ã²¥±¨ÎÄ
     BYTE payload[] = {ATTR_SOCKET_E};
+    milliseconds_sleep(500);
     sendzgbmsg(address, payload, 1, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, getpacketid());
     milliseconds_sleep(500);
     payload[0] = ATTR_SEN_WATER_YIELD;

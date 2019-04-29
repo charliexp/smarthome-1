@@ -735,7 +735,7 @@ void* zgbmsgprocess(void* argc)
             } 
             case ZGB_MSGTYPE_DEVICE_STATUS_REPORT://设备状态上报
             {
-                MYLOG_INFO("[ZGB DEVICE]Get a device status message.");
+                MYLOG_INFO("[ZGB DEVICE]Get a device status message.the deviceid is %s", db_deviceid);
                 MYLOG_ZGBMSG(qmsg.msg);             
                 cJSON *device_json;
                 cJSON *attr_json;
@@ -756,7 +756,8 @@ void* zgbmsgprocess(void* argc)
                 while(i < (zgbdata->length - 7))
                 {
                     attr = zgbdata->pdu[i++];
-                    
+
+                    MYLOG_DEBUG("The attr is %d", attr);
                     attr_json = get_attr_value_object_json(device_json, attr);
                     
                     if(attr_json == NULL)
@@ -765,75 +766,75 @@ void* zgbmsgprocess(void* argc)
                     }
                     value = zgbdata->pdu[i++]*256*256*256 + zgbdata->pdu[i++]*256*256 
                         + zgbdata->pdu[i++]*256 + zgbdata->pdu[i++];
-                replace_value_json = cJSON_CreateNumber(value);
+                    replace_value_json = cJSON_CreateNumber(value);
 
-                switch(attr)
-                {
-                case ATTR_DEVICESTATUS:
-                case ATTR_AIR_CONDITION_MODE:
-                case ATTR_WINDSPEED:
-                case ATTR_ENV_TEMPERATURE:
-                case ATTR_ENV_HUMIDITY:
-                case ATTR_ENV_PM25:
-                case ATTR_ENV_CO2:
-                case ATTR_ENV_FORMALDEHYDE:
-                case ATTR_SOCKET_V:
-                case ATTR_SETTING_TEMPERATURE:
-                case ATTR_SETTING_HUMIDITY:
-                case ATTR_SYSMODE:
-                {
-                    temp = cJSON_GetObjectItem(attr_json, "value");
-                    if(temp == NULL)
+                    switch(attr)
                     {
-                        if(device_json != NULL)
-                        {
-                            cJSON_Delete(device_json);
-                        }
-                        goto end;
-                    }
-                    oldvalue = temp->valueint;
-                    if(value == oldvalue)
-                    {
-                        needmqtt = false || needmqtt;
-                    }
-                    else
-                    {
-                        //修改的是复制出来的设备属性表
-                        cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);
-                        //修改的是全局的设备属性表
-                        change_device_attr_value(db_deviceid, attr, value);
-                        needmqtt = true || needmqtt;
-                        switch (attr)
-                        {
+                        case ATTR_DEVICESTATUS:
+                        case ATTR_AIR_CONDITION_MODE:
+                        case ATTR_WINDSPEED:
+                        case ATTR_ENV_TEMPERATURE:
+                        case ATTR_ENV_HUMIDITY:
+                        case ATTR_ENV_PM25:
+                        case ATTR_ENV_CO2:
+                        case ATTR_ENV_FORMALDEHYDE:
+                        case ATTR_SOCKET_V:
+                        case ATTR_SETTING_TEMPERATURE:
+                        case ATTR_SETTING_HUMIDITY:
                         case ATTR_SYSMODE:
-                            if(value != g_system_mode)
-                                change_system_mode(value);
+                        {
+                            temp = cJSON_GetObjectItem(attr_json, "value");
+                            if(temp == NULL)
+                            {
+                                if(device_json != NULL)
+                                {
+                                    cJSON_Delete(device_json);
+                                }
+                                goto end;
+                            }
+                            oldvalue = temp->valueint;
+                            if(value == oldvalue)
+                            {
+                                needmqtt = false || needmqtt;
+                            }
+                            else
+                            {
+                                //修改的是复制出来的设备属性表
+                                cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);
+                                //修改的是全局的设备属性表
+                                change_device_attr_value(db_deviceid, attr, value);
+                                needmqtt = true || needmqtt;
+                                switch (attr)
+                                {
+                                case ATTR_SYSMODE:
+                                    if(value != g_system_mode)
+                                        change_system_mode(value);
+                                    break;
+                                default:
+                                    break;
+                                }
+                            }
                             break;
+                        }
+                        case ATTR_SEN_WATER_YIELD:
+                        {
+                            MYLOG_ERROR("Get a water yield report msg, the deviceid is %s", db_deviceid);
+                            needmqtt = false || needmqtt;
+                            change_device_attr_value(db_deviceid, attr, value);                 
+                            wateryield_stat(db_deviceid, value);
+                            break;
+                        }                
+                        case ATTR_SOCKET_E:
+                        {
+                            MYLOG_ERROR("Get a socket electricity report msg, the deviceid is %s", db_deviceid);
+                            needmqtt = false || needmqtt;
+                            change_device_attr_value(db_deviceid, attr, value);                 
+                            electricity_stat(db_deviceid, value);
+                            break;
+                        }
                         default:
                             break;
-                        }
                     }
-                    break;
-                }
-                case ATTR_SEN_WATER_YIELD:
-                {
-                    MYLOG_ERROR("Get a water yield report msg, the deviceid is %s", db_deviceid);
-                    needmqtt = false || needmqtt;
-                    change_device_attr_value(db_deviceid, attr, value);                 
-                    wateryield_stat(db_deviceid, value);
-                    break;
-                }                
-                case ATTR_SOCKET_E:
-                {
-                    MYLOG_ERROR("Get a socket electricity report msg, the deviceid is %s", db_deviceid);
-                    needmqtt = false || needmqtt;
-                    change_device_attr_value(db_deviceid, attr, value);                 
-                    electricity_stat(db_deviceid, value);
-                    break;
-                }
-                default:
-                    break;
-                }
             }
             if(needmqtt)//是否需要发送mqtt消息
             {
