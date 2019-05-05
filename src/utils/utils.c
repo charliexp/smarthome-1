@@ -373,10 +373,10 @@ void electricity_stat(char* deviceid, int num)
     min   = t->tm_min;
 	hour  = t->tm_hour;
 	day   = t->tm_mday;
-	month = t->tm_mon;
+	month = t->tm_mon + 1; //localtime»ñÈ¡µÄmonth·¶Î§0-11
 	year  = t->tm_year + 1900;
 
-	MYLOG_ERROR("The time is %4d-%2d-%2d %2d:%2d", year, month, day, hour, min);
+	MYLOG_DEBUG("The time is %4d-%2d-%2d %2d:%2d", year, month, day, hour, min);
 
 	sprintf(sql, "replace into electricity_hour(deviceid, electricity, hour) values('%s', %2d, %2d);", deviceid, num, hour);
     exec_sql_create(sql);
@@ -477,10 +477,10 @@ void wateryield_stat(char* deviceid, int num)
     min   = t->tm_min;
 	hour  = t->tm_hour;
 	day   = t->tm_mday;
-	month = t->tm_mon;
+	month = t->tm_mon + 1;
 	year  = t->tm_year + 1900;
 
-	MYLOG_ERROR("The time is %4d-%2d-%2d %2d:%2d", year, month, day, hour, min);
+	MYLOG_DEBUG("The time is %4d-%2d-%2d %2d:%2d", year, month, day, hour, min);
 
 	sprintf(sql, "replace into wateryield_hour(deviceid, wateryield, hour) values('%s', %2d, %2d);", deviceid, num, hour);
     exec_sql_create(sql);
@@ -498,13 +498,13 @@ void wateryield_stat(char* deviceid, int num)
         if(ncolumn==1&&nrow==1)
         {
             day_sum = atoi(dbresult[1]);
-            MYLOG_INFO("The day_sum is %d", day_sum);
+            MYLOG_DEBUG("The day_sum is %d", day_sum);
             day_sum += num;
         }
         else
         {
             day_sum = num;
-            MYLOG_DEBUG("can not find right wateryield from wateryield_day!");
+            MYLOG_ERROR("can not find right wateryield from wateryield_day!");
         }
         sqlite3_free_table(dbresult);
     }
@@ -524,7 +524,7 @@ void wateryield_stat(char* deviceid, int num)
         if(ncolumn==1&&nrow==1)
         {
             month_sum = atoi(dbresult[1]);
-            MYLOG_INFO("The month_sum is %d", month_sum);
+            MYLOG_DEBUG("The month_sum is %d", month_sum);
             month_sum += num;
         }
         else
@@ -550,7 +550,7 @@ void wateryield_stat(char* deviceid, int num)
         if(ncolumn==1&&nrow==1)
         {
             year_sum = atoi(dbresult[1]);
-            MYLOG_INFO("The year_sum is %d", year_sum);
+            MYLOG_DEBUG("The year_sum is %d", year_sum);
             year_sum += num;
         }
         else
