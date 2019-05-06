@@ -86,6 +86,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	int sendret;
 	size_t msglen = sizeof(devicequeuemsg);
 	char topic[TOPIC_LENGTH] = { 0 };
+	int devicetype;
 
     MYLOG_INFO("Message arrived");
     MYLOG_INFO("Topic: %s", topicName);
@@ -196,7 +197,18 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
                 cJSON_AddItemToArray(records, record);          
             }
             cJSON_AddItemToObject(device, "records", records);
-            cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(DEV_SOCKET));
+            
+            sprintf(sql, "select devicetype from devices where deviceid='%s';", deviceid);
+            sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+            if(nrow == 0)
+            {
+                MYLOG_DEBUG("Can not find the device in devices");
+                goto end;
+            }
+
+            devicetype = atoi(dbresult[1]); 
+            
+            cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(devicetype));
             sqlite3_free_table(dbresult);
 	    }
 	    cJSON_AddItemToObject(root, "resultcode", cJSON_CreateNumber(0));
@@ -289,7 +301,19 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
                 cJSON_AddItemToArray(records, record);          
             }
             cJSON_AddItemToObject(device, "records", records);
-            cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(DEV_SOCKET));
+            
+            sprintf(sql, "select devicetype from devices where deviceid='%s';", deviceid);
+            sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+            if(nrow == 0)
+            {
+                MYLOG_DEBUG("Can not find the device in devices");
+                goto end;
+            }
+
+            devicetype = atoi(dbresult[1]); 
+            
+            cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(devicetype));
+
             sqlite3_free_table(dbresult);
 	    }
 	    cJSON_AddItemToObject(root, "resultcode", cJSON_CreateNumber(0));

@@ -41,7 +41,7 @@
 
 #define USERNAME    "root"
 #define PASSWORD    "root"
-#define TOPICSNUM          3
+#define TOPICSNUM          4
 #define RESPONSE_WAIT      3000 //消息响应等待时间(毫秒)
 #define ZGB_ADDRESS_LENGTH 8
 #define ZGBMSG_MAX_NUM     20
@@ -180,6 +180,9 @@
 #define ATTR_CONNECTED_AIRCONDITON    0x20  //面板是否连接了空调主机  0-未连接 1-连接
 #define ATTR_SYSTEM_BOILER            0x21  //系统控制锅炉的插座
 
+#define ATTR_SEN_WINDSPEED            0x30   //风速 单位m/s
+
+
 /*环境属性*/
 #define ATTR_ENV_TEMPERATURE   0x40              //温度
 #define ATTR_ENV_HUMIDITY      0x41              //湿度
@@ -190,6 +193,8 @@
 #define ATTR_SEN_WATER_YIELD   0x46              //水量
 
 #define ATTR_SEN_WATERPRESSURE 0x50         //水压
+#define ATTR_SEN_WATERSPEED    0x51         //水速
+
 
 #define ATTR_WATER_TEMPERATURE_TARGET  0x51 //目标温度
 #define ATTR_WATER_TEMPERATURE_CURRENT 0x52 //当前温度

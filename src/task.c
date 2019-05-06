@@ -20,7 +20,7 @@ pthread_mutex_t g_devices_status_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 //程序启动后申请堆存放需要订阅的topic
-char g_topicthemes[TOPICSNUM][20] = {{"devices/operation"},{"devices/electric"},{"gateway"}};
+char g_topicthemes[TOPICSNUM][20] = {{"devices/operation"},{"devices/electric"},{"devices/wateryield"},{"gateway"}};
 char g_clientid[30], g_clientid_pub[30];
 
 
@@ -782,6 +782,7 @@ void* zgbmsgprocess(void* argc)
                         case ATTR_SETTING_TEMPERATURE:
                         case ATTR_SETTING_HUMIDITY:
                         case ATTR_SYSMODE:
+                        case ATTR_SEN_WINDSPEED:
                         {
                             temp = cJSON_GetObjectItem(attr_json, "value");
                             if(temp == NULL)
