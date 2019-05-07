@@ -170,7 +170,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             cJSON* record;
             const char* num;
             const char* time;
-            for(int i=1;i<nrow;i++)
+            for(int i=1;i<=nrow;i++)
             {
                 record = cJSON_CreateObject();
                 num = (const char*)dbresult[i*2];
@@ -274,7 +274,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             cJSON* record;
             const char* num;
             const char* time;
-            for(int i=1;i<nrow;i++)
+            for(int i=1;i<=nrow;i++)
             {
                 record = cJSON_CreateObject();
                 num = (const char*)dbresult[i*2];
