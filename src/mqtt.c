@@ -168,8 +168,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
             cJSON* records = cJSON_CreateArray();
             cJSON* record;
-            const char* num;
-            const char* time;
+            int num;
+            int data;
             time_t time_now;
             struct tm* t;
             time(&time_now);
@@ -182,27 +182,27 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             {
                 int recordflag = 1;
                 record = cJSON_CreateObject();
-                num = (const char*)dbresult[i*2];
-                time = (const char*)dbresult[i*2+1];
+                num = atoi((const char*)dbresult[i*2]);
+                data = atoi((const char*)dbresult[i*2+1]);
                 
                 switch (type)
                 {
                     case OP_TYPE_HOUR:
-                        cJSON_AddNumberToObject(record, "hour", atoi(time));
+                        cJSON_AddNumberToObject(record, "hour", data);
                         break;
                     case OP_TYPE_DAY:
-                        if(day < time && time >= 29)
+                        if(day < data && data >= 29)
                         {
-                            if(time == 29 && (month-1) == 2)
+                            if(data == 29 && (month-1) == 2)
                             {
                                 if(!isLeapYear(year)) 
                                     recordflag = 0;
                             }
-                            else if((time == 30 || time == 31) && (month-1) == 2)
+                            else if((data == 30 || data == 31) && (month-1) == 2)
                             {
                                 recordflag == 0;
                             }                            
-                            else if(((month -1) == 4 || (month -1) == 6 || (month -1) == 9 || (month -1) == 11) && time == 31)
+                            else if(((month -1) == 4 || (month -1) == 6 || (month -1) == 9 || (month -1) == 11) && data == 31)
                             {
                                 recordflag == 0;
                             }                        
@@ -210,14 +210,14 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 
                         if(recordflag)
                         {
-                            cJSON_AddNumberToObject(record, "day", atoi(time));                            
+                            cJSON_AddNumberToObject(record, "day", data);                            
                         }
                         break;                
                     case OP_TYPE_MONTH:
-                        cJSON_AddNumberToObject(record, "month", atoi(time));
+                        cJSON_AddNumberToObject(record, "month", data);
                         break;                
                     case OP_TYPE_YEAR:
-                        cJSON_AddNumberToObject(record, "year", atoi(time));
+                        cJSON_AddNumberToObject(record, "year", data);
                         break;
                     default:
                         break;                
@@ -225,7 +225,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
                 }
                 if(recordflag)
                 {
-                    cJSON_AddNumberToObject(record, "electricity", atoi(num)); 
+                    cJSON_AddNumberToObject(record, "electricity", num); 
                     cJSON_AddItemToArray(records, record); 
                 }
                          
@@ -306,8 +306,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
             cJSON* records = cJSON_CreateArray();
             cJSON* record;
-            const char* num;
-            const char* time;
+            int num;
+            int data;
             time_t time_now;
             struct tm* t;
             time(&time_now);
@@ -320,27 +320,27 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             {
                 int recordflag = 1;            
                 record = cJSON_CreateObject();
-                num = (const char*)dbresult[i*2];
-                time = (const char*)dbresult[i*2+1];
+                num = atoi((const char*)dbresult[i*2]);
+                data = atoi((const char*)dbresult[i*2+1]);
 
                 switch (type)
                 {
                     case OP_TYPE_HOUR:
-                        cJSON_AddNumberToObject(record, "hour", atoi(time));
+                        cJSON_AddNumberToObject(record, "hour", data);
                         break;
                     case OP_TYPE_DAY:
-                        if(day < time && time >= 29)
+                        if(day < data && data >= 29)
                         {
-                            if(time == 29 && (month-1) == 2)
+                            if(data == 29 && (month-1) == 2)
                             {
                                 if(!isLeapYear(year)) 
                                     recordflag = 0;
                             }
-                            else if((time == 30 || time == 31) && (month-1) == 2)
+                            else if((data == 30 || data == 31) && (month-1) == 2)
                             {
                                 recordflag == 0;
                             }                            
-                            else if(((month -1) == 4 || (month -1) == 6 || (month -1) == 9 || (month -1) == 11) && time == 31)
+                            else if(((month -1) == 4 || (month -1) == 6 || (month -1) == 9 || (month -1) == 11) && data == 31)
                             {
                                 recordflag == 0;
                             }                        
@@ -348,15 +348,15 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 
                         if(recordflag)
                         {
-                            cJSON_AddNumberToObject(record, "day", atoi(time));                            
+                            cJSON_AddNumberToObject(record, "day", data);                            
                         }
 
                         break;                
                     case OP_TYPE_MONTH:
-                        cJSON_AddNumberToObject(record, "month", atoi(time));
+                        cJSON_AddNumberToObject(record, "month", data);
                         break;                
                     case OP_TYPE_YEAR:
-                        cJSON_AddNumberToObject(record, "year", atoi(time));
+                        cJSON_AddNumberToObject(record, "year", data);
                         break;
                     default:
                         break;                
@@ -364,7 +364,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
                 }
                 if(recordflag)
                 {
-                    cJSON_AddNumberToObject(record, "wateryield", atoi(num));                
+                    cJSON_AddNumberToObject(record, "wateryield", num);                
                     cJSON_AddItemToArray(records, record);                     
                 }
          

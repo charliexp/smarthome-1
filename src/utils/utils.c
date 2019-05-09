@@ -582,7 +582,7 @@ int exec_sql_create(char* sql)
 /*电量、水量数据库删除*/
 void devicedatadelete(char* id)
 {
-    char[100] sql= {0};
+    char sql[100] = {0};
     if(!id)
     {
         return;
@@ -616,7 +616,7 @@ void devicedatadelete(char* id)
 
 void devicedatainit(char* id,int type)
 {
-    char[100] sql= {0};
+    char sql[100]= {0};
     if(!id)
     {
         return;
