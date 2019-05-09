@@ -646,6 +646,7 @@ void* zgbmsgprocess(void* argc)
             }
             if(cJSON_GetArraySize(device_array)>0)
             {
+                devicedatadelete(db_zgbaddress);//删除电量或者水量数据                
                 sendmqttmsg(MQTT_MSG_TYPE_PUB, TOPIC_DEVICE_DELETE, cJSON_PrintUnformatted(device_array), 0, 0);
             }
             pthread_mutex_unlock(&g_devices_status_mutex);
@@ -689,7 +690,6 @@ void* zgbmsgprocess(void* argc)
                  MYLOG_INFO(sql);
             
                  sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
-                 //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
                  if(nrow != 0) //数据库中有该设备
                  {
                     MYLOG_INFO("The device has been registered!");
@@ -700,6 +700,15 @@ void* zgbmsgprocess(void* argc)
                  
                  sprintf(sql, "replace into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, devicetype, deviceindex);
                  MYLOG_INFO("The sql is %s", sql);
+
+                 if(devicetype == DEV_SOCKET || devicetype == DEV_FAN_COIL || devicetype == DEV_FRESH_AIR)
+                 {
+                    devicedatainit(db_deviceid, 1);
+                 }else if(devicetype == SEN_WATER_FLOW)
+                 {
+                     devicedatainit(db_deviceid, 2);                       
+                 }
+                 
                  rc = sqlite3_exec(g_db, sql, 0, 0, &zErrMsg);
                  if(rc != SQLITE_OK)
                  {

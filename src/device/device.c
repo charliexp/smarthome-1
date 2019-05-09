@@ -265,6 +265,15 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status);       	
             break;
         }
+        case SEN_ELECTRICITY_METER:
+        {
+        	cJSON_AddNumberToObject(device, "devicetype", SEN_ELECTRICITY_METER);
+        	status = cJSON_CreateObject();
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_SOCKET_E);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddItemToArray(statusarray, status);        	
+        }
         case DEV_AIR_CON:
         {    	
         	cJSON_AddNumberToObject(device, "devicetype", DEV_AIR_CON);	 

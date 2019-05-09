@@ -42,6 +42,14 @@ int gatewayregister();
 /*上传文件到服务器*/
 int updatefile(const char* filepath);
 
+/*电量、水量数据库删除*/
+void devicedatadelete(char* id);
+
+void devicedatainit(char* id,int type);
+
+/*判断是否闰年*/
+int isLeapYear(int year);
+
 /*电量统计*/
 void electricity_stat(char* deviceid, int num);
 

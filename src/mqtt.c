@@ -170,19 +170,48 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             cJSON* record;
             const char* num;
             const char* time;
+            time_t time_now;
+            struct tm* t;
+            time(&time_now);
+            t = localtime(&time_now);
+            int day   = t->tm_mday;
+        	int month = t->tm_mon + 1; //localtime获取的month范围0-11
+        	int year = t->tm_year;
+        	
             for(int i=1;i<=nrow;i++)
             {
+                int recordflag = 1;
                 record = cJSON_CreateObject();
                 num = (const char*)dbresult[i*2];
                 time = (const char*)dbresult[i*2+1];
-                cJSON_AddNumberToObject(record, "electricity", atoi(num));
+                
                 switch (type)
                 {
                     case OP_TYPE_HOUR:
                         cJSON_AddNumberToObject(record, "hour", atoi(time));
                         break;
                     case OP_TYPE_DAY:
-                        cJSON_AddNumberToObject(record, "day", atoi(time));
+                        if(day < time && time >= 29)
+                        {
+                            if(time == 29 && (month-1) == 2)
+                            {
+                                if(!isLeapYear(year)) 
+                                    recordflag = 0;
+                            }
+                            else if((time == 30 || time == 31) && (month-1) == 2)
+                            {
+                                recordflag == 0;
+                            }                            
+                            else if(((month -1) == 4 || (month -1) == 6 || (month -1) == 9 || (month -1) == 11) && time == 31)
+                            {
+                                recordflag == 0;
+                            }                        
+                        }
+
+                        if(recordflag)
+                        {
+                            cJSON_AddNumberToObject(record, "day", atoi(time));                            
+                        }
                         break;                
                     case OP_TYPE_MONTH:
                         cJSON_AddNumberToObject(record, "month", atoi(time));
@@ -194,7 +223,12 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
                         break;                
                  
                 }
-                cJSON_AddItemToArray(records, record);          
+                if(recordflag)
+                {
+                    cJSON_AddNumberToObject(record, "electricity", atoi(num)); 
+                    cJSON_AddItemToArray(records, record); 
+                }
+                         
             }
             cJSON_AddItemToObject(device, "records", records);
             
@@ -274,19 +308,49 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             cJSON* record;
             const char* num;
             const char* time;
+            time_t time_now;
+            struct tm* t;
+            time(&time_now);
+            t = localtime(&time_now);
+            int day   = t->tm_mday;
+        	int month = t->tm_mon + 1; //localtime获取的month范围0-11
+        	int year = t->tm_year;
+        	
             for(int i=1;i<=nrow;i++)
             {
+                int recordflag = 1;            
                 record = cJSON_CreateObject();
                 num = (const char*)dbresult[i*2];
                 time = (const char*)dbresult[i*2+1];
-                cJSON_AddNumberToObject(record, "wateryield", atoi(num));
+
                 switch (type)
                 {
                     case OP_TYPE_HOUR:
                         cJSON_AddNumberToObject(record, "hour", atoi(time));
                         break;
                     case OP_TYPE_DAY:
-                        cJSON_AddNumberToObject(record, "day", atoi(time));
+                        if(day < time && time >= 29)
+                        {
+                            if(time == 29 && (month-1) == 2)
+                            {
+                                if(!isLeapYear(year)) 
+                                    recordflag = 0;
+                            }
+                            else if((time == 30 || time == 31) && (month-1) == 2)
+                            {
+                                recordflag == 0;
+                            }                            
+                            else if(((month -1) == 4 || (month -1) == 6 || (month -1) == 9 || (month -1) == 11) && time == 31)
+                            {
+                                recordflag == 0;
+                            }                        
+                        }
+
+                        if(recordflag)
+                        {
+                            cJSON_AddNumberToObject(record, "day", atoi(time));                            
+                        }
+
                         break;                
                     case OP_TYPE_MONTH:
                         cJSON_AddNumberToObject(record, "month", atoi(time));
@@ -298,7 +362,12 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
                         break;                
                  
                 }
-                cJSON_AddItemToArray(records, record);          
+                if(recordflag)
+                {
+                    cJSON_AddNumberToObject(record, "wateryield", atoi(num));                
+                    cJSON_AddItemToArray(records, record);                     
+                }
+         
             }
             cJSON_AddItemToObject(device, "records", records);
             

@@ -579,6 +579,73 @@ int exec_sql_create(char* sql)
     }    
 }
 
+/*电量、水量数据库删除*/
+void devicedatadelete(char* id)
+{
+    char[100] sql= {0};
+    if(!id)
+    {
+        return;
+    }
+
+    sprintf(sql, "DELETE FROM electricity_hour where deviceid like '%s%%';", id);
+    exec_sql_create(sql); 
+    memset(sql, 0, 100);
+    sprintf(sql, "DELETE FROM electricity_day where deviceid like '%s%%';", id);
+    exec_sql_create(sql);
+    memset(sql, 0, 100);
+    sprintf(sql, "DELETE FROM electricity_month where deviceid like '%s%%';", id);
+    exec_sql_create(sql);
+    memset(sql, 0, 100);
+    sprintf(sql, "DELETE FROM electricity_year where deviceid like '%s%%';", id);
+    exec_sql_create(sql); 
+    memset(sql, 0, 100);
+    sprintf(sql, "DELETE FROM wateryield_year where deviceid like '%s%%';", id);
+    exec_sql_create(sql);
+    memset(sql, 0, 100);
+    sprintf(sql, "DELETE FROM wateryield_hour where deviceid like '%s%%';", id);
+    exec_sql_create(sql); 
+    memset(sql, 0, 100);
+    sprintf(sql, "DELETE FROM wateryield_day where deviceid like '%s%%';", id);
+    exec_sql_create(sql); 
+    memset(sql, 0, 100);
+    sprintf(sql, "DELETE FROM wateryield_month where deviceid like '%s%%';", id);
+    exec_sql_create(sql);
+}
+
+
+void devicedatainit(char* id,int type)
+{
+    char[100] sql= {0};
+    if(!id)
+    {
+        return;
+    }
+
+    //电量数据初始化
+    if(type == 1)
+    {
+        for(int i = 1;i<=24;i++)
+        {
+            sprintf(sql, "INSERT INTO electricity_hour values('%s', 0, %d);", id, i);
+            exec_sql_create(sql); 
+            memset(sql, 0, 100);        
+        }          
+    }
+    //水量数据初始化
+    else if(type == 2)
+    {
+        for(int i = 1;i<=24;i++)
+        {
+            sprintf(sql, "INSERT INTO wateryield_hour values('%s', 0, %d);", id, i);
+            exec_sql_create(sql); 
+            memset(sql, 0, 100);        
+        }          
+    }
+
+}
+
+
 
 int lockfile(int fd)
 {
@@ -685,4 +752,13 @@ int ledcontrol(int num, int action, int time)
         ;       
     }
     return -1;
+}
+
+/*判断是否闰年*/
+int isLeapYear(int year)
+{
+   if(year%400==0||(year%4==0 && year%100!=0))
+       return 1;
+   else
+       return 0;
 }
