@@ -537,7 +537,7 @@ cJSON* dup_device_status_json(char* deviceid)
         {
             pthread_mutex_unlock(&g_devices_status_mutex);
             cJSON *dev = cJSON_Duplicate(devicestatus, 1);
-            cJSON_DeleteItemFromObject(dev, "online-check")
+            cJSON_DeleteItemFromObject(dev, "online-check");
             return dev;
         }
     }
