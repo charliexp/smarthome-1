@@ -762,3 +762,55 @@ int isLeapYear(int year)
    else
        return 0;
 }
+
+int debugproc(cJSON* root, char* topic)
+{
+    cJSON* op = cJSON_GetObjectItem(root, "operation");
+    if(op == NULL)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;       
+    }
+    
+    int operationtype = op->valueint;
+    if(operationtype == 1)
+    {
+        int ret = gatewayregister();
+        if (ret == 0)
+        {
+            MYLOG_INFO("Register gateway success!");
+            cJSON_AddStringToObject(root, "result", "ok");           
+        }
+        else
+        {
+            MYLOG_INFO("Register gateway failed!");
+            cJSON_AddStringToObject(root, "result", "fail");                
+        }        
+    }
+    else if(operationtype == 2)
+    {
+        if(updatefile(LOG_FILE))
+        {
+            cJSON_AddStringToObject(root, "result", "ok");
+        }
+        else
+        {
+            cJSON_AddStringToObject(root, "result", "fail");
+        }      
+    }
+    else if(operationtype == 3)
+    {
+        int loglevel = cJSON_GetObjectItem(root, "value")->valueint;
+        g_log_level = loglevel;
+        cJSON_AddStringToObject(root, "result", "ok");
+    }
+    else if(operationtype == 4)//«Âø’»’÷æ
+    {
+        fclose(g_fp);
+        int fd = open(LOG_FILE, O_RDWR | O_TRUNC);
+        fclose(g_fp);
+        log_init();
+        cJSON_AddStringToObject(root, "result", "ok");
+    } 
+    sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);    
+}

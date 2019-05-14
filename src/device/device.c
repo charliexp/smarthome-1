@@ -926,3 +926,292 @@ void change_system_boiler(char* id)
     set_system_boiler(id);
 
 }
+
+/*电量查询*/
+int electricity_query(cJSON* root,char* topic)
+{
+    MYLOG_INFO("An electric qury!");
+    int devicetype;
+    cJSON* t = cJSON_GetObjectItem(root, "operation");        
+    if(t == NULL)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;    	        
+    }
+    int type = t->valueint;
+    cJSON* devices = cJSON_GetObjectItem(root, "devices");
+    if(devices == NULL)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;	        
+    }
+    int num = cJSON_GetArraySize(devices);
+    if(num == 0)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;	        
+    }	    
+    for(int i=0;i<num;i++){
+        cJSON* device = cJSON_GetArrayItem(devices, i);
+        cJSON* deviceidjson = cJSON_GetObjectItem(device, "deviceid");
+        cJSON_AddItemToObject(device, "result", cJSON_CreateNumber(0));
+        cJSON* records = cJSON_CreateArray();
+	    if(deviceidjson == NULL)
+	    {
+            MYLOG_ERROR("Wrong format MQTT message!");
+            return -1;	        
+	    }	        
+	    char* deviceid = deviceidjson->valuestring;
+	    char sql[250]={0};   
+        int nrow = 0, ncolumn = 0;
+        char **dbresult;
+        char *zErrMsg = NULL;
+
+        sprintf(sql, "select devicetype from devices where deviceid='%s';", deviceid);
+        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+        if(nrow == 0)
+        {
+            MYLOG_DEBUG("Can not find the device in devices");
+            cJSON_AddItemToObject(device, "records", records);
+            sqlite3_free_table(dbresult);
+            continue;
+        }
+
+        devicetype = atoi(dbresult[1]);         
+        cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(devicetype));
+        sqlite3_free_table(dbresult);
+        
+        switch(type)
+        {
+            case OP_TYPE_HOUR:
+                sprintf(sql, "select electricity,hour from electricity_hour where deviceid='%s';", deviceid);
+                break;
+            case OP_TYPE_DAY:
+                sprintf(sql, "select electricity,day from electricity_day where deviceid='%s';", deviceid);
+                break;
+            case OP_TYPE_MONTH:
+                sprintf(sql, "select electricity,month from electricity_month where deviceid='%s';", deviceid);
+                break;
+            case OP_TYPE_YEAR:
+                sprintf(sql, "select electricity,year from electricity_year where deviceid='%s';", deviceid);
+                break;
+            default:
+                break;
+        }    
+        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+        
+        cJSON* record;
+        int num;
+        int data;
+        time_t time_now;
+        struct tm* t;
+        time(&time_now);
+        t = localtime(&time_now);
+        int day   = t->tm_mday;
+    	int month = t->tm_mon + 1; //localtime获取的month范围 0-11
+    	int year = t->tm_year;
+    	
+        for(int i=1;i<=nrow;i++)
+        {
+            int recordflag = 1;//判断该条记录是否需要上报
+            record = cJSON_CreateObject();
+            num = atoi((const char*)dbresult[i*2]);
+            data = atoi((const char*)dbresult[i*2+1]);
+            
+            switch (type)
+            {
+                case OP_TYPE_HOUR:
+                    cJSON_AddNumberToObject(record, "hour", data);
+                    break;
+                case OP_TYPE_DAY:
+                    if(day < data && data >= 29)
+                    {
+                        if(data == 29 && (month-1) == 2)
+                        {
+                            if(!isLeapYear(year)) 
+                                recordflag = 0;
+                        }
+                        else if((data == 30 || data == 31) && (month-1) == 2)
+                        {
+                            recordflag == 0;
+                        }                            
+                        else if(((month -1) == 4 || (month -1) == 6 || (month -1) == 9 || (month -1) == 11) && data == 31)
+                        {
+                            recordflag == 0;
+                        }                        
+                    }
+
+                    if(recordflag)
+                    {
+                        cJSON_AddNumberToObject(record, "day", data);                            
+                    }
+                    break;                
+                case OP_TYPE_MONTH:
+                    cJSON_AddNumberToObject(record, "month", data);
+                    break;                
+                case OP_TYPE_YEAR:
+                    cJSON_AddNumberToObject(record, "year", data);
+                    break;
+                default:
+                    break;                
+             
+            }
+            if(recordflag)
+            {
+                cJSON_AddNumberToObject(record, "electricity", num); 
+                cJSON_AddItemToArray(records, record); 
+            }
+                     
+        }
+        cJSON_AddItemToObject(device, "records", records);       
+        sqlite3_free_table(dbresult);
+    }
+    cJSON_AddItemToObject(root, "resultcode", cJSON_CreateNumber(0));
+    sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
+	return 0;    
+}
+
+
+/*水量查询*/
+int wateryield_query(cJSON* root,char* topic)
+{
+    MYLOG_INFO("An wateryield qury!");
+    int devicetype;
+    cJSON* t = cJSON_GetObjectItem(root, "operation");        
+    if(t == NULL)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;    	        
+    }
+    int type = t->valueint;
+    cJSON* devices = cJSON_GetObjectItem(root, "devices");
+    if(devices == NULL)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;	        
+    }
+    int num = cJSON_GetArraySize(devices);
+    if(num == 0)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;	        
+    }	    
+    for(int i=0;i<num;i++){
+        cJSON* device = cJSON_GetArrayItem(devices, i);
+        cJSON* deviceidjson = cJSON_GetObjectItem(device, "deviceid");
+        cJSON* records = cJSON_CreateArray();
+        cJSON* record;    
+	    char* deviceid = deviceidjson->valuestring;
+	    char sql[250]={0};   
+        int nrow = 0, ncolumn = 0;
+        char **dbresult;
+        char *zErrMsg = NULL;
+        int num;
+        int data;
+        time_t time_now;
+        struct tm* t;        
+        
+        cJSON_AddItemToObject(device, "result", cJSON_CreateNumber(0));
+	    if(deviceidjson == NULL)
+	    {
+            MYLOG_ERROR("Wrong format MQTT message!");
+            return -1;	        
+	    }	        
+       
+        sprintf(sql, "select devicetype from devices where deviceid='%s';", deviceid);
+        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+        if(nrow == 0)
+        {
+            MYLOG_DEBUG("Can not find the device in devices");
+            continue;
+        }
+
+        devicetype = atoi(dbresult[1]);        
+        cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(devicetype));
+        sqlite3_free_table(dbresult);
+        
+        switch(type)
+        {
+            case OP_TYPE_HOUR:
+                sprintf(sql, "select wateryield,hour from wateryield_hour where deviceid='%s';", deviceid);
+                break;
+            case OP_TYPE_DAY:
+                sprintf(sql, "select wateryield,day from wateryield_day where deviceid='%s';", deviceid);
+                break;
+            case OP_TYPE_MONTH:
+                sprintf(sql, "select wateryield,month from wateryield_month where deviceid='%s';", deviceid);
+                break;
+            case OP_TYPE_YEAR:
+                sprintf(sql, "select wateryield,year from wateryield_year where deviceid='%s';", deviceid);
+                break;
+            default:
+                break;
+        }    
+        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+
+        time(&time_now);
+        t = localtime(&time_now);
+        int day   = t->tm_mday;
+    	int month = t->tm_mon + 1; //localtime获取的month范围0-11
+    	int year  = t->tm_year;
+    	
+        for(int i=1;i<=nrow;i++)
+        {
+            int recordflag = 1;            
+            record = cJSON_CreateObject();
+            num = atoi((const char*)dbresult[i*2]);
+            data = atoi((const char*)dbresult[i*2+1]);
+
+            switch (type)
+            {
+                case OP_TYPE_HOUR:
+                    cJSON_AddNumberToObject(record, "hour", data);
+                    break;
+                case OP_TYPE_DAY:
+                    if(day < data && data >= 29)
+                    {
+                        if(data == 29 && (month-1) == 2)
+                        {
+                            if(!isLeapYear(year)) 
+                                recordflag = 0;
+                        }
+                        else if((data == 30 || data == 31) && (month-1) == 2)
+                        {
+                            recordflag == 0;
+                        }                            
+                        else if(((month -1) == 4 || (month -1) == 6 || (month -1) == 9 || (month -1) == 11) && data == 31)
+                        {
+                            recordflag == 0;
+                        }                        
+                    }
+
+                    if(recordflag)
+                    {
+                        cJSON_AddNumberToObject(record, "day", data);                            
+                    }
+
+                    break;                
+                case OP_TYPE_MONTH:
+                    cJSON_AddNumberToObject(record, "month", data);
+                    break;                
+                case OP_TYPE_YEAR:
+                    cJSON_AddNumberToObject(record, "year", data);
+                    break;
+                default:
+                    break;                
+             
+            }
+            if(recordflag)
+            {
+                cJSON_AddNumberToObject(record, "wateryield", num);                
+                cJSON_AddItemToArray(records, record);                     
+            }     
+        }
+        cJSON_AddItemToObject(device, "records", records);
+
+        sqlite3_free_table(dbresult);
+    }
+    cJSON_AddItemToObject(root, "resultcode", cJSON_CreateNumber(0));
+    sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
+	return 0;      
+}

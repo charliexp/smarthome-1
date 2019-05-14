@@ -67,4 +67,6 @@ int already_running(const char *filename);
 
 /*LED¿ØÖÆ½Ó¿Ú*/
 int ledcontrol(int num, int action, int time);
+
+int debugproc(cJSON* root, char* topic);
 #endif

@@ -62,4 +62,10 @@ void set_system_boiler(char* id);
 void change_system_boiler(char* id);
 
 void report_device_status(cJSON* stat);
+
+/*电量查询*/
+int electricity_query(cJSON* root, char* topic);
+/*水量查询*/
+int wateryield_query(cJSON* root,char* topic);
+
 #endif
