@@ -5,7 +5,6 @@
 /*全局变量*/
 int g_uartfd;
 int g_log_level = 2;
-int g_operationflag = 0;
 int g_system_mode = 1;
 int g_queueid;
 sqlite3* g_db;
@@ -268,7 +267,6 @@ void* devicemsgprocess(void *argc)
      
         }else{
 		    cJSON_Delete(device_mqtt_json);
-		    g_operationflag = 0;
             continue;
         }
         
@@ -517,7 +515,6 @@ response:
     	sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(result_json), QOS_LEVEL_2, 0);  
 		cJSON_Delete(device_mqtt_json);
 		cJSON_Delete(result_json);
-		g_operationflag = 0;
 	}
 	pthread_exit(NULL);
 }

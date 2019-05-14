@@ -178,8 +178,8 @@ void airconditiontimerfun(timer* t)
     int size = cJSON_GetArraySize(g_devices_status_json);
     int type,value,online;
     ZGBADDRESS airconaddr;
-    BYTE close_payload[] = {ATTR_DEVICESTATUS, 0, 0, 0, 0};//关闭操作报文内容
-    BYTE open_payload[] = {ATTR_DEVICESTATUS, 0, 0, 0, 1};//打开操作报文内容
+    BYTE close_payload[] = {ATTR_DEVICESTATUS, 0, 0, 0, 0};//关闭操作
+    BYTE open_payload[] = {ATTR_DEVICESTATUS, 0, 0, 0, 1};//打开操作
     for(int i=0; i<size; i++)
     {
         dev = cJSON_GetArrayItem(g_devices_status_json, i);

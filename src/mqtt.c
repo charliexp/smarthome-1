@@ -2,7 +2,6 @@
 #include "paho/MQTTAsync.h"
 
 extern int g_queueid;
-extern int g_operationflag;
 extern char g_topics[TOPICSNUM][50];
 extern char g_clientid[30], g_clientid_pub[30];
 extern char g_topicroot[20];
@@ -124,27 +123,16 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
     /*设备操作*/
 	else if (strstr(topicName, "operation") != 0)
 	{
-		if (g_operationflag) //检查当前是否有msg在处理
-		{
-			/*如果有消息在处理，则返回忙碌错误*/
-			cJSON_AddNumberToObject(root, "resultcode", MQTT_MSG_ERRORCODE_BUSY);
-			sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
-		}
-		else
-		{
-			/*将操作消息json链表的root封装消息丢入消息队列*/
-			g_operationflag = 1;
-			MYLOG_INFO("get an operation msg.\n");
-
-			msg.msgtype = QUEUE_MSG_DEVIC;
-			msg.p_operation_json = cJSON_Duplicate(root, 1);
-
-			if (sendret = msgsnd(g_queueid, (void*)&msg, msglen, 0) != 0)
-			{
-				MYLOG_ERROR("sendret = %d", sendret);
-				MYLOG_ERROR("send devicequeuemsg fail!");
-			}			
-		}
+        MYLOG_INFO("get an operation msg.\n");
+        
+        msg.msgtype = QUEUE_MSG_DEVIC;
+        msg.p_operation_json = cJSON_Duplicate(root, 1);
+        
+        if (sendret = msgsnd(g_queueid, (void*)&msg, msglen, 0) != 0)
+        {
+            MYLOG_ERROR("sendret = %d", sendret);
+            MYLOG_ERROR("send devicequeuemsg fail!");
+        }
 	}
 	/*调试操作*/
 	else if(strstr(topicName, "gateway") != 0)
