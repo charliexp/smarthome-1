@@ -22,6 +22,7 @@
 #include "const.h"
 #include "type.h"
 #include "error.h"
+#include "../mqtt.h"
 #include "../log/log.h"
 
 extern sqlite3* g_db;
