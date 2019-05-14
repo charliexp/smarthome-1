@@ -840,7 +840,7 @@ void report_device_status(cJSON* stat)
     sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
     cJSON* dev = cJSON_Duplicate(stat, 1);
     cJSON_DeleteItemFromObject(dev, "online-check");
-    sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(stat), 0, 0);
+    sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(dev), 0, 0);
     cJSON_Delete(dev);
 }
 
