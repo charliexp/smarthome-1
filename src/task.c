@@ -842,42 +842,41 @@ void* zgbmsgprocess(void* argc)
                         default:
                             break;
                     }
-            }
-            if(needmqtt)//是否需要发送mqtt消息
-            {
-                sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
-                //如果是设备状态关闭，则不上报其他属性
-                attr_json = get_attr_value_object_json(device_json, ATTR_DEVICESTATUS);
-                if(attr_json != NULL)
+                }
+                if(needmqtt)//是否需要发送mqtt消息
                 {
-                    int value = cJSON_GetObjectItem(attr_json, "value")->valueint;
-                    if(value == TLV_VALUE_POWER_OFF)
+                    sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_STATUS);
+                    //如果是设备状态关闭，则不上报其他属性
+                    attr_json = get_attr_value_object_json(device_json, ATTR_DEVICESTATUS);
+                    if(attr_json != NULL)
                     {
-                        cJSON* status = cJSON_GetObjectItem(device_json, "status");
-                        int sum = cJSON_GetArraySize(status);
-                        cJSON* tmp;
-                        for(int i = 0; i < sum; )
+                        int value = cJSON_GetObjectItem(attr_json, "value")->valueint;
+                        if(value == TLV_VALUE_POWER_OFF)
                         {
-                            tmp = cJSON_GetArrayItem(status, i);
-                            attr = cJSON_GetObjectItem(tmp, "type")->valueint;
-                            //如果不是类型和状态属性全部删除
-                            if(attr != ATTR_DEVICESTATUS&& attr != ATTR_DEVICETYPE)
+                            cJSON* status = cJSON_GetObjectItem(device_json, "status");
+                            int sum = cJSON_GetArraySize(status);
+                            cJSON* tmp;
+                            for(int i = 0; i < sum; )
                             {
-                                cJSON_DeleteItemFromArray(status, i);
-                                sum--;
-                            }
-                            else
-                            {
-                                i++;
-                            }
+                                tmp = cJSON_GetArrayItem(status, i);
+                                attr = cJSON_GetObjectItem(tmp, "type")->valueint;
+                                //如果不是类型和状态属性全部删除
+                                if(attr != ATTR_DEVICESTATUS&& attr != ATTR_DEVICETYPE)
+                                {
+                                    cJSON_DeleteItemFromArray(status, i);
+                                    sum--;
+                                }
+                                else
+                                {
+                                    i++;
+                                }
+                             }
                         }
-                    }
-
-                 }
-                    sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device_json), 0, 0);
-              }
-                cJSON_Delete(device_json);
-                break;
+                      }
+                      sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device_json), 0, 0);
+                  }
+               cJSON_Delete(device_json);
+               break;
             }
             case ZGB_MSGTYPE_DEVICE_LOCATION:
             {
