@@ -125,16 +125,33 @@ void sigalrm_fn(int sig)
 }
 
 void timerinit()
-{
-
-    timer* pelecttimer = createtimer(10, electtimerfun);
-    addtimer(pelecttimer);
-    
+{    
     timer* pstatustimer = createtimer(10, statustimerfun);
     addtimer(pstatustimer);
 
     timer* pairconditiontimer = createtimer(10, airconditiontimerfun);
     addtimer(pairconditiontimer);    
+
+    int sec,min;
+    time_t time_now;
+    struct tm* tm;
+    time(&time_now);
+    tm = localtime(&time_now);
+    sec = tm->tm_sec;
+    min = tm->tm_min;
+    int time_sec;//需要定时的秒数	
+
+	if(min == 59)
+	{
+		time_sec = 60 - sec + 59*60;
+	}
+	else
+	{
+		time_sec = 59*60 - min*60 -sec;//当前一小时剩余的秒数加上下个59分钟的秒数,alarm函数不精确 		
+	}
+
+    timer* pelecttimer = createtimer(time_sec, electtimerfun);
+    addtimer(pelecttimer);	
     signal(SIGALRM, sigalrm_fn); 
     alarm(1);    
 }
@@ -144,22 +161,58 @@ void electtimerfun(timer* t)
 {
     time_t time_now;
     struct tm* tm;
-    int sec,min;
+    int sec,min,hour,day,month,year;
     int time_sec;//需要定时的秒数
+
+    time(&time_now);
+    tm = localtime(&time_now);
+    sec   = tm->tm_sec;
+    min   = tm->tm_min;
+	hour  = t->tm_hour;
+	day   = t->tm_mday;
+	month = t->tm_mon + 1;
+	year  = t->tm_year + 1900;
+
+	//清除当前小时的数据
+	char sql[100] = {0};
+
+	sprintf(sql, "delete from electricity_hour where hour = %d;", hour);
+	exec_sql_create(sql);
+	memset(sql, 0, 100);
+	sprintf(sql, "delete from wateryield_hour where hour = %d;", hour);
+	exec_sql_create(sql);
+	memset(sql, 0, 100);
+
+	if(hour == 0)
+	{
+		sprintf(sql, "delete from electricity_day where day = %d;", day);
+		exec_sql_create(sql);
+		memset(sql, 0, 100);
+		sprintf(sql, "delete from wateryield_day where day = %d;", day);
+		exec_sql_create(sql);
+		memset(sql, 0, 100);
+		if(day == 1)
+		{
+			sprintf(sql, "delete from electricity_month where month = %d;", month);
+			exec_sql_create(sql);
+			memset(sql, 0, 100);
+			sprintf(sql, "delete from wateryield_month where month = %d;", month);
+			exec_sql_create(sql);
+			memset(sql, 0, 100);	
+		}		
+	}
+
 
     MYLOG_DEBUG("electric statistics!");
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文
     BYTE payload[] = {ATTR_SOCKET_E};
     milliseconds_sleep(500);
-    sendzgbmsg(address, payload, 1, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, getpacketid());
+    sendzgbmsg(address, payload, 1, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, getpacketid());//查询电量
     milliseconds_sleep(500);
     payload[0] = ATTR_SEN_WATER_YIELD;
-    sendzgbmsg(address, payload, 1, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, SEN_WATER_FLOW, 0, getpacketid());    
-    time(&time_now);
-    tm = localtime(&time_now);
-    sec = tm->tm_sec;
-    min = tm->tm_min;
-    time_sec = (60*60 - min*60 -sec) + 58*60;//当前一小时剩余的秒数加上下个59分钟的秒数,alarm函数不精确
+    sendzgbmsg(address, payload, 1, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, SEN_WATER_FLOW, 0, getpacketid());//查询水量    
+
+    time_sec = (60*60 - min*60 -sec) + 59*60;//当前一小时剩余的秒数加上下个59分钟的秒数,alarm函数不精确
     t->timevalue = time_sec;
     t->lefttime = time_sec;
     return;    

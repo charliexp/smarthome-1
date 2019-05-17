@@ -53,3 +53,4 @@ dkms.conf
 .vs/
 smarthome.code-workspace
 src/.vscode/settings.json
+*.xml

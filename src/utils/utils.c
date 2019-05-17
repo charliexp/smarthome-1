@@ -627,7 +627,7 @@ void devicedatainit(char* id,int type)
     //电量数据初始化
     if(type == 1)
     {
-        for(int i = 1;i<=24;i++)
+        for(int i = 0;i<24;i++)
         {
             sprintf(sql, "INSERT INTO electricity_hour values('%s', 0, %d);", id, i);
             exec_sql_create(sql); 
@@ -637,7 +637,7 @@ void devicedatainit(char* id,int type)
     //水量数据初始化
     else if(type == 2)
     {
-        for(int i = 1;i<=24;i++)
+        for(int i = 0;i<24;i++)
         {
             sprintf(sql, "INSERT INTO wateryield_hour values('%s', 0, %d);", id, i);
             exec_sql_create(sql); 

@@ -473,10 +473,9 @@ void* devicemsgprocess(void *argc)
     			cJSON_AddNumberToObject(device, "result", g_devicemsgstatus[i].result);    			
     		}
     		cJSON_AddItemToObject(result_json, "devices", devs);
-        }
-        
+        }        
         //设备状态查询
-        if (operationtype == 2)
+        else if (operationtype == 2)
         {
             cJSON* statusarray = cJSON_CreateArray();
     		for (i=0; i< devicenum; i++)
@@ -495,11 +494,11 @@ void* devicemsgprocess(void *argc)
                 devicestatus = dup_device_status_json(deviceid);
                 if (devicestatus == NULL)
                 {
+                    MYLOG_ERROR("Can't find the device status!,id:%s", deviceid);                
     			    cJSON* status = cJSON_CreateObject();
                     cJSON_AddItemToObject(status, "deviceid", cJSON_CreateString(deviceid));
                     cJSON_AddItemToObject(status, "status", cJSON_CreateArray());
                     cJSON_AddItemToArray(statusarray, status);
-                    MYLOG_ERROR("Can't find the device status!,id:%s", deviceid);
                 }
                 else
                 {
@@ -643,7 +642,7 @@ void* zgbmsgprocess(void* argc)
             }
             if(cJSON_GetArraySize(device_array)>0)
             {
-                devicedatadelete(db_zgbaddress);//删除电量或者水量数据                
+                //devicedatadelete(db_zgbaddress);//删除电量或者水量数据                
                 sendmqttmsg(MQTT_MSG_TYPE_PUB, TOPIC_DEVICE_DELETE, cJSON_PrintUnformatted(device_array), 0, 0);
             }
             pthread_mutex_unlock(&g_devices_status_mutex);
