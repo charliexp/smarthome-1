@@ -168,10 +168,10 @@ void electtimerfun(timer* t)
     tm = localtime(&time_now);
     sec   = tm->tm_sec;
     min   = tm->tm_min;
-	hour  = t->tm_hour;
-	day   = t->tm_mday;
-	month = t->tm_mon + 1;
-	year  = t->tm_year + 1900;
+	hour  = tm->tm_hour;
+	day   = tm->tm_mday;
+	month = tm->tm_mon + 1;
+	year  = tm->tm_year + 1900;
 
 	//清除当前小时的数据
 	char sql[100] = {0};

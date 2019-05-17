@@ -106,7 +106,7 @@ void change_panel_mode(int mode)
 {
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //¹ã²¥±¨ÎÄ
     BYTE data[5] = {ATTR_SYSMODE, 0x0, 0x0, 0x0, mode};
-    sendzgbmsg(address, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_CONTROL_PANEL, 0xFF, getpacketid());        
+    sendzgbmsg(address, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_CONTROL_PANEL, 0x0, getpacketid());        
 }
 
 void change_boiler_mode(int mode)
@@ -438,7 +438,11 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_HUMIDITY);
         	cJSON_AddNumberToObject(status, "value", 0);        	
-        	cJSON_AddItemToArray(statusarray, status);        	
+        	cJSON_AddItemToArray(statusarray, status);
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_SETTING_HUMIDITY);
+        	cJSON_AddNumberToObject(status, "value", 0);        	
+        	cJSON_AddItemToArray(statusarray, status);         	
             break;            
         }
         case DEV_DEHUMIDIFIER:

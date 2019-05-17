@@ -54,3 +54,4 @@ dkms.conf
 smarthome.code-workspace
 src/.vscode/settings.json
 *.xml
+*.si_recovery
