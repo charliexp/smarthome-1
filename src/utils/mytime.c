@@ -173,30 +173,32 @@ void electtimerfun(timer* t)
 	month = tm->tm_mon + 1;
 	year  = tm->tm_year + 1900;
 
-	//清除当前小时的数据
+	//置零当前小时的数据
 	char sql[100] = {0};
 
-	sprintf(sql, "delete from electricity_hour where hour = %d;", hour);
+	sprintf(sql, "update electricity_hour set electricity = 0 where hour = %d;", hour);
 	exec_sql_create(sql);
 	memset(sql, 0, 100);
-	sprintf(sql, "delete from wateryield_hour where hour = %d;", hour);
+	sprintf(sql, "update wateryield_hour set wateryield = 0 where hour = %d;", hour);
 	exec_sql_create(sql);
 	memset(sql, 0, 100);
 
 	if(hour == 0)
 	{
-		sprintf(sql, "delete from electricity_day where day = %d;", day);
+		//置零当前天的数据
+		sprintf(sql, "update electricity_day set electricity = 0 where day = %d;", day);
 		exec_sql_create(sql);
 		memset(sql, 0, 100);
-		sprintf(sql, "delete from wateryield_day where day = %d;", day);
+		sprintf(sql, "update wateryield_day set wateryield = 0 where day = %d;", day);
 		exec_sql_create(sql);
 		memset(sql, 0, 100);
 		if(day == 1)
 		{
-			sprintf(sql, "delete from electricity_month where month = %d;", month);
+			//置零当前月的数据
+			sprintf(sql, "update electricity_month set electricity = 0 where month = %d;", month);
 			exec_sql_create(sql);
 			memset(sql, 0, 100);
-			sprintf(sql, "delete from wateryield_month where month = %d;", month);
+			sprintf(sql, "update wateryield_month set wateryield = 0 where month = %d;", month);
 			exec_sql_create(sql);
 			memset(sql, 0, 100);	
 		}		
