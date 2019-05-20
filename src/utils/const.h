@@ -142,29 +142,22 @@
 #define TLV_VALUE_FAULT_SOCKET    0x01 //插座保险丝损坏
 #define TLV_VALUE_FAULT_PURIFIER  0x02 //净水器滤芯更换
 
-#define TLV_VALUE_POWER_OFF  0x00 //关机
-#define TLV_VALUE_POWER_ON   0x01 //上电
-#define TLV_VALUE_STANDBY    0x02 //待机
+#define TLV_VALUE_POWER_OFF       0x00 //关机
+#define TLV_VALUE_POWER_ON        0x01 //上电
+#define TLV_VALUE_STANDBY         0x02 //待机
 
-#define TLV_VALUE_HEAT  0 //制热
-#define TLV_VALUE_COLD  1 //制冷
-#define TLV_VALUE_HUMIDIFICATION 0   //加湿
+#define TLV_VALUE_HEAT             0 //制热
+#define TLV_VALUE_COLD             1 //制冷
+#define TLV_VALUE_HUMIDIFICATION   0 //加湿
 #define TLV_VALUE_DEHUMIDIFICATION 1 //除湿
 
-#define TLV_VALUE_COND_HEAT 1 //空调制热
-#define TLV_VALUE_COND_COLD 2 //空调制冷
-#define TLV_VALUE_BOILER_HEAT 3 //锅炉制热
+#define TLV_VALUE_COND_HEAT        1 //空调制热
+#define TLV_VALUE_COND_COLD        2 //空调制冷
+#define TLV_VALUE_BOILER_HEAT      3 //锅炉制热
 
 #define TLV_VALUE_ONLINE 1
 #define TLV_VALUE_OFFLINE 0
 
-/*插座数据*/
-#define ATTR_SOCKET_E   0x10 //电量
-#define ATTR_SOCKET_P   0x11 //功率
-#define ATTR_SOCKET_V   0x12 //电压
-#define ATTR_SOCKET_I   0x13 //电流
-#define ATTR_SOCKET_WORKTIME 0x15 //插座通电时间
-#define ATTR_SOCKET_MODE 0x16 //通电模式 0：按键可控，1：按键不可控，一直供电
 
 /*设备属性*/
 #define ATTR_DEVICETYPE               0x01  //设备类型
@@ -177,33 +170,35 @@
 #define ATTR_SETTING_HUMIDITY         0x08  //设备设定湿度：0-100
 #define ATTR_SETTING_TEMPERATURE      0x09  //设备设定温度: 0-100
 
+/*插座数据*/
+#define ATTR_SOCKET_E                 0x10 //电量
+#define ATTR_SOCKET_P                 0x11 //功率
+#define ATTR_SOCKET_V                 0x12 //电压
+#define ATTR_SOCKET_I                 0x13 //电流
+#define ATTR_SOCKET_WORKTIME          0x15 //插座通电时间
+
 #define ATTR_CONNECTED_AIRCONDITON    0x20  //面板是否连接了空调主机  0-未连接 1-连接
 #define ATTR_SYSTEM_BOILER            0x21  //系统控制锅炉的插座
 
-#define ATTR_SEN_WINDSPEED            0x30   //风速 单位m/s
-
-
 /*环境属性*/
-#define ATTR_ENV_TEMPERATURE   0x40              //温度
-#define ATTR_ENV_HUMIDITY      0x41              //湿度
-#define ATTR_ENV_PM25          0x42              //PM2.5
-#define ATTR_ENV_CO2           0x43              //CO2
-#define ATTR_ENV_FORMALDEHYDE  0x44              //甲醛
-#define ATTR_ENV_TV0C          0x45              //TVOC
-#define ATTR_SEN_WATER_YIELD   0x46              //水量
+#define ATTR_ENV_TEMPERATURE   0x40         //温度
+#define ATTR_ENV_HUMIDITY      0x41         //湿度
+#define ATTR_ENV_PM25          0x42         //PM2.5
+#define ATTR_ENV_CO2           0x43         //CO2
+#define ATTR_ENV_FORMALDEHYDE  0x44         //甲醛
+#define ATTR_ENV_TV0C          0x45         //TVOC
+#define ATTR_SEN_WATER_YIELD   0x46         //水量
+#define ATTR_SEN_WATERPRESSURE 0x47         //水压
+#define ATTR_SEN_WATERSPEED    0x48         //水速
+#define ATTR_SEN_WINDSPEED     0x49         //风速 单位m/s
 
-#define ATTR_SEN_WATERPRESSURE 0x50         //水压
-#define ATTR_SEN_WATERSPEED    0x51         //水速
-
-
-#define ATTR_WATER_TEMPERATURE_TARGET  0x51 //目标温度
-#define ATTR_WATER_TEMPERATURE_CURRENT 0x52 //当前温度
-#define ATTR_WATER_TEMPERATURE_CLEAN   0x53 //灭菌温度
-#define ATTR_WATER_TIME                0x54 //热水器灭菌时长
-
-#define ATTR_CONNECTED_SOCKET    0x55 //关联插座
-#define ATTR_CONNECTED_WATER_SEN 0x56 //关联温度传感器
-
+#define ATTR_HOTWATER_SYSTEM_STATUS       0x50 //热水系统状态       0关闭 1开启
+#define ATTR_HOTWATER_TEMPERATURE_TARGET  0x51 //热水器目标温度
+#define ATTR_HOTWATER_TEMPERATURE_CURRENT 0x52 //热水器回水口当前温度
+#define ATTR_HOTWATER_TEMPERATURE_CLEAN   0x53 //热水器灭菌温度
+#define ATTR_HOTWATER_TIME                0x54 //热水器灭菌时长
+#define ATTR_HOTWATER_CONNECTED_SOCKET    0x55 //热水器关联插座
+#define ATTR_HOTWATER_CONNECTED_TEMPERATURE_SEN 0x56 //热水器回水口温度传感器
 
 #define TLV_VALUE_SPEED_HIGH    0x00     //风盘高速
 #define TLV_VALUE_SPEED_MEDIU   0x01     //风盘中速

@@ -10,6 +10,8 @@ int g_queueid;
 sqlite3* g_db;
 char g_mac[20] = {0};
 char g_boilerid[20] = {0};
+char g_hotwatersystem_socket[20];
+char g_hotwatersystem_temperaturesensor[20];
 char g_topicroot[20] = {0};
 char g_topics[TOPICSNUM][50] ={{0},{0},{0}};
 timer* g_zgbtimer;
@@ -69,7 +71,7 @@ int sqlitedb_init()
         sprintf(sql,"CREATE TABLE [wateryield_hour]([deviceid] TEXT NOT NULL,[wateryield] INT NOT NULL,[hour] INT NOT NULL, primary key(deviceid, hour));");
         exec_sql_create(sql);
 
-        sprintf(sql,"CREATE TABLE gatewaycfg (mode INTERGER NOT NULL DEFAULT 0, boilerid TEXT DEFAULT \"\");");
+        sprintf(sql,"CREATE TABLE gatewaycfg (mode INTERGER NOT NULL DEFAULT 0, boilerid TEXT DEFAULT \"\", hotwatersocketid TEXT DEFAULT \"\", hotwatersensorid TEXT DEFAULT \"\");");
         exec_sql_create(sql);        
 
         //把网关设备写入devices表
@@ -196,6 +198,7 @@ void init()
     {
         MYLOG_ERROR("init_uart fail!");
     }
+
     ledcontrol(ZGB_LED, LED_ACTION_ON, 0);//点亮ZGB LED灯
     
     if(createmessagequeue() == -1)

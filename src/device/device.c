@@ -246,6 +246,46 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
                 cJSON_AddStringToObject(status, "value", g_boilerid);
             }
             cJSON_AddItemToArray(statusarray, status);
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_HOTWATER_TEMPERATURE_TARGET);
+        	cJSON_AddNumberToObject(status, "value", 30);
+        	cJSON_AddItemToArray(statusarray, status);     
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_HOTWATER_TEMPERATURE_CURRENT);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddItemToArray(statusarray, status);    
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_HOTWATER_TEMPERATURE_CLEAN);
+        	cJSON_AddNumberToObject(status, "value", 80);
+        	cJSON_AddItemToArray(statusarray, status);    
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_HOTWATER_TIME);
+        	cJSON_AddNumberToObject(status, "value", 60);
+        	cJSON_AddItemToArray(statusarray, status);
+            status = cJSON_CreateObject();
+            cJSON_AddNumberToObject(status, "type", ATTR_HOTWATER_CONNECTED_SOCKET);
+            int ret = get_hotwatersystem_socket(g_hotwatersystem_socket);
+            if(ret == -1)
+            {
+                cJSON_AddStringToObject(status, "value", "");
+            }
+            else
+            {
+                cJSON_AddStringToObject(status, "value", g_hotwatersystem_socket);
+            }
+            cJSON_AddItemToArray(statusarray, status);
+            status = cJSON_CreateObject();
+            cJSON_AddNumberToObject(status, "type", ATTR_HOTWATER_CONNECTED_TEMPERATURE_SEN);
+            int ret = get_hotwatersystem_temperaturesensor(g_hotwatersystem_temperaturesensor);
+            if(ret == -1)
+            {
+                cJSON_AddStringToObject(status, "value", "");
+            }
+            else
+            {
+                cJSON_AddStringToObject(status, "value", g_hotwatersystem_temperaturesensor);
+            }
+            cJSON_AddItemToArray(statusarray, status); 
                 break;            
             }
         case DEV_SOCKET:
@@ -459,7 +499,11 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_ENV_HUMIDITY);
         	cJSON_AddNumberToObject(status, "value", 0);        	
-        	cJSON_AddItemToArray(statusarray, status);        	
+        	cJSON_AddItemToArray(statusarray, status);
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_SETTING_HUMIDITY);
+        	cJSON_AddNumberToObject(status, "value", 0);        	
+        	cJSON_AddItemToArray(statusarray, status);         	
             break;            
         }        
         case DEV_WATER_PURIF:
@@ -475,22 +519,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         case DEV_WATER_HEAT:
         {
         	cJSON_AddNumberToObject(device, "devicetype", DEV_WATER_HEAT);	
-        	status = cJSON_CreateObject();
-        	cJSON_AddNumberToObject(status, "type", ATTR_WATER_TEMPERATURE_TARGET);
-        	cJSON_AddNumberToObject(status, "value", 30);
-        	cJSON_AddItemToArray(statusarray, status);     
-        	status = cJSON_CreateObject();
-        	cJSON_AddNumberToObject(status, "type", ATTR_WATER_TEMPERATURE_CURRENT);
-        	cJSON_AddNumberToObject(status, "value", 0);
-        	cJSON_AddItemToArray(statusarray, status);    
-        	status = cJSON_CreateObject();
-        	cJSON_AddNumberToObject(status, "type", ATTR_WATER_TEMPERATURE_CLEAN);
-        	cJSON_AddNumberToObject(status, "value", 80);
-        	cJSON_AddItemToArray(statusarray, status);    
-        	status = cJSON_CreateObject();
-        	cJSON_AddNumberToObject(status, "type", ATTR_WATER_TIME);
-        	cJSON_AddNumberToObject(status, "value", 60);
-        	cJSON_AddItemToArray(statusarray, status);            	
+        	status = cJSON_CreateObject();       	
             break;               
         }
         case DEV_WATER_PUMP:
@@ -751,6 +780,63 @@ int gatewayproc(cJSON* op)
             }
             change_system_boiler(id);
         }
+		else if(attr == ATTR_HOTWATER_CONNECTED_SOCKET)
+		{
+            temp = cJSON_GetObjectItem(item, "value");
+            if(temp == NULL)
+            {
+                return MQTT_MSG_ERRORCODE_FORMATERROR;
+            }
+            char *id = temp->valuestring;
+            temp = get_device_status_json(id);
+            if(temp == NULL)
+            {
+                return MQTT_MSG_ERRORCODE_DEVICENOEXIST;
+            }
+            temp = get_attr_value_object_json(temp, ATTR_DEVICETYPE);
+            int type = cJSON_GetObjectItem(temp, "value")->valueint;
+            if(type != DEV_SOCKET)
+            {
+                return MQTT_MSG_ERRORCODE_FORMATERROR;
+            }
+            change_hotwatersystem_socket(id);			
+		}
+		else if(attr == ATTR_HOTWATER_CONNECTED_TEMPERATURE_SEN)
+		{
+            temp = cJSON_GetObjectItem(item, "value");
+            if(temp == NULL)
+            {
+                return MQTT_MSG_ERRORCODE_FORMATERROR;
+            }
+            char *id = temp->valuestring;
+            temp = get_device_status_json(id);
+            if(temp == NULL)
+            {
+                return MQTT_MSG_ERRORCODE_DEVICENOEXIST;
+            }
+            temp = get_attr_value_object_json(temp, ATTR_DEVICETYPE);
+            int type = cJSON_GetObjectItem(temp, "value")->valueint;
+            if(type != SEN_WATER_TEMPERATURE)
+            {
+                return MQTT_MSG_ERRORCODE_FORMATERROR;
+            }
+            change_hotwatersystem_temperaturesensor(id);			
+		}
+		else
+		{
+			cJSON* dev = get_device_status_json(GATEWAY_ID);
+			cJSON* attr_json = get_attr_value_object_json(dev, attr);
+            temp = cJSON_GetObjectItem(item, "value");
+            if(temp == NULL)
+            {
+                return MQTT_MSG_ERRORCODE_FORMATERROR;
+            }
+            value = temp->valueint;
+
+			cJSON* replace_value_json = cJSON_CreateNumber(double value);
+			cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);		
+		}
+
     }
     return MQTT_MSG_ERRORCODE_SUCCESS;
 }
@@ -899,6 +985,7 @@ void change_system_mode(int mode)
     device_closeallfan();
 }
 
+/*获取系统配置的锅炉插座id*/
 int get_system_boiler(char* id)
 {
     size_t nrow = 0, ncolumn = 0;
@@ -919,6 +1006,7 @@ int get_system_boiler(char* id)
     return 0;
 }
 
+/*设置数据库中系统配置的锅炉插座id*/
 void set_system_boiler(char* id)
 {
     char sql[100] = {0};
@@ -926,6 +1014,7 @@ void set_system_boiler(char* id)
     exec_sql_create(sql);
 }
 
+/*改变系统配置的锅炉插座id*/
 void change_system_boiler(char* id)
 {
     cJSON* dev = get_device_status_json(GATEWAY_ID);
@@ -935,6 +1024,83 @@ void change_system_boiler(char* id)
     set_system_boiler(id);
 
 }
+
+int get_hotwatersystem_socket(char* id)
+{
+    size_t nrow = 0, ncolumn = 0;
+    char **dbresult;
+    char sql[]= {"select hotwatersocketid from gatewaycfg;"};
+    char* zErrMsg = NULL;
+
+    sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+
+    if(nrow == 0)
+    {
+        MYLOG_DEBUG("Can not get hotwatersystem socket!");
+        MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
+        return -1;
+    }
+
+    memcpy(id, dbresult[1], strlen(dbresult[1]));
+    return 0;
+}
+
+
+void set_hotwatersystem_socket(char* id)
+{
+    char sql[100] = {0};
+    sprintf(sql, "replace into gatewaycfg(rowid, hotwatersocketid) values(1, %s)", id);
+    exec_sql_create(sql);
+}
+
+void change_hotwatersystem_socket(char* id)
+{
+    cJSON* dev = get_device_status_json(GATEWAY_ID);
+    cJSON* devid = get_attr_value_object_json(dev, ATTR_HOTWATER_CONNECTED_SOCKET);
+    cJSON* socket = cJSON_CreateString(id);
+    cJSON_ReplaceItemInObject(devid, "value", socket);
+    set_system_boiler(id);
+
+}
+
+int get_hotwatersystem_temperaturesensor(char* id)
+{
+    size_t nrow = 0, ncolumn = 0;
+    char **dbresult;
+    char sql[]= {"select hotwatersensorid from gatewaycfg;"};
+    char* zErrMsg = NULL;
+
+    sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+
+    if(nrow == 0)
+    {
+        MYLOG_DEBUG("Can not get hotwatersensorid!");
+        MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
+        return -1;
+    }
+
+    memcpy(id, dbresult[1], strlen(dbresult[1]));
+    return 0;
+}
+
+
+void set_hotwatersystem_temperaturesensor(char* id)
+{
+    char sql[100] = {0};
+    sprintf(sql, "replace into gatewaycfg(rowid, hotwatersensorid) values(1, %s)", id);
+    exec_sql_create(sql);
+}
+
+void change_hotwatersystem_temperaturesensor(char* id)
+{
+    cJSON* dev = get_device_status_json(GATEWAY_ID);
+    cJSON* devid = get_attr_value_object_json(dev, ATTR_HOTWATER_CONNECTED_TEMPERATURE_SEN);
+    cJSON* sensor = cJSON_CreateString(id);
+    cJSON_ReplaceItemInObject(devid, "value", sensor);
+    set_system_boiler(id);
+
+}
+
 
 /*电量查询*/
 int electricity_query(cJSON* root,char* topic)

@@ -55,11 +55,26 @@ void set_gateway_mode(int mode);
 
 void change_system_mode(int mode);
 
+/*系统锅炉插座配置接口*/
 int get_system_boiler(char* id);
 
 void set_system_boiler(char* id);
 
 void change_system_boiler(char* id);
+
+/*热水系统插座配置接口*/
+int get_hotwatersystem_socket(char* id);
+
+void set_hotwatersystem_socket(char* id);
+
+void change_hotwatersystem_socket(char* id);
+
+/*热水系统水温器配置接口*/
+int get_hotwatersystem_temperaturesensor(char* id);
+
+void set_hotwatersystem_temperaturesensor(char* id);
+
+void change_hotwatersystem_temperaturesensor(char* id);
 
 void report_device_status(cJSON* stat);
 
