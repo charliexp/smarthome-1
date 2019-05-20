@@ -821,7 +821,7 @@ int gatewayproc(cJSON* op)
             }
             value = temp->valueint;
 
-			cJSON* replace_value_json = cJSON_CreateNumber(double value);
+			cJSON* replace_value_json = cJSON_CreateNumber(value);
 			cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);		
 		}
 
