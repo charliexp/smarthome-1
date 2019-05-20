@@ -21,6 +21,9 @@ extern sqlite3* g_db;
 extern int g_system_mode;
 extern char g_topicroot[20];
 extern char g_boilerid[20];
+extern char g_hotwatersystem_socket[20];
+extern char g_hotwatersystem_temperaturesensor[20];
+
 extern pthread_mutex_t g_devices_status_mutex;
 
 void zgbaddresstodbaddress(ZGBADDRESS addr, char* db_address)
@@ -264,7 +267,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status);
             status = cJSON_CreateObject();
             cJSON_AddNumberToObject(status, "type", ATTR_HOTWATER_CONNECTED_SOCKET);
-            int ret = get_hotwatersystem_socket(g_hotwatersystem_socket);
+            ret = get_hotwatersystem_socket(g_hotwatersystem_socket);
             if(ret == -1)
             {
                 cJSON_AddStringToObject(status, "value", "");
@@ -276,7 +279,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
             cJSON_AddItemToArray(statusarray, status);
             status = cJSON_CreateObject();
             cJSON_AddNumberToObject(status, "type", ATTR_HOTWATER_CONNECTED_TEMPERATURE_SEN);
-            int ret = get_hotwatersystem_temperaturesensor(g_hotwatersystem_temperaturesensor);
+            ret = get_hotwatersystem_temperaturesensor(g_hotwatersystem_temperaturesensor);
             if(ret == -1)
             {
                 cJSON_AddStringToObject(status, "value", "");
@@ -522,19 +525,6 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	status = cJSON_CreateObject();       	
             break;               
         }
-        case DEV_WATER_PUMP:
-        {
-        	cJSON_AddNumberToObject(device, "devicetype", DEV_WATER_PUMP);
-        	status = cJSON_CreateObject();
-        	cJSON_AddNumberToObject(status, "type", ATTR_CONNECTED_SOCKET);
-        	cJSON_AddStringToObject(status, "value", "");
-        	cJSON_AddItemToArray(statusarray, status);
-        	status = cJSON_CreateObject();
-        	cJSON_AddNumberToObject(status, "type", ATTR_CONNECTED_WATER_SEN);
-        	cJSON_AddStringToObject(status, "value", "");
-        	cJSON_AddItemToArray(statusarray, status);           	
-            break;               
-        }
         case SEN_ANEMOGRAPH:
         {
         	cJSON_AddNumberToObject(device, "devicetype", SEN_ANEMOGRAPH);
@@ -702,8 +692,6 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
             case ATTR_SETTING_HUMIDITY:
             case ATTR_SOCKET_E:
             case ATTR_SOCKET_WORKTIME:
-            case ATTR_WATER_TEMPERATURE_TARGET:
-            case ATTR_WATER_TEMPERATURE_CLEAN:
             {
                 int j = 4;
                 int attrvalue = value;
