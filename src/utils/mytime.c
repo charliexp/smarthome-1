@@ -141,13 +141,13 @@ void timerinit()
     min = tm->tm_min;
     int time_sec;//需要定时的秒数	
 
-	if(min == 0)
+	if(min == 59)
 	{
-		time_sec = 60 - sec;
+		time_sec = 60 - sec + 59*60;
 	}
 	else
 	{
-		time_sec = 60 + (60 -min)*60 - sec;//当前一小时剩余的秒数加上下个1分钟的秒数		
+		time_sec = 59*60 - min*60 -sec;//当前一小时剩余的秒数加上下个59分钟的秒数,alarm函数不精确 		
 	}
 
     timer* pelecttimer = createtimer(time_sec, electtimerfun);
@@ -214,7 +214,7 @@ void electtimerfun(timer* t)
     payload[0] = ATTR_SEN_WATER_YIELD;
     sendzgbmsg(address, payload, 1, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, SEN_WATER_FLOW, 0, getpacketid());//查询水量    
 
-    time_sec = (60 - min)*60 -sec + 60;//当前一小时剩余的秒数加上下个1分钟的秒数,alarm函数不精确
+    time_sec = (60*60 - min*60 -sec) + 59*60;//当前一小时剩余的秒数加上下个59分钟的秒数,alarm函数不精确
     t->timevalue = time_sec;
     t->lefttime = time_sec;
     return;    
