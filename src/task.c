@@ -78,10 +78,10 @@ int sqlitedb_init()
         exec_sql_create(sql);        
 
         //把网关设备写入devices表
-        sprintf(sql, "replace into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, DEV_GATEWAY, 0);
+        sprintf(sql, "insert into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, DEV_GATEWAY, 0);
         exec_sql_create(sql);
 
-        sprintf(sql, "replace into gatewaycfg values(2, \"\");");
+        sprintf(sql, "insert into gatewaycfg values(2, \"\");");
         exec_sql_create(sql);          
     }
     else

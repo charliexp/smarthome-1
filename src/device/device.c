@@ -972,7 +972,7 @@ void set_gateway_mode(int mode)
     char sql[100];
     g_system_mode = mode;
     memset(sql, 0, 100);
-    sprintf(sql, "replace into gatewaycfg(rowid, mode) values(1, %d)", mode);
+    sprintf(sql, "update gatewaycfg set mode = %d where rowid =1;", mode);
     exec_sql_create(sql);
 }
 

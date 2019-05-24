@@ -380,7 +380,7 @@ void electricity_stat(char* deviceid, int num)
 
 	MYLOG_DEBUG("The time is %4d-%2d-%2d %2d:%2d", year, month, day, hour, min);
 
-	sprintf(sql, "replace into electricity_hour(deviceid, electricity, hour) values('%s', %2d, %2d);", deviceid, num, hour);
+	sprintf(sql, "update electricity_hour set electricity=%d where deviceid='%s' and hour=%d;", num, deviceid, hour);
     exec_sql_create(sql);
 
     /*天电量处理*/
@@ -390,7 +390,7 @@ void electricity_stat(char* deviceid, int num)
     }
     else
     {
-    	sprintf(sql, "select electricity from electricity_day where deviceid = '%s' and day = %d", deviceid, day);
+    	sprintf(sql, "select electricity from electricity_day where deviceid = '%s' and day = %d;", deviceid, day);
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
         MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
         if(ncolumn==1&&nrow==1)
@@ -406,7 +406,7 @@ void electricity_stat(char* deviceid, int num)
         }
         sqlite3_free_table(dbresult);
     }
-	sprintf(sql, "replace into electricity_day(deviceid, electricity, day) values('%s', %2d, %2d);", deviceid, day_sum, day);
+	sprintf(sql, "update electricity_day set electricity=%d where deviceid='%s' and day=%d;", day_sum, deviceid, day);
     exec_sql_create(sql); 
 	
 	/*月电量处理*/
@@ -416,7 +416,7 @@ void electricity_stat(char* deviceid, int num)
 	}
 	else
 	{
-    	sprintf(sql, "select electricity from electricity_month where deviceid = '%s' and month = %d", deviceid, month);
+    	sprintf(sql, "select electricity from electricity_month where deviceid = '%s' and month = %d;", deviceid, month);
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
         MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
         if(ncolumn==1&&nrow==1)
@@ -432,7 +432,7 @@ void electricity_stat(char* deviceid, int num)
         }
         sqlite3_free_table(dbresult);
 	}
-	sprintf(sql, "replace into electricity_month(deviceid, electricity, month) values('%s', %2d, %2d);", deviceid, month_sum, month);
+	sprintf(sql, "update electricity_month set electricity=%d where deviceid='%s' and month=%d;", month_sum, deviceid, month);
     exec_sql_create(sql);   
 
 	/*年电量处理*/
@@ -442,7 +442,7 @@ void electricity_stat(char* deviceid, int num)
 	}
 	else
 	{
-    	sprintf(sql, "select electricity from electricity_year where deviceid = '%s' and year = %d", deviceid, year);
+    	sprintf(sql, "select electricity from electricity_year where deviceid = '%s' and year = %d;", deviceid, year);
         sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
         MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
         if(ncolumn==1&&nrow==1)
@@ -458,7 +458,7 @@ void electricity_stat(char* deviceid, int num)
         }
         sqlite3_free_table(dbresult);
 	}
-	sprintf(sql, "replace into electricity_year(deviceid, electricity, year) values('%s', %2d, %4d);", deviceid, year_sum, year);
+	sprintf(sql, "update electricity_year set electricity=%d where deviceid='%s' and year=%d;", year_sum, deviceid, year);
     exec_sql_create(sql);    	
 }
 
@@ -484,7 +484,7 @@ void wateryield_stat(char* deviceid, int num)
 
 	MYLOG_DEBUG("The time is %4d-%2d-%2d %2d:%2d", year, month, day, hour, min);
 
-	sprintf(sql, "replace into wateryield_hour(deviceid, wateryield, hour) values('%s', %2d, %2d);", deviceid, num, hour);
+	sprintf(sql, "update wateryield_hour set wateryield=%d where deviceid='%s' and hour=%d;", num, deviceid, hour);
     exec_sql_create(sql);
 
     /*天电量处理*/
@@ -510,7 +510,7 @@ void wateryield_stat(char* deviceid, int num)
         }
         sqlite3_free_table(dbresult);
     }
-	sprintf(sql, "replace into wateryield_day(deviceid, wateryield, day) values('%s', %2d, %2d);", deviceid, day_sum, day);
+	sprintf(sql, "update wateryield_day set wateryield=%d where deviceid='%s' and day=%d;", day_sum, deviceid, day);
     exec_sql_create(sql); 
 	
 	/*月电量处理*/
@@ -536,7 +536,7 @@ void wateryield_stat(char* deviceid, int num)
         }
         sqlite3_free_table(dbresult);
 	}
-	sprintf(sql, "replace into wateryield_month(deviceid, wateryield, month) values('%s', %2d, %2d);", deviceid, month_sum, month);
+	sprintf(sql, "update wateryield_month set wateryield=%d where deviceid='%s' and month=%d;", month_sum, deviceid, month);
     exec_sql_create(sql);   
 
 	/*年电量处理*/
@@ -562,7 +562,7 @@ void wateryield_stat(char* deviceid, int num)
         }
         sqlite3_free_table(dbresult);
 	}
-	sprintf(sql, "replace into wateryield_year(deviceid, wateryield, year) values('%s', %2d, %4d);", deviceid, year_sum, year);
+	sprintf(sql, "update wateryield_year set wateryield=%d where deviceid='%s' and year=%d;", year_sum, deviceid, year);
     exec_sql_create(sql);    	
 }
 
