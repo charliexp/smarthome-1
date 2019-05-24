@@ -16,6 +16,8 @@
 #define TYPE_CLOSE_NETWORK        0x05
 #define TYPE_NETWORK_INFO         0x06
 
+#define HOTWATER_DEFAULTTEMPERATURE 45
+
 #define LOCKFILE "/var/run/smarthome.pid"
 #define LOCKMODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) 
 

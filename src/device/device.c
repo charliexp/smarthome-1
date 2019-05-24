@@ -252,7 +252,15 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
             cJSON_AddItemToArray(statusarray, status);
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_HOTWATER_TEMPERATURE_TARGET);
-        	cJSON_AddNumberToObject(status, "value", 45);
+            ret = get_hotwatersystem_targettemperature();
+            if(ret == -1)
+            {
+                cJSON_AddNumberToObject(status, "value", HOTWATER_DEFAULTTEMPERATURE);
+            }
+            else
+            {
+                cJSON_AddNumberToObject(status, "value", g_hotwatersystem_socket);
+            }			
         	cJSON_AddItemToArray(statusarray, status);     
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_HOTWATER_TEMPERATURE_CURRENT);
@@ -1057,6 +1065,34 @@ void set_hotwatersystem_targettemperature(int temperature)
     sprintf(sql, "update gatewaycfg set hotwatertargettemperature='%d' where rowid =1;", temperature);
     exec_sql_create(sql);
 	g_hotwatersystem_settingtemperature = temperature;
+}
+
+int get_hotwatersystem_targettemperature()
+{
+    size_t nrow = 0, ncolumn = 0;
+    char **dbresult;
+    char sql[]= {"select hotwatertargettemperature from gatewaycfg;"};
+    char* zErrMsg = NULL;
+
+    sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+
+    if(nrow == 0)
+    {
+        MYLOG_DEBUG("Can not get hotwatersensorid!");
+        MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
+        return -1;
+    }
+
+	if(dbresult[1][0]>='0' && dbresult[1][0] <='9')
+	{
+		g_hotwatersystem_settingtemperature = atoi(dbresult[1]);		
+	}
+	else
+	{
+		g_hotwatersystem_settingtemperature = HOTWATER_DEFAULTTEMPERATURE;
+	}
+
+    return 0;
 }
 
 
