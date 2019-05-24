@@ -23,7 +23,9 @@
 
 extern pthread_mutex_t g_devices_status_mutex;
 extern cJSON* g_devices_status_json;
-
+extern int g_hotwatersystem_settingtemperature;
+extern char g_hotwatersystem_socket[20];
+extern char g_hotwatersystem_temperaturesensor[20];
 timer* g_timer_manager;
 
 timer* createtimer(int timevlaue,void(*fun)())
@@ -126,14 +128,14 @@ void sigalrm_fn(int sig)
 
 void timerinit()
 {    
-    timer* pstatustimer = createtimer(10, statustimerfun);
-    addtimer(pstatustimer);
+    timer* timer = createtimer(10, statustimerfun);
+    addtimer(timer);
 
-    timer* pairconditiontimer = createtimer(10, airconditiontimerfun);
-    addtimer(pairconditiontimer);    
+    timer = createtimer(10, airconditiontimerfun);
+    addtimer(timer);    
 
-    timer* pairconditiontimer = createtimer(10, hotwatertimerfun);
-    addtimer(pairconditiontimer);  
+    timer = createtimer(10, hotwatertimerfun);
+    addtimer(timer);  
 	
     int sec,min;
     time_t time_now;
@@ -153,8 +155,8 @@ void timerinit()
 		time_sec = 59*60 - min*60 -sec;//当前一小时剩余的秒数加上下个59分钟的秒数,alarm函数不精确 		
 	}
 
-    timer* pelecttimer = createtimer(time_sec, electtimerfun);
-    addtimer(pelecttimer);	
+    timer = createtimer(time_sec, electtimerfun);
+    addtimer(timer);	
     signal(SIGALRM, sigalrm_fn); 
     alarm(1);    
 }
