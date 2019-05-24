@@ -62,6 +62,9 @@ void set_system_boiler(char* id);
 
 void change_system_boiler(char* id);
 
+void set_hotwatersystem_targettemperature(int temperature);
+
+
 /*热水系统插座配置接口*/
 int get_hotwatersystem_socket(char* id);
 

@@ -9,7 +9,10 @@ int g_system_mode = 1;
 int g_queueid;
 sqlite3* g_db;
 char g_mac[20] = {0};
+
 char g_boilerid[20] = {0};
+
+int g_hotwatersystem_settingtemperature = 45;
 char g_hotwatersystem_socket[20];
 char g_hotwatersystem_temperaturesensor[20];
 char g_topicroot[20] = {0};
@@ -71,7 +74,7 @@ int sqlitedb_init()
         sprintf(sql,"CREATE TABLE [wateryield_hour]([deviceid] TEXT NOT NULL,[wateryield] INT NOT NULL,[hour] INT NOT NULL, primary key(deviceid, hour));");
         exec_sql_create(sql);
 
-        sprintf(sql,"CREATE TABLE gatewaycfg (mode INTERGER NOT NULL DEFAULT 0, boilerid TEXT DEFAULT \"\", hotwatersocketid TEXT DEFAULT \"\", hotwatersensorid TEXT DEFAULT \"\");");
+        sprintf(sql,"CREATE TABLE gatewaycfg (mode INTERGER NOT NULL DEFAULT 0, boilerid TEXT DEFAULT \"\",hotwatertargettemperature INTERGER NOT NULL DEFAULT 45, hotwatersocketid TEXT DEFAULT \"\", hotwatersensorid TEXT DEFAULT \"\");");
         exec_sql_create(sql);        
 
         //把网关设备写入devices表

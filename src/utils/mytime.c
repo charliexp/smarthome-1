@@ -132,6 +132,9 @@ void timerinit()
     timer* pairconditiontimer = createtimer(10, airconditiontimerfun);
     addtimer(pairconditiontimer);    
 
+    timer* pairconditiontimer = createtimer(10, hotwatertimerfun);
+    addtimer(pairconditiontimer);  
+	
     int sec,min;
     time_t time_now;
     struct tm* tm;
@@ -235,6 +238,9 @@ void airconditiontimerfun(timer* t)
     ZGBADDRESS airconaddr;
     BYTE close_payload[] = {ATTR_DEVICESTATUS, 0, 0, 0, 0};//关闭操作
     BYTE open_payload[] = {ATTR_DEVICESTATUS, 0, 0, 0, 1};//打开操作
+    
+	MYLOG_DEBUG("aircondition status check!");
+	
     for(int i=0; i<size; i++)
     {
         dev = cJSON_GetArrayItem(g_devices_status_json, i);
@@ -289,4 +295,28 @@ void statustimerfun(timer* t)
     t->timevalue = 10;
     t->lefttime = 10;
     return;      
+}
+
+void hotwatertimerfun(timer* t)
+{
+    MYLOG_DEBUG("hotwater system check!");
+	if(strlen(g_hotwatersystem_socket) == 0 || strlen(g_hotwatersystem_temperaturesensor) == 0){
+		return;
+	}
+	if((check_device_online(g_hotwatersystem_socket)!=1) || (check_device_online(g_hotwatersystem_temperaturesensor)!=1)){
+		return;
+	}
+	cJSON* device_temperaturesensor = get_device_status_json(g_hotwatersystem_temperaturesensor);
+	cJSON* tmp = get_attr_value_object_json(device_temperaturesensor, ATTR_ENV_TEMPERATURE);
+	
+	if(tmp == NULL)
+		return;
+	
+	int temperature = cJSON_GetObjectItem(tmp, "value")->valueint;
+	if(temperature > g_hotwatersystem_settingtemperature){
+		ZGBADDRESS socketaddr;
+		dbaddresstozgbaddress(g_hotwatersystem_socket, socketaddr);
+	    BYTE data[5] = {ATTR_DEVICESTATUS, 0x0, 0x0, 0x0, TLV_VALUE_POWER_OFF};
+	    sendzgbmsg(socketaddr, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_SOCKET, 0, getpacketid()); 
+	}
 }

@@ -27,5 +27,5 @@ void statustimerfun(timer* t);
 
 void airconditiontimerfun(timer* t);
 
-
+void hotwatertimerfun(timer* t);
 #endif
