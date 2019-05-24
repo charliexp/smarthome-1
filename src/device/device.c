@@ -259,7 +259,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
             }
             else
             {
-                cJSON_AddNumberToObject(status, "value", g_hotwatersystem_socket);
+                cJSON_AddNumberToObject(status, "value", (double)g_hotwatersystem_settingtemperature);
             }			
         	cJSON_AddItemToArray(statusarray, status);     
         	status = cJSON_CreateObject();
