@@ -23,6 +23,7 @@ extern char g_topicroot[20];
 extern char g_boilerid[20];
 extern char g_hotwatersystem_socket[20];
 extern char g_hotwatersystem_temperaturesensor[20];
+extern int g_hotwatersystem_settingtemperature;
 
 extern pthread_mutex_t g_devices_status_mutex;
 

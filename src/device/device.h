@@ -23,6 +23,9 @@ cJSON* create_device_status_json(char* deviceid, char devicetype);
 
 cJSON* dup_device_status_json(char* deviceid);
 
+cJSON* get_device_status_json(char* deviceid);
+
+
 cJSON* get_attr_value_object_json(cJSON* device, char attrtype);
 
 void devices_status_query();
