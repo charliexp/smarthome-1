@@ -809,8 +809,8 @@ int debugproc(cJSON* root, char* topic)
     else if(operationtype == 4)//«Âø’»’÷æ
     {
         fclose(g_fp);
-        g_fp = open(LOG_FILE, O_RDWR | O_TRUNC);
-        fclose(g_fp);
+        int fd = open(LOG_FILE, O_RDWR | O_TRUNC);
+        close(fd);
         log_init();
         cJSON_AddStringToObject(root, "result", "ok");
     } 
