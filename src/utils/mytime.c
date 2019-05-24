@@ -303,16 +303,24 @@ void hotwatertimerfun(timer* t)
 {
     MYLOG_DEBUG("hotwater system check!");
 	if(strlen(g_hotwatersystem_socket) == 0 || strlen(g_hotwatersystem_temperaturesensor) == 0){
+	    t->timevalue = 10;
+	    t->lefttime = 10;		
 		return;
 	}
 	if((check_device_online(g_hotwatersystem_socket)!=1) || (check_device_online(g_hotwatersystem_temperaturesensor)!=1)){
+	    t->timevalue = 10;
+	    t->lefttime = 10;		
 		return;
 	}
 	cJSON* device_temperaturesensor = get_device_status_json(g_hotwatersystem_temperaturesensor);
 	cJSON* tmp = get_attr_value_object_json(device_temperaturesensor, ATTR_ENV_TEMPERATURE);
 	
 	if(tmp == NULL)
+	{
+	    t->timevalue = 10;
+	    t->lefttime = 10;
 		return;
+	}
 	
 	int temperature = cJSON_GetObjectItem(tmp, "value")->valueint;
 	if(temperature > g_hotwatersystem_settingtemperature){
@@ -321,4 +329,8 @@ void hotwatertimerfun(timer* t)
 	    BYTE data[5] = {ATTR_DEVICESTATUS, 0x0, 0x0, 0x0, TLV_VALUE_POWER_OFF};
 	    sendzgbmsg(socketaddr, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_SOCKET, 0, getpacketid()); 
 	}
+
+	t->timevalue = 10;
+	t->lefttime = 10;	
+	return;
 }
