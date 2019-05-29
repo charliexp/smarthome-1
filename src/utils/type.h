@@ -2,7 +2,7 @@
 #define _TYPE_H_
 
 #include "../cjson/cJSON.h"
-#include "util.h"
+#include "../utils/util.h"
 
 typedef unsigned char BYTE;
 typedef BYTE ZGBADDRESS[8];
