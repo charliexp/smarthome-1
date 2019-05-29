@@ -378,88 +378,83 @@ void electricity_stat(char* deviceid, int num)
 	month = t->tm_mon + 1; //localtime获取的month范围0-11
 	year  = t->tm_year + 1900;
 
-	MYLOG_DEBUG("The time is %4d-%2d-%2d %2d:%2d", year, month, day, hour, min);
-
 	sprintf(sql, "update electricity_hour set electricity=%d where deviceid='%s' and hour=%d;", num, deviceid, hour);
     exec_sql_create(sql);
+	memset(sql, 0, 250);
 
     /*天电量处理*/
-    if(hour == 0)
-    {
-        day_sum = num;
-    }
-    else
-    {
-    	sprintf(sql, "select electricity from electricity_day where deviceid = '%s' and day = %d;", deviceid, day);
-        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
-        if(ncolumn==1&&nrow==1)
-        {
-            day_sum = atoi(dbresult[1]);
-            MYLOG_INFO("The day_sum is %d", day_sum);
-            day_sum += num;
-        }
-        else
-        {
-            day_sum = num;
-            MYLOG_DEBUG("can not find right electricity from electricity_day!");
-        }
-        sqlite3_free_table(dbresult);
-    }
-	sprintf(sql, "update electricity_day set electricity=%d where deviceid='%s' and day=%d;", day_sum, deviceid, day);
-    exec_sql_create(sql); 
-	
-	/*月电量处理*/
-	if(day == 1 && hour == 0)
+	sprintf(sql, "select electricity from electricity_day where deviceid = '%s' and day = %d;", deviceid, day);
+	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+	memset(sql, 0, 250);
+	if(ncolumn==1&&nrow==1)
 	{
-	    month_sum = num;
+		day_sum = atoi(dbresult[1]);
+		MYLOG_INFO("The day_sum is %d", day_sum);
+		day_sum += num;
+		
+		sprintf(sql, "update electricity_day set electricity=%d where deviceid='%s' and day=%d;", day_sum, deviceid, day);
+		exec_sql_create(sql);		
 	}
 	else
 	{
-    	sprintf(sql, "select electricity from electricity_month where deviceid = '%s' and month = %d;", deviceid, month);
-        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
-        if(ncolumn==1&&nrow==1)
-        {
-            month_sum = atoi(dbresult[1]);
-            MYLOG_INFO("The month_sum is %d", month_sum);
-            month_sum += num;
-        }
-        else
-        {
-            month_sum = num;
-            MYLOG_ERROR("can not find right electricity from electricity_month!");
-        }
-        sqlite3_free_table(dbresult);
+		day_sum = num;
+		MYLOG_INFO("can not find right electricity from electricity_day!");
+
+		sprintf(sql, "insert into electricity_day values('%s', %d, %d);", deviceid, day_sum, day);
+		exec_sql_create(sql);		
 	}
-	sprintf(sql, "update electricity_month set electricity=%d where deviceid='%s' and month=%d;", month_sum, deviceid, month);
-    exec_sql_create(sql);   
+	memset(sql, 0, 250);
+	sqlite3_free_table(dbresult);
+		
+	/*月电量处理*/
+	sprintf(sql, "select electricity from electricity_month where deviceid = '%s' and month = %d;", deviceid, month);
+	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+	memset(sql, 0, 250);
+	if(ncolumn==1&&nrow==1)
+	{
+		month_sum = atoi(dbresult[1]);
+		MYLOG_INFO("The month_sum is %d", month_sum);
+		month_sum += num;
+		
+		sprintf(sql, "update electricity_month set electricity=%d where deviceid='%s' and month=%d;", month_sum, deviceid, month);
+	    exec_sql_create(sql); 		
+	}
+	else
+	{
+		month_sum = num;
+		MYLOG_INFO("can not find right electricity from electricity_month!");
+		
+		sprintf(sql, "insert into electricity_month values('%s', %d, %d);", deviceid, month_sum, month);
+		exec_sql_create(sql);		
+	}
+	memset(sql, 0, 250);
+	sqlite3_free_table(dbresult);
+
+  
 
 	/*年电量处理*/
-	if(month == 1 && day == 1 && hour == 0)
+	sprintf(sql, "select electricity from electricity_year where deviceid = '%s' and year = %d;", deviceid, year);
+	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+	memset(sql, 0, 250);
+	MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+	if(ncolumn==1&&nrow==1)
 	{
-	    year_sum = num;
+		year_sum = atoi(dbresult[1]);
+		MYLOG_INFO("The year_sum is %d", year_sum);
+		year_sum += num;
+		sprintf(sql, "update electricity_year set electricity=%d where deviceid='%s' and year=%d;", year_sum, deviceid, year);
+	    exec_sql_create(sql); 		
 	}
 	else
 	{
-    	sprintf(sql, "select electricity from electricity_year where deviceid = '%s' and year = %d;", deviceid, year);
-        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
-        if(ncolumn==1&&nrow==1)
-        {
-            year_sum = atoi(dbresult[1]);
-            MYLOG_INFO("The year_sum is %d", year_sum);
-            year_sum += num;
-        }
-        else
-        {
-            year_sum = num;
-            MYLOG_ERROR("can not find right electricity from electricity_year!");
-        }
-        sqlite3_free_table(dbresult);
+		year_sum = num;
+		MYLOG_INFO("can not find right electricity from electricity_year!");
+		sprintf(sql, "insert into electricity_year values('%s', %d, %d);", deviceid, year_sum, year);
+		exec_sql_create(sql);		
 	}
-	sprintf(sql, "update electricity_year set electricity=%d where deviceid='%s' and year=%d;", year_sum, deviceid, year);
-    exec_sql_create(sql);    	
+	memset(sql, 0, 250);
+	sqlite3_free_table(dbresult);
+   	
 }
 
 /*水量数据处理*/
@@ -482,88 +477,82 @@ void wateryield_stat(char* deviceid, int num)
 	month = t->tm_mon + 1;
 	year  = t->tm_year + 1900;
 
-	MYLOG_DEBUG("The time is %4d-%2d-%2d %2d:%2d", year, month, day, hour, min);
-
 	sprintf(sql, "update wateryield_hour set wateryield=%d where deviceid='%s' and hour=%d;", num, deviceid, hour);
     exec_sql_create(sql);
+	memset(sql, 0, 250);
 
     /*天电量处理*/
-    if(hour == 0)
-    {
-        day_sum = num;
-    }
-    else
-    {
-    	sprintf(sql, "select wateryield from wateryield_day where deviceid = '%s' and day = %d", deviceid, day);
-        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
-        if(ncolumn==1&&nrow==1)
-        {
-            day_sum = atoi(dbresult[1]);
-            MYLOG_DEBUG("The day_sum is %d", day_sum);
-            day_sum += num;
-        }
-        else
-        {
-            day_sum = num;
-            MYLOG_ERROR("can not find right wateryield from wateryield_day!");
-        }
-        sqlite3_free_table(dbresult);
-    }
-	sprintf(sql, "update wateryield_day set wateryield=%d where deviceid='%s' and day=%d;", day_sum, deviceid, day);
-    exec_sql_create(sql); 
-	
-	/*月电量处理*/
-	if(day == 1 && hour == 0)
+	sprintf(sql, "select wateryield from wateryield_day where deviceid = '%s' and day = %d;", deviceid, day);
+	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+	memset(sql, 0, 250);
+	if(ncolumn==1&&nrow==1)
 	{
-	    month_sum = num;
+		day_sum = atoi(dbresult[1]);
+		MYLOG_INFO("The day_sum is %d", day_sum);
+		day_sum += num;
+		
+		sprintf(sql, "update wateryield_day set wateryield=%d where deviceid='%s' and day=%d;", day_sum, deviceid, day);
+		exec_sql_create(sql);		
 	}
 	else
 	{
-    	sprintf(sql, "select wateryield from wateryield_month where deviceid = '%s' and month = %d", deviceid, month);
-        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
-        if(ncolumn==1&&nrow==1)
-        {
-            month_sum = atoi(dbresult[1]);
-            MYLOG_DEBUG("The month_sum is %d", month_sum);
-            month_sum += num;
-        }
-        else
-        {
-            month_sum = num;
-            MYLOG_ERROR("can not find right wateryield from wateryield_month!");
-        }
-        sqlite3_free_table(dbresult);
+		day_sum = num;
+		MYLOG_INFO("can not find right wateryield from wateryield_day!");
+
+		sprintf(sql, "insert into wateryield_day values('%s', %d, %d);", deviceid, day_sum, day);
+		exec_sql_create(sql);		
 	}
-	sprintf(sql, "update wateryield_month set wateryield=%d where deviceid='%s' and month=%d;", month_sum, deviceid, month);
-    exec_sql_create(sql);   
+	memset(sql, 0, 250);
+	sqlite3_free_table(dbresult);
+		
+	/*月电量处理*/
+	sprintf(sql, "select wateryield from wateryield_month where deviceid = '%s' and month = %d;", deviceid, month);
+	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+	memset(sql, 0, 250);
+	if(ncolumn==1&&nrow==1)
+	{
+		month_sum = atoi(dbresult[1]);
+		MYLOG_INFO("The month_sum is %d", month_sum);
+		month_sum += num;
+		
+		sprintf(sql, "update wateryield_month set wateryield=%d where deviceid='%s' and month=%d;", month_sum, deviceid, month);
+	    exec_sql_create(sql); 		
+	}
+	else
+	{
+		month_sum = num;
+		MYLOG_INFO("can not find right wateryield from wateryield_month!");
+		
+		sprintf(sql, "insert into wateryield_month values('%s', %d, %d);", deviceid, month_sum, month);
+		exec_sql_create(sql);		
+	}
+	memset(sql, 0, 250);
+	sqlite3_free_table(dbresult);
+
+  
 
 	/*年电量处理*/
-	if(month == 1 && day == 1 && hour == 0)
+	sprintf(sql, "select wateryield from wateryield_year where deviceid = '%s' and year = %d;", deviceid, year);
+	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+	memset(sql, 0, 250);
+	MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+	if(ncolumn==1&&nrow==1)
 	{
-	    year_sum = num;
+		year_sum = atoi(dbresult[1]);
+		MYLOG_INFO("The year_sum is %d", year_sum);
+		year_sum += num;
+		sprintf(sql, "update wateryield_year set wateryield=%d where deviceid='%s' and year=%d;", year_sum, deviceid, year);
+	    exec_sql_create(sql); 		
 	}
 	else
 	{
-    	sprintf(sql, "select wateryield from wateryield_year where deviceid = '%s' and year = %d", deviceid, year);
-        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-        MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
-        if(ncolumn==1&&nrow==1)
-        {
-            year_sum = atoi(dbresult[1]);
-            MYLOG_DEBUG("The year_sum is %d", year_sum);
-            year_sum += num;
-        }
-        else
-        {
-            year_sum = num;
-            MYLOG_ERROR("can not find right wateryield from wateryield_year!");
-        }
-        sqlite3_free_table(dbresult);
+		year_sum = num;
+		MYLOG_INFO("can not find right wateryield from wateryield_year!");
+		sprintf(sql, "insert into wateryield_year values('%s', %d, %d);", deviceid, year_sum, year);
+		exec_sql_create(sql);		
 	}
-	sprintf(sql, "update wateryield_year set wateryield=%d where deviceid='%s' and year=%d;", year_sum, deviceid, year);
-    exec_sql_create(sql);    	
+	memset(sql, 0, 250);
+	sqlite3_free_table(dbresult); 	
 }
 
 
@@ -777,19 +766,9 @@ int debugproc(cJSON* root, char* topic)
     int operationtype = op->valueint;
     if(operationtype == 1)
     {
-        int ret = gatewayregister();
-        if (ret == 0)
-        {
-            MYLOG_INFO("Register gateway success!");
-            cJSON_AddStringToObject(root, "result", "ok");           
-        }
-        else
-        {
-            MYLOG_INFO("Register gateway failed!");
-            cJSON_AddStringToObject(root, "result", "fail");                
-        }        
+		reportdevices();       
     }
-    else if(operationtype == 2)
+    else if(operationtype == 4)
     {
         if(updatefile(LOG_FILE))
         {
@@ -800,13 +779,13 @@ int debugproc(cJSON* root, char* topic)
             cJSON_AddStringToObject(root, "result", "fail");
         }      
     }
-    else if(operationtype == 3)
+    else if(operationtype == 2)
     {
         int loglevel = cJSON_GetObjectItem(root, "value")->valueint;
         g_log_level = loglevel;
         cJSON_AddStringToObject(root, "result", "ok");
     }
-    else if(operationtype == 4)//清空日志
+    else if(operationtype == 3)//清空日志
     {
         fclose(g_fp);
         int fd = open(LOG_FILE, O_RDWR | O_TRUNC);
@@ -819,6 +798,20 @@ int debugproc(cJSON* root, char* topic)
 		Operationlog log = {"1234123412", 1, g_mac, "00000000000000000", 1, 1, 1, ""};
 		reportlog(log);			
 	}
+	else if(operationtype == 6)
+    {
+        int ret = gatewayregister();
+        if (ret == 0)
+        {
+            MYLOG_INFO("Register gateway success!");
+            cJSON_AddStringToObject(root, "result", "ok");           
+        }
+        else
+        {
+            MYLOG_INFO("Register gateway failed!");
+            cJSON_AddStringToObject(root, "result", "fail");                
+        }        
+    }
     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);    
 }
 
@@ -838,6 +831,7 @@ int reportlog(Operationlog log)
             "\t\"operationresult\":%d,\n"
             "\t\"operationtime\":\"\"\n"
             "}", log.logtype, log.userid, g_mac, log.deviceid, log.operationtype, log.devicetype, log.operationresult);
+	MYLOG_ERROR(info);
     curl_global_init(CURL_GLOBAL_ALL);
     curl_handle = curl_easy_init();
 

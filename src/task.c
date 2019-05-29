@@ -246,7 +246,7 @@ void* devicemsgprocess(void *argc)
     char db_zgbaddress[20];
     char devicetype,deviceindex;
     char *zErrMsg = 0;  
-    char sql[512]; 
+    char sql[512] ={0}; 
     BYTE data[72];
     int rc;  
     int len = 0;   
@@ -417,6 +417,7 @@ void* devicemsgprocess(void *argc)
                 MYLOG_INFO(sql);
                 
                 sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+				memset(sql, 0, strlen(sql));
                 if(nrow == 0) //数据库中没有该设备
                 {
                     MYLOG_ERROR("MQTT:The device is not exist! id:%s", deviceid);
@@ -479,7 +480,6 @@ void* devicemsgprocess(void *argc)
 				g_devicemsgstatus[i].reportflag = 0;
 				memcpy(log->userid, userid, strlen(userid));
 				memcpy(log->deviceid, deviceid, strlen(deviceid));
-				reportlog(*log);
     		}
 
     		for(i=0; i<RESPONSE_WAIT/50; i++)  //50毫秒循环一次
@@ -500,7 +500,12 @@ void* devicemsgprocess(void *argc)
     		for (i=0; i<devicenum; i++)
     		{
     			device = cJSON_GetArrayItem(devs, i);
-    			cJSON_AddNumberToObject(device, "result", g_devicemsgstatus[i].result);    			
+    			cJSON_AddNumberToObject(device, "result", g_devicemsgstatus[i].result);
+				if(g_devicemsgstatus[i].reportflag == 0)
+				{
+					g_devicemsgstatus[i].log.operationresult = g_devicemsgstatus[i].result;
+					int r = reportlog(g_devicemsgstatus[i].log);
+				}
     		}
     		cJSON_AddItemToObject(result_json, "devices", devs);
         }        
@@ -539,6 +544,70 @@ void* devicemsgprocess(void *argc)
             cJSON_AddItemToObject(result_json, "devices", statusarray);
             
         }
+		else if(operationtype == 3) //删除设备
+		{
+			MYLOG_DEBUG("Get a delete device msg!");
+    		for (i=0; i< devicenum; i++)
+    		{
+	            int sum;
+	            cJSON* devicestatus = NULL;
+	            char* array_deviceid;
+				int length;
+				cJSON* id;
+				cJSON* device_array = cJSON_CreateArray();
+				
+    			device = cJSON_GetArrayItem(devices, i); 
+                tmp = cJSON_GetObjectItem(device, "deviceid");
+                if(tmp == NULL)
+    		    {
+                    cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+                    goto response;
+    			}                
+                
+    			deviceid = tmp->valuestring;
+	            sprintf(sql,"DELETE FROM devices WHERE deviceid = '%s';", deviceid);            
+	            exec_sql_create(sql);
+				memset(sql, 0, strlen(sql));
+
+	            pthread_mutex_lock(&g_devices_status_mutex);
+	            sum = cJSON_GetArraySize(g_devices_status_json);
+
+	            //删除内存设备状态表中相关的设备
+	            for (int i=0; i < sum;)
+	            {
+	                devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
+	                if(devicestatus == NULL)
+	                {
+	                	i++;
+	                    continue;
+	                }
+	                cJSON* json_deviceid = cJSON_GetObjectItem(devicestatus, "deviceid");
+	                if(deviceid == NULL)
+	                {
+	                    continue;
+	                }
+	                array_deviceid = json_deviceid->valuestring;
+					length = (strlen(deviceid)>strlen(array_deviceid)?strlen(deviceid):strlen(array_deviceid));					
+	                if(strncmp(deviceid, array_deviceid, length) == 0)//同一个ZGB设备上的设备
+	                {	
+	                    id = cJSON_CreateString(array_deviceid);
+	                    cJSON_AddItemToArray(device_array, id);	                
+	                    cJSON_DeleteItemFromArray(g_devices_status_json, i);
+	                    devicenum--;
+	                }
+	                else
+	                {
+	                     i++;
+	                }
+	            }
+	            if(cJSON_GetArraySize(device_array)>0)
+	            {
+	                //devicedatadelete(db_zgbaddress);//删除电量或者水量数据                
+	                sendmqttmsg(MQTT_MSG_TYPE_PUB, TOPIC_DEVICE_DELETE, cJSON_PrintUnformatted(device_array), 0, 0);
+	            }
+	            pthread_mutex_unlock(&g_devices_status_mutex);				
+            }			
+		}
         
 response:
     	sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(result_json), QOS_LEVEL_2, 0);  
@@ -619,7 +688,6 @@ void* zgbmsgprocess(void* argc)
             MYLOG_INFO(sql);
             
             sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
-            //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
             if(nrow == 0) //数据库中没有该设备
             {
                 milliseconds_sleep(1000);
