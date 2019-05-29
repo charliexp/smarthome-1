@@ -17,14 +17,15 @@ typedef enum bool
 char getpacketid(void);
 
 typedef struct {
-	int userid;
+	char userid[20];
 	int logtype;
-	char gateway[20];
-	int devicetype;
+	char* gatewayid;
 	char deviceid[20];
 	int operationtype;
+	int devicetype;
 	int operationresult;
-}operationlog;
+	char operationtime[20]; 
+}Operationlog;
 
 /*获取设备mac值
 * 格式如下
@@ -78,4 +79,8 @@ int already_running(const char *filename);
 int ledcontrol(int num, int action, int time);
 
 int debugproc(cJSON* root, char* topic);
+
+//上报日志
+int reportlog(Operationlog log);
+
 #endif

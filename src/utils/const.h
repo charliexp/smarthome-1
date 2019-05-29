@@ -237,4 +237,7 @@
 #define CHECK_NULL_CONTINUE(obj) if(!obj) continue;
 #define CHECK_NULL_BREAK(obj)   if(!obj) break; 
 
+#define OPERATIONLOG 1
+#define QUERYLOG     2
+
 #endif

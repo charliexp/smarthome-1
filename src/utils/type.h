@@ -93,6 +93,8 @@ typedef struct
 	char packetid;
 	char result;
 	char finish;//判断该消息是否已收到回复或者已经处理完
+	Operationlog log;
+	char reportflag;  //日志是否上报，0上报，1不上报
 }ZGB_MSG_STATUS;
 
 #endif

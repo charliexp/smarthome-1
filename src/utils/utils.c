@@ -468,7 +468,7 @@ void wateryield_stat(char* deviceid, int num)
     time_t time_now;
     int min,hour,day,month,year;
     int day_sum=0,month_sum=0,year_sum=0;
-    char sql[250]={0};   
+    char sql[250]={0};
     int nrow = 0, ncolumn = 0;
     char **dbresult;
     char *zErrMsg = NULL;
@@ -813,6 +813,65 @@ int debugproc(cJSON* root, char* topic)
         close(fd);
         log_init();
         cJSON_AddStringToObject(root, "result", "ok");
-    } 
+    }
+	else if(operationtype == 5)//发送测试日志
+	{
+		Operationlog log = {"1234123412", 1, g_mac, "00000000000000000", 1, 1, 1, ""};
+		reportlog(log);			
+	}
     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);    
+}
+
+int reportlog(Operationlog log)
+{
+    CURL *curl_handle;
+    CURLcode res;
+    char info[200];
+    struct curl_slist *list = NULL;
+    
+    sprintf(info, "{\"logtype\":%d,\n"
+            "\t\"userid\":\"%s\",\n"
+            "\t\"gateway\":\"%s\",\n"
+            "\t\"deviceid\":\"%s\",\n"
+            "\t\"operationtype\":%d,\n"
+            "\t\"devicetype\":%d,\n"
+            "\t\"operationresult\":%d,\n"
+            "\t\"operationtime\":\"\"\n"
+            "}", log.logtype, log.userid, g_mac, log.deviceid, log.operationtype, log.devicetype, log.operationresult);
+    curl_global_init(CURL_GLOBAL_ALL);
+    curl_handle = curl_easy_init();
+
+    curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+    curl_easy_setopt(curl_handle, CURLOPT_POST,1);
+    
+	//curl_easy_setopt(curl_handle,CURLOPT_VERBOSE,1); //打印调试信息
+
+    curl_easy_setopt(curl_handle, CURLOPT_URL, "https://192.168.188.108:8443/operationlog/add");
+    
+    list = curl_slist_append(list, "accept: */*");
+    list = curl_slist_append(list, "Content-Type: application/json");
+
+    curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, list);
+    curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, info);
+
+    res = curl_easy_perform(curl_handle);
+
+    if(res != CURLE_OK)
+    {
+        MYLOG_ERROR("curl_easy_perform() failed: %s\n",
+        curl_easy_strerror(res));
+        curl_easy_cleanup(curl_handle);
+        curl_slist_free_all(list);
+        curl_global_cleanup();        
+        return -1;
+    }
+    else
+    {
+        MYLOG_INFO("Gateway register success!\n");     
+        curl_easy_cleanup(curl_handle);
+        curl_slist_free_all(list);
+        curl_global_cleanup();   
+        return 0;
+    }	
 }

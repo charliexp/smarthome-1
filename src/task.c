@@ -251,6 +251,7 @@ void* devicemsgprocess(void *argc)
     int rc;  
     int len = 0;   
     cJSON* devicestatus;
+	char* userid;
 
 	while(1)
 	{
@@ -272,9 +273,20 @@ void* devicemsgprocess(void *argc)
      		sprintf(topic, "%s%s/response/%d", g_topicroot, g_topicthemes[0], mqttid);
      
         }else{
+			MYLOG_ERROR("Wrong MQTT msg, NO 'mqttid'!");
 		    cJSON_Delete(device_mqtt_json);
             continue;
         }
+
+        tmp = cJSON_GetObjectItem(device_mqtt_json, "user");
+        if (tmp != NULL)
+        {
+        	userid = tmp->string;     
+        }else{
+			MYLOG_ERROR("Wrong MQTT msg, NO 'user'!");
+		    cJSON_Delete(device_mqtt_json);
+            continue;
+        }		
         
 		result_json = cJSON_CreateObject();
 		cJSON_AddNumberToObject(result_json, "mqttid", mqttid);
@@ -283,7 +295,7 @@ void* devicemsgprocess(void *argc)
         tmp = cJSON_GetObjectItem(device_mqtt_json, "operation");
         if (tmp == NULL)
         {
-            MYLOG_ERROR("Wrong MQTT msg, NO 'operation:'!");
+            MYLOG_ERROR("Wrong MQTT msg, NO 'operation'!");
             cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
             goto response;
         }          
@@ -383,9 +395,11 @@ void* devicemsgprocess(void *argc)
                 ***/
     			packetid = getpacketid(); //packetid是用来跟zgb设备通信使用的
     			g_devicemsgstatus[i].packetid = packetid;
-    			g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_OPERATIONFAIL; //1代表失败，0代表成功，2代表设备未响应
+    			g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_OPERATIONFAIL; //1代表失败，0代表成功，2代表设备未响应'
+    			g_devicemsgstatus[i].reportflag = 1;
     			g_devicemsgstatus[i].finish = 1; //1代表未处理完
-                
+    			Operationlog* log = g_devicemsgstatus[i].log;
+		                
                 tmp = cJSON_GetObjectItem(device, "deviceid");
                 if(tmp == NULL)
     		    {
@@ -455,7 +469,16 @@ void* devicemsgprocess(void *argc)
                 int datalen = mqtttozgb(operations, data, devicetype);
                 sendzgbmsg(src, data, datalen, ZGB_MSGTYPE_DEVICE_OPERATION, devicetype, deviceindex, packetid);
                 cJSON_AddItemToArray(devs, dev);
-                sqlite3_free_table(dbresult);             
+                sqlite3_free_table(dbresult);
+
+				//初始化日志结构体
+				log->gatewayid = g_mac;
+				log->logtype = OPERATIONLOG;
+				log->operationtype = operationtype;
+				log->devicetype = devicetype;
+				g_devicemsgstatus[i].reportflag = 0;
+				memcpy(log->userid, userid, strlen(userid));
+				memcpy(log->deviceid, deviceid, strlen(deviceid));				
     		}
 
     		for(i=0; i<RESPONSE_WAIT/50; i++)  //50毫秒循环一次
@@ -694,34 +717,35 @@ void* zgbmsgprocess(void* argc)
                  sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
                  if(nrow != 0) //数据库中有该设备
                  {
-                    MYLOG_INFO("The device has been registered!");
-                    break;
+                     MYLOG_INFO("The device has been registered!");
                  }
-                 sqlite3_free_table(azResult);                 
-                 nrow = 0, ncolumn = 0;
-                 
-                 sprintf(sql, "replace into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, devicetype, deviceindex);
-                 MYLOG_INFO("The sql is %s", sql);
+				 else
+				 {	                 
+	                 sprintf(sql, "insert into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, devicetype, deviceindex);
+	                 MYLOG_INFO("The sql is %s", sql);
 
-                 if(devicetype == DEV_SOCKET || devicetype == DEV_FAN_COIL || devicetype == DEV_FRESH_AIR)
-                 {
-                    devicedatainit(db_deviceid, 1);
-                 }else if(devicetype == SEN_WATER_FLOW)
-                 {
-                     devicedatainit(db_deviceid, 2);                       
-                 }
-                 
-                 rc = sqlite3_exec(g_db, sql, 0, 0, &zErrMsg);
-                 if(rc != SQLITE_OK)
-                 {
-                     MYLOG_ERROR(zErrMsg);
-                     break;
-                 }
-
-                 cJSON* devicestatus = create_device_status_json(db_deviceid, devicetype);
-                 cJSON_AddItemToArray(g_devices_status_json, devicestatus);
-                 MYLOG_INFO("The devices status is %s", cJSON_PrintUnformatted(g_devices_status_json));
-                 
+	                 if(devicetype == DEV_SOCKET || devicetype == DEV_FAN_COIL || devicetype == DEV_FRESH_AIR)
+	                 {
+	                     devicedatainit(db_deviceid, 1);
+	                 }
+					 else if(devicetype == SEN_WATER_FLOW)
+	                 {
+	                     devicedatainit(db_deviceid, 2);                       
+	                 }
+	                 
+	                 rc = sqlite3_exec(g_db, sql, 0, 0, &zErrMsg);
+	                 if(rc != SQLITE_OK)
+	                 {
+	                     MYLOG_ERROR(zErrMsg);
+	                     break;
+	                 }	
+					 
+	                 cJSON* devicestatus = create_device_status_json(db_deviceid, devicetype);
+	                 cJSON_AddItemToArray(g_devices_status_json, devicestatus);		 
+				}				           
+				 
+				 sqlite3_free_table(azResult); 			
+				 
                  sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_ADD);
                  cJSON_AddStringToObject(root, "deviceid", db_deviceid);
                  cJSON_AddNumberToObject(root, "devicetype", devicetype);
@@ -866,7 +890,7 @@ void* zgbmsgprocess(void* argc)
                                 tmp = cJSON_GetArrayItem(status, i);
                                 attr = cJSON_GetObjectItem(tmp, "type")->valueint;
                                 //如果不是类型和状态属性全部删除
-                                if(attr != ATTR_DEVICESTATUS&& attr != ATTR_DEVICETYPE)
+                                if(attr != ATTR_DEVICESTATUS && attr != ATTR_DEVICETYPE && attr != ATTR_ENV_HUMIDITY)
                                 {
                                     cJSON_DeleteItemFromArray(status, i);
                                     sum--;
