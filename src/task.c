@@ -398,7 +398,7 @@ void* devicemsgprocess(void *argc)
     			g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_OPERATIONFAIL; //1代表失败，0代表成功，2代表设备未响应'
     			g_devicemsgstatus[i].reportflag = 1;
     			g_devicemsgstatus[i].finish = 1; //1代表未处理完
-    			Operationlog* log = g_devicemsgstatus[i].log;
+    			Operationlog* log = &(g_devicemsgstatus[i].log);
 		                
                 tmp = cJSON_GetObjectItem(device, "deviceid");
                 if(tmp == NULL)
@@ -478,7 +478,8 @@ void* devicemsgprocess(void *argc)
 				log->devicetype = devicetype;
 				g_devicemsgstatus[i].reportflag = 0;
 				memcpy(log->userid, userid, strlen(userid));
-				memcpy(log->deviceid, deviceid, strlen(deviceid));				
+				memcpy(log->deviceid, deviceid, strlen(deviceid));
+				reportlog(*log);
     		}
 
     		for(i=0; i<RESPONSE_WAIT/50; i++)  //50毫秒循环一次

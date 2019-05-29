@@ -2,10 +2,20 @@
 #define _TYPE_H_
 
 #include "../cjson/cJSON.h"
-#include "../utils/util.h"
 
 typedef unsigned char BYTE;
 typedef BYTE ZGBADDRESS[8];
+
+typedef struct {
+	char  userid[20];
+	int   logtype;
+	char* gatewayid;
+	char  deviceid[20];
+	int   operationtype;
+	int   devicetype;
+	int   operationresult;
+	char  operationtime[20]; 
+}Operationlog;
 
 typedef struct 
 {

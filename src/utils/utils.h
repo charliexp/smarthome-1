@@ -16,17 +16,6 @@ typedef enum bool
 /*获取zgbmsg消息的packetid*/
 char getpacketid(void);
 
-typedef struct {
-	char userid[20];
-	int logtype;
-	char* gatewayid;
-	char deviceid[20];
-	int operationtype;
-	int devicetype;
-	int operationresult;
-	char operationtime[20]; 
-}Operationlog;
-
 /*获取设备mac值
 * 格式如下
 * 00:0c:43:e1:76:28
