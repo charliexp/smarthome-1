@@ -605,7 +605,18 @@ void* devicemsgprocess(void *argc)
 		}
         
 response:
-    	sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(result_json), QOS_LEVEL_2, 0);  
+    	sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(result_json), QOS_LEVEL_2, 0);
+		if(operationtype == 1)
+		{
+    		for (i=0; i<devicenum; i++)
+    		{
+				if(g_devicemsgstatus[i].reportflag == 0)
+				{
+					g_devicemsgstatus[i].log.operationresult = g_devicemsgstatus[i].result;
+					int r = reportlog(g_devicemsgstatus[i].log);
+				}
+    		}				
+		}		
 		cJSON_Delete(device_mqtt_json);
 		cJSON_Delete(result_json);
 	}

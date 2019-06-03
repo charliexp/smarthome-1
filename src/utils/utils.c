@@ -833,11 +833,9 @@ int reportlog(Operationlog log)
             "\t\"devicetype\":%d,\n"
             "\t\"deviceattr\":%d,\n"
             "\t\"deviceattrvalue\":%d,\n"
-            "\t\"operationresult\":%d,\n"
-            "\t\"operationtime\":\"\"\n"
+            "\t\"operationresult\":%d\n"
             "}", log.logtype, log.userid, g_mac, log.deviceid, log.operationtype, log.devicetype, log.deviceattr,\
             log.deviceattrvalue, log.operationresult);
-	MYLOG_ERROR(info);
     curl_global_init(CURL_GLOBAL_ALL);
     curl_handle = curl_easy_init();
 
