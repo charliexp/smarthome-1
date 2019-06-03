@@ -13,6 +13,8 @@ typedef struct {
 	char  deviceid[20];
 	int   operationtype;
 	int   devicetype;
+	int   deviceattr;
+	int   deviceattrvalue;
 	int   operationresult;
 	char  operationtime[20]; 
 }Operationlog;

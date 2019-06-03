@@ -320,9 +320,6 @@ void* devicemsgprocess(void *argc)
                     MYLOG_INFO("COO operation AT+FORM=02");
                     break;
                 case TYPE_OPEN_NETWORK:
-                    write(g_uartfd, AT_CREATE_NETWORK, strlen(AT_CREATE_NETWORK));
-                    MYLOG_INFO("COO operation AT+FORM=02");
-                    milliseconds_sleep(2000);
                     write(g_uartfd, AT_OPEN_NETWORK, strlen(AT_OPEN_NETWORK));
                     MYLOG_INFO("COO operation AT+PERMITJOIN=78");
                     if(g_zgbtimer == NULL)
@@ -338,10 +335,6 @@ void* devicemsgprocess(void *argc)
                     }
                     reportdevices();
                     break;
-                case TYPE_DEVICE_LIST:
-                    write(g_uartfd, AT_DEVICE_LIST, strlen(AT_DEVICE_LIST));
-                    MYLOG_INFO("COO operation AT+LIST");                    
-                    break;   
                 case TYPE_NETWORK_NOCLOSE:
                     write(g_uartfd, AT_NETWORK_NOCLOSE, strlen(AT_NETWORK_NOCLOSE));
                     MYLOG_INFO("COO operation AT+PERMITJOIN=FF");
@@ -359,11 +352,7 @@ void* devicemsgprocess(void *argc)
                     write(g_uartfd, AT_CLOSE_NETWORK, strlen(AT_CLOSE_NETWORK));
                     MYLOG_INFO("COO operation AT+PERMITJOIN=00");
                     ledcontrol(ZGB_LED, LED_ACTION_ON, 0);
-                    break;
-                case TYPE_NETWORK_INFO:
-                    write(g_uartfd, AT_NETWORK_INFO, strlen(AT_NETWORK_INFO));
-                    MYLOG_INFO("COO operation AT+GETINFO");
-                    break;   
+                    break; 
                 default:
                     MYLOG_ERROR("Unknow actiontype!");
                     cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
@@ -447,7 +436,13 @@ void* devicemsgprocess(void *argc)
                 //操作的设备是网关本身
                 if (devicetype == DEV_GATEWAY)
                 {
-                    int ret = gatewayproc(operations);
+                    int ret = gatewayproc(operations, log);
+					//初始化日志结构体
+					log->gatewayid = g_mac;
+					log->logtype = OPERATIONLOG;
+					log->operationtype = operationtype;
+					log->devicetype = devicetype;
+					g_devicemsgstatus[i].reportflag = 0;					
                     g_devicemsgstatus[i].result = ret;
                     g_devicemsgstatus[i].finish = 0; //0代表已处理完
                     cJSON_AddItemToArray(devs, dev);
@@ -467,7 +462,7 @@ void* devicemsgprocess(void *argc)
                 }    		    
     		  
     		    BYTE data[125];
-                int datalen = mqtttozgb(operations, data, devicetype);
+                int datalen = mqtttozgb(operations, data, devicetype, log);
                 sendzgbmsg(src, data, datalen, ZGB_MSGTYPE_DEVICE_OPERATION, devicetype, deviceindex, packetid);
                 cJSON_AddItemToArray(devs, dev);
                 sqlite3_free_table(dbresult);
@@ -546,7 +541,7 @@ void* devicemsgprocess(void *argc)
         }
 		else if(operationtype == 3) //删除设备
 		{
-			MYLOG_DEBUG("Get a delete device msg!");
+			MYLOG_ERROR("Get a delete device msg!");
     		for (i=0; i< devicenum; i++)
     		{
 	            int sum;

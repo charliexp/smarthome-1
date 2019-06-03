@@ -9,12 +9,10 @@
 #define AT_CLOSE_NETWORK        "AT+PERMITJOIN=00"
 #define AT_NETWORK_INFO         "AT+GETINFO"
 
-#define TYPE_CREATE_NETWORK       0x01
-#define TYPE_OPEN_NETWORK         0x02
-#define TYPE_DEVICE_LIST          0x03
+#define TYPE_CREATE_NETWORK       0x03
+#define TYPE_OPEN_NETWORK         0x01
 #define TYPE_NETWORK_NOCLOSE      0x04
-#define TYPE_CLOSE_NETWORK        0x05
-#define TYPE_NETWORK_INFO         0x06
+#define TYPE_CLOSE_NETWORK        0x02
 
 #define HOTWATER_DEFAULTTEMPERATURE 45
 

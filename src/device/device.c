@@ -115,10 +115,9 @@ void change_panel_mode(int mode)
 
 void change_boiler_mode(int mode)
 {   
-    ZGBADDRESS addr;
-    dbaddresstozgbaddress(g_boilerid, addr);
+    ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文 
     BYTE data[5] = {ATTR_DEVICESTATUS, 0x0, 0x0, 0x0, mode};
-    sendzgbmsg(addr, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_SOCKET, 0x0, getpacketid());    
+    sendzgbmsg(address, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_BOILER, 0x0, getpacketid());    
 }
 
 void devices_status_query()
@@ -662,7 +661,7 @@ void change_device_attr_value(char* deviceid, char attr, int value)
 }
 
 /* MQTT的操作数据转为ZGB的DATA */
-int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
+int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype, Operationlog* log)
 {
     if(!op)
         return 0;
@@ -678,13 +677,17 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
     MYLOG_INFO("the operationnum = %d", opnum);
     MYLOG_INFO("Begin to trans mqtt to zgb");
 
-    for(int i=0 ; i<opnum; i++)
+    for(int i=0; i<opnum; i++)
     {
         item = cJSON_GetArrayItem(op, i);
         attr = cJSON_GetObjectItem(item, "type")->valueint;
         
         if(attr != ATTR_DEVICENAME)
-            value = cJSON_GetObjectItem(item, "value")->valueint;
+        {
+			log->deviceattr = attr;		
+            value = cJSON_GetObjectItem(item, "value")->valueint;			        
+			log->deviceattrvalue = value;
+        }
         else
             name = cJSON_GetObjectItem(item, "value")->valuestring;
 
@@ -729,7 +732,7 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype)
     return index--;
 }
 
-int gatewayproc(cJSON* op)
+int gatewayproc(cJSON* op, Operationlog* log)
 {
     cJSON* item,* temp;
     int attr=0;
@@ -740,6 +743,7 @@ int gatewayproc(cJSON* op)
     {
         item = cJSON_GetArrayItem(op, i);
         attr = cJSON_GetObjectItem(item, "type")->valueint;
+		log->deviceattr = attr;
         if(attr == ATTR_SYSMODE)
         {
             temp = cJSON_GetObjectItem(item, "value");
@@ -748,6 +752,7 @@ int gatewayproc(cJSON* op)
                 return MQTT_MSG_ERRORCODE_FORMATERROR;
             }
             value = temp->valueint;
+			log->deviceattrvalue = value;
             if(value == TLV_VALUE_COND_HEAT || value == TLV_VALUE_COND_COLD || value == TLV_VALUE_BOILER_HEAT)
             {
                 if(g_system_mode != value)
@@ -840,7 +845,7 @@ int gatewayproc(cJSON* op)
             }
 			
             value = temp->valueint;
-
+			log->deviceattrvalue = value;
 			if(attr == ATTR_HOTWATER_TEMPERATURE_TARGET){
 				set_hotwatersystem_targettemperature(value);
 			}
@@ -1036,7 +1041,6 @@ void change_system_boiler(char* id)
     cJSON* boiler = cJSON_CreateString(id);
     cJSON_ReplaceItemInObject(devid, "value", boiler);
     set_system_boiler(id);
-
 }
 
 int get_hotwatersystem_socket(char* id)

@@ -39,11 +39,11 @@ void device_closeallfan();
 
 void change_boiler_mode(int mode);
 
-int gatewayproc(cJSON* op);
+int gatewayproc(cJSON* op, Operationlog* log);
 
 /* MQTT的操作数据转为ZGB的DATA */
 /* 返回data的数据长度 */
-int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype);
+int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype, Operationlog* log);
 
 /*设置设备下线状态*/
 void change_devices_offline();

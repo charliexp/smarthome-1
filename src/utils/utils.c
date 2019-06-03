@@ -148,7 +148,10 @@ int init_uart(char* port)
     {    
         MYLOG_ERROR("uart set error!");      
         return -1;     
-    }    
+    }
+	//½¨Á¢zgbÍøÂç
+	write(g_uartfd, AT_CREATE_NETWORK, strlen(AT_CREATE_NETWORK));
+	
     return 0;    
 }
 
@@ -828,9 +831,12 @@ int reportlog(Operationlog log)
             "\t\"deviceid\":\"%s\",\n"
             "\t\"operationtype\":%d,\n"
             "\t\"devicetype\":%d,\n"
+            "\t\"deviceattr\":%d,\n"
+            "\t\"deviceattrvalue\":%d,\n"
             "\t\"operationresult\":%d,\n"
             "\t\"operationtime\":\"\"\n"
-            "}", log.logtype, log.userid, g_mac, log.deviceid, log.operationtype, log.devicetype, log.operationresult);
+            "}", log.logtype, log.userid, g_mac, log.deviceid, log.operationtype, log.devicetype, log.deviceattr,
+            log.deviceattrvalue log.operationresult);
 	MYLOG_ERROR(info);
     curl_global_init(CURL_GLOBAL_ALL);
     curl_handle = curl_easy_init();
