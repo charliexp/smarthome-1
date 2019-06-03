@@ -798,7 +798,7 @@ int debugproc(cJSON* root, char* topic)
     }
 	else if(operationtype == 5)//∑¢ÀÕ≤‚ ‘»’÷æ
 	{
-		Operationlog log = {"1234123412", 1, g_mac, "00000000000000000", 1, 1, 1, ""};
+		Operationlog log = {"test", 1, g_mac, "00000000000000000", 1, 0, ATTR_SYSMODE, TLV_VALUE_COND_COLD, 1, ""};
 		reportlog(log);			
 	}
 	else if(operationtype == 6)
@@ -835,7 +835,7 @@ int reportlog(Operationlog log)
             "\t\"deviceattrvalue\":%d,\n"
             "\t\"operationresult\":%d,\n"
             "\t\"operationtime\":\"\"\n"
-            "}", log.logtype, log.userid, g_mac, log.deviceid, log.operationtype, log.devicetype, log.deviceattr,
+            "}", log.logtype, log.userid, g_mac, log.deviceid, log.operationtype, log.devicetype, log.deviceattr,\
             log.deviceattrvalue log.operationresult);
 	MYLOG_ERROR(info);
     curl_global_init(CURL_GLOBAL_ALL);
