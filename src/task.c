@@ -281,7 +281,7 @@ void* devicemsgprocess(void *argc)
         tmp = cJSON_GetObjectItem(device_mqtt_json, "user");
         if (tmp != NULL)
         {
-        	userid = tmp->string;     
+        	userid = tmp->valuestring;     
         }else{
 			MYLOG_ERROR("Wrong MQTT msg, NO 'user'!");
 		    cJSON_Delete(device_mqtt_json);
@@ -496,11 +496,6 @@ void* devicemsgprocess(void *argc)
     		{
     			device = cJSON_GetArrayItem(devs, i);
     			cJSON_AddNumberToObject(device, "result", g_devicemsgstatus[i].result);
-				if(g_devicemsgstatus[i].reportflag == 0)
-				{
-					g_devicemsgstatus[i].log.operationresult = g_devicemsgstatus[i].result;
-					int r = reportlog(g_devicemsgstatus[i].log);
-				}
     		}
     		cJSON_AddItemToObject(result_json, "devices", devs);
         }        
