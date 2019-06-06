@@ -924,7 +924,7 @@ void* zgbmsgprocess(void* argc)
                         }
                         case ATTR_SEN_WATER_YIELD:
                         {
-                            MYLOG_ERROR("Get a water yield report msg, the deviceid is %s", db_deviceid);
+                            MYLOG_INFO("Get a water yield report msg, the deviceid is %s", db_deviceid);
                             needmqtt = false || needmqtt;
                             change_device_attr_value(db_deviceid, attr, value);                 
                             wateryield_stat(db_deviceid, value);
@@ -932,7 +932,7 @@ void* zgbmsgprocess(void* argc)
                         }                
                         case ATTR_SOCKET_E:
                         {
-                            MYLOG_ERROR("Get a socket electricity report msg, the deviceid is %s", db_deviceid);
+                            MYLOG_INFO("Get a socket electricity report msg, the deviceid is %s", db_deviceid);
                             needmqtt = false || needmqtt;
                             change_device_attr_value(db_deviceid, attr, value);                 
                             electricity_stat(db_deviceid, value);
@@ -993,7 +993,7 @@ void* zgbmsgprocess(void* argc)
                 //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
                 if(nrow == 0) //数据库中没有该设备
                 {
-                   MYLOG_INFO("The device has been registered!");
+                   MYLOG_INFO("The device has not been registered!");
                    break;
                 }
                 sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_SHOW);

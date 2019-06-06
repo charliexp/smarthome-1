@@ -845,7 +845,7 @@ int reportlog(Operationlog log)
     
 	//curl_easy_setopt(curl_handle,CURLOPT_VERBOSE,1); //打印调试信息
 
-    curl_easy_setopt(curl_handle, CURLOPT_URL, "https://192.168.188.108:8443/operationlog/add");
+    curl_easy_setopt(curl_handle, CURLOPT_URL, "https://123.206.15.63:8443/operationlog/add");
     
     list = curl_slist_append(list, "accept: */*");
     list = curl_slist_append(list, "Content-Type: application/json");
