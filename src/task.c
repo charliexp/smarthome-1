@@ -922,7 +922,7 @@ void* zgbmsgprocess(void* argc)
 	                                default:
 	                                    break;
                                 }
-								if(packetid == 0)
+								if(packetid == 0 && devicetype != DEV_AIR_CON)
 								{
 									Operationlog log = {"0", 1, g_mac, "", 1, devicetype, attr, value, 0, ""};
 									memcpy(log.deviceid, db_deviceid, strlen(db_deviceid));
