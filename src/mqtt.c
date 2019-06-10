@@ -1,7 +1,7 @@
 #include "app.h"
 #include "paho/MQTTAsync.h"
 
-extern int g_queueid;
+extern int g_queueid,g_zgbqueueid;
 extern char g_topics[TOPICSNUM][50];
 extern char g_clientid[30], g_clientid_pub[30];
 extern char g_topicroot[20];
@@ -70,7 +70,7 @@ void mqtt_reconnect(Clientcontext* context)
 	conn_opts.onFailure = connectfailure;
 	conn_opts.context = context;
 
-    sleep(10);
+    sleep(5);
 	
 	MQTTAsync_connect(context->handle, &conn_opts);
 }

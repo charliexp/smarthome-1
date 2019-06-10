@@ -15,7 +15,7 @@
 #include "../log/log.h"
 #include "../mqtt.h"
 
-extern int g_queueid;
+extern int g_queueid,g_zgbqueueid;
 extern cJSON* g_devices_status_json;
 extern sqlite3* g_db;
 extern int g_system_mode;
@@ -161,7 +161,7 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
     uartmsg.msgtype = QUEUE_MSG_UART;
     uartmsg.msg = msg;
 
-    if (ret = msgsnd(g_queueid, &uartmsg, sizeof(uartmsg), 0) != 0)
+    if (ret = msgsnd(g_zgbqueueid, &uartmsg, sizeof(uartmsg), 0) != 0)
     {
 		MYLOG_ERROR("send uartsendqueuemsg fail!");
         return -1;

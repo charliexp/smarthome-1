@@ -7,6 +7,7 @@ int g_uartfd;
 int g_log_level = 2;
 int g_system_mode = 1;
 int g_queueid;
+int g_zgbqueueid;
 sqlite3* g_db;
 char g_mac[20] = {0};
 
@@ -81,7 +82,7 @@ int sqlitedb_init()
         sprintf(sql, "insert into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, DEV_GATEWAY, 0);
         exec_sql_create(sql);
 
-        sprintf(sql, "insert into gatewaycfg values(2, \"\");");
+        sprintf(sql, "insert into gatewaycfg(mode) values(2);");
         exec_sql_create(sql);          
     }
     else
@@ -118,6 +119,16 @@ int createmessagequeue()
 		MYLOG_ERROR("get ipc_id error!");
 		return -1;
 	}
+
+	key = ftok("/", 1);
+    
+	g_zgbqueueid = msgget(key, IPC_CREAT | 0644);
+	if (g_zgbqueueid < 0)
+	{
+		MYLOG_ERROR("get ipc_id error!");
+		return -1;
+	}	
+	
     return 0;  
 }
 
@@ -627,7 +638,7 @@ void* uartsend(void *argc)
     MYLOG_DEBUG("Enter pthread uartsend");
     while(true)
     {
-		if ( rcvret = msgrcv(g_queueid, (void*)&qmsg, sizeof(qmsg), QUEUE_MSG_UART, 0) <= 0 )
+		if ( rcvret = msgrcv(g_zgbqueueid, (void*)&qmsg, sizeof(qmsg), QUEUE_MSG_UART, 0) <= 0 )
 		{
 			MYLOG_ERROR("rcvret = %d", rcvret);
 			MYLOG_ERROR("recive uartsendmsg fail!");
@@ -669,7 +680,7 @@ void* zgbmsgprocess(void* argc)
 
 	while(1)
 	{
-		if (rcvret = msgrcv(g_queueid , (void*)&qmsg, sizeof(qmsg), QUEUE_MSG_ZGB, 0) <= 0)
+		if (rcvret = msgrcv(g_zgbqueueid, (void*)&qmsg, sizeof(qmsg), QUEUE_MSG_ZGB, 0) <= 0)
 		{
             MYLOG_ERROR("recive zgbqueuemsg fail!");
             MYLOG_ERROR("rcvret = %d", rcvret);
@@ -875,19 +886,11 @@ void* zgbmsgprocess(void* argc)
 
                     switch(attr)
                     {
-                        case ATTR_DEVICESTATUS:
-                        case ATTR_AIR_CONDITION_MODE:
+                        case ATTR_DEVICESTATUS:                        
                         case ATTR_WINDSPEED:
-                        case ATTR_ENV_TEMPERATURE:
-                        case ATTR_ENV_HUMIDITY:
-                        case ATTR_ENV_PM25:
-                        case ATTR_ENV_CO2:
-                        case ATTR_ENV_FORMALDEHYDE:
-                        case ATTR_SOCKET_V:
                         case ATTR_SETTING_TEMPERATURE:
                         case ATTR_SETTING_HUMIDITY:
                         case ATTR_SYSMODE:
-                        case ATTR_SEN_WINDSPEED:
                         {
                             temp = cJSON_GetObjectItem(attr_json, "value");
                             if(temp == NULL)
@@ -912,15 +915,55 @@ void* zgbmsgprocess(void* argc)
                                 needmqtt = true || needmqtt;
                                 switch (attr)
                                 {
-                                case ATTR_SYSMODE:
-                                    if(value != g_system_mode)
-                                        change_system_mode(value);
-                                    break;
-                                default:
-                                    break;
+	                                case ATTR_SYSMODE:
+	                                    if(value != g_system_mode)
+	                                        change_system_mode(value);
+	                                    break;
+	                                default:
+	                                    break;
                                 }
+								if(packetid == 0)
+								{
+									Operationlog log = {"0", 1, g_mac, "", 1, devicetype, attr, value, 0, ""};
+									memcpy(log.deviceid, db_deviceid, strlen(db_deviceid));
+									reportlog(log);
+								}
+									
                             }
                             break;
+                        }
+						case ATTR_AIR_CONDITION_MODE:
+                        case ATTR_ENV_TEMPERATURE:
+                        case ATTR_ENV_HUMIDITY:
+                        case ATTR_ENV_PM25:
+                        case ATTR_ENV_CO2:
+                        case ATTR_ENV_FORMALDEHYDE:
+                        case ATTR_SOCKET_V:
+                        case ATTR_SEN_WINDSPEED:
+                        {
+                            temp = cJSON_GetObjectItem(attr_json, "value");
+                            if(temp == NULL)
+                            {
+                                if(device_json != NULL)
+                                {
+                                    cJSON_Delete(device_json);
+                                }
+                                goto end;
+                            }
+                            oldvalue = temp->valueint;
+                            if(value == oldvalue)
+                            {
+                                needmqtt = false || needmqtt;
+                            }
+                            else
+                            {
+                                //修改的是复制出来的设备属性表
+                                cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);
+                                //修改的是全局的设备属性表
+                                change_device_attr_value(db_deviceid, attr, value);
+                                needmqtt = true || needmqtt;
+                            }
+                            break;                        
                         }
                         case ATTR_SEN_WATER_YIELD:
                         {
@@ -959,7 +1002,7 @@ void* zgbmsgprocess(void* argc)
                             {
                                 tmp = cJSON_GetArrayItem(status, i);
                                 attr = cJSON_GetObjectItem(tmp, "type")->valueint;
-                                //如果不是类型和状态属性全部删除
+                                //如果不是类型属性和状态属性全部删除
                                 if(attr != ATTR_DEVICESTATUS && attr != ATTR_DEVICETYPE && attr != ATTR_ENV_HUMIDITY)
                                 {
                                     cJSON_DeleteItemFromArray(status, i);
@@ -1118,7 +1161,7 @@ void* uartlisten(void *argc)
             zgbqmsg.msgtype = QUEUE_MSG_ZGB;
             memcpy((void*)&zgbqmsg.msg, (void*)&zmsg, sizeof(zgbmsg));
 
-          	if (ret = msgsnd(g_queueid, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
+          	if (ret = msgsnd(g_zgbqueueid, &zgbqmsg, sizeof(zgbqueuemsg), 0) != 0)
         	{
 		        MYLOG_ERROR("send zgbqueuemsg fail!");
 	        }
