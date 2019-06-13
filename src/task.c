@@ -399,6 +399,7 @@ void* devicemsgprocess(void *argc)
     			g_devicemsgstatus[i].reportflag = 1;
     			g_devicemsgstatus[i].finish = 1; //1代表未处理完
     			Operationlog* log = &(g_devicemsgstatus[i].log);
+				memset(log, 0, sizeof(Operationlog));
 		                
                 tmp = cJSON_GetObjectItem(device, "deviceid");
                 if(tmp == NULL)

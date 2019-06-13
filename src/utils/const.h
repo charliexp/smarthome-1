@@ -87,7 +87,8 @@
 #define DEV_CURTAIN                   0x10  //窗帘
 #define DEV_WATER_PURIF	              0x11	//净水器
 #define DEV_WATER_HEAT	              0x12	//热水器
-#define DEV_LIGHTER                   0x13  //灯具
+#define DEV_LIGHT                     0x13  //灯具
+#define DEV_AJUSTABLE_LIGHT           0x14  //可调灯
 
 #define SEN_WIND_PRESSURE             0x50  //风压传感器
 #define SEN_WATER_FLOW                0x51  //水流量计
