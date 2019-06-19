@@ -925,7 +925,7 @@ void* zgbmsgprocess(void* argc)
 											{
 												break;
 											}
-	                                    	int flag = v->valueint;
+	                                    	int flag = cJSON_GetObjectItem(v, "value")->valueint;
 	                                    	if(flag == 1)
 	                                    	{		                                    		
 		                                        change_system_mode(value);		                                    		
