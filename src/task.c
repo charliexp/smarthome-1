@@ -920,11 +920,16 @@ void* zgbmsgprocess(void* argc)
 	                                case ATTR_SYSMODE:
 	                                    if(value != g_system_mode)
 	                                    {
-	                                    	int flag = get_attr_value_object_json(device_json, ATTR_CONNECTED_AIRCONDITON);
+	                                    	cJSON* v = get_attr_value_object_json(device_json, ATTR_CONNECTED_AIRCONDITON);
+											if(v == NULL)
+											{
+												break;
+											}
+	                                    	int flag = v->valueint;
 	                                    	if(flag == 1)
-	                                    	{
+	                                    	{		                                    		
 		                                        change_system_mode(value);		                                    		
-	                                    	}else{
+	                                    	}else{												
 												change_panel_mode(db_deviceid, g_system_mode);
 	                                    	}                                    	
 	                                    }

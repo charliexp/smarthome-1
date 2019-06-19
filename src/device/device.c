@@ -116,6 +116,7 @@ void change_panels_mode(int mode)
 void change_panel_mode(char* deviceid, int mode)
 {
     ZGBADDRESS address;
+	MYLOG_INFO("Change panel mode: %s-> %d", deviceid, value);
 	dbaddresstozgbaddress(deviceid, address);
     BYTE data[5] = {ATTR_SYSMODE, 0x0, 0x0, 0x0, mode};
     sendzgbmsg(address, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_CONTROL_PANEL, 0x0, getpacketid());        
@@ -992,6 +993,7 @@ void set_gateway_mode(int mode)
 
 void change_system_mode(int mode)
 {
+	MYLOG_INFO("Change systemmode: %d", value);
     char topic[TOPIC_LENGTH] = {0};
     sprintf(topic, "%sdevices/status", g_topicroot);
 
