@@ -1039,7 +1039,7 @@ void* zgbmsgprocess(void* argc)
                 if(nrow == 0) //数据库中没有该设备
                 {
                    MYLOG_INFO("The device has not been registered!");
-				   sqlite3_free_table(dbresult);
+				   sqlite3_free_table(azResult);
                    break;
                 }
                 sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_SHOW);
