@@ -1025,7 +1025,7 @@ int get_system_boiler(char* id)
     {
         MYLOG_DEBUG("Can not get system boiler!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
-		sqlite3_free_table(dbresult)
+		sqlite3_free_table(dbresult);
         return -1;
     }
 
