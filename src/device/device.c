@@ -106,9 +106,17 @@ void device_closeallfan()
     sendzgbmsg(address, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_FAN_COIL, 0xFF, getpacketid());    
 }
 
-void change_panel_mode(int mode)
+void change_panels_mode(int mode)
 {
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //¹ã²¥±¨ÎÄ
+    BYTE data[5] = {ATTR_SYSMODE, 0x0, 0x0, 0x0, mode};
+    sendzgbmsg(address, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_CONTROL_PANEL, 0x0, getpacketid());        
+}
+
+void change_panel_mode(char* deviceid, int mode)
+{
+    ZGBADDRESS address;
+	dbaddresstozgbaddress(deviceid, address);
     BYTE data[5] = {ATTR_SYSMODE, 0x0, 0x0, 0x0, mode};
     sendzgbmsg(address, data, 5, ZGB_MSGTYPE_DEVICE_OPERATION, DEV_CONTROL_PANEL, 0x0, getpacketid());        
 }
@@ -988,7 +996,7 @@ void change_system_mode(int mode)
     sprintf(topic, "%sdevices/status", g_topicroot);
 
     set_gateway_mode(mode);
-    change_panel_mode(mode);
+    change_panels_mode(mode);
     change_device_attr_value(GATEWAY_ID, ATTR_SYSMODE, mode);
 
     if(mode == TLV_VALUE_BOILER_HEAT)

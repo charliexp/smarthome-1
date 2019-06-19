@@ -919,7 +919,15 @@ void* zgbmsgprocess(void* argc)
                                 {
 	                                case ATTR_SYSMODE:
 	                                    if(value != g_system_mode)
-	                                        change_system_mode(value);
+	                                    {
+	                                    	int flag = get_attr_value_object_json(device_json, ATTR_CONNECTED_AIRCONDITON)
+	                                    	if(flag == 1)
+	                                    	{
+		                                        change_system_mode(value);		                                    		
+	                                    	}else{
+												change_panel_mode(db_deviceid, g_system_mode);
+	                                    	}                                    	
+	                                    }
 	                                    break;
 	                                default:
 	                                    break;
@@ -929,8 +937,7 @@ void* zgbmsgprocess(void* argc)
 									Operationlog log = {"0", 1, g_mac, "", 1, devicetype, attr, value, 0, ""};
 									memcpy(log.deviceid, db_deviceid, strlen(db_deviceid));
 									reportlog(log);
-								}
-									
+								}								
                             }
                             break;
                         }

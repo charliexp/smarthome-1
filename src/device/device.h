@@ -39,6 +39,13 @@ void device_closeallfan();
 
 void change_boiler_mode(int mode);
 
+/*切换指定面板模式*/
+void change_panel_mode(char* deviceid, int mode);
+
+/*切换所有面板模式*/
+void change_panels_mode(int mode);
+
+
 int gatewayproc(cJSON* op, Operationlog* log);
 
 /* MQTT的操作数据转为ZGB的DATA */
