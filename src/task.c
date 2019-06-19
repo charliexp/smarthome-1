@@ -933,7 +933,7 @@ void* zgbmsgprocess(void* argc)
 												change_panel_mode(db_deviceid, g_system_mode);
 	                                    	}                                    	
 	                                    }
-	                                    break;
+	                                    continue;
 	                                default:
 	                                    break;
                                 }
@@ -954,6 +954,7 @@ void* zgbmsgprocess(void* argc)
                         case ATTR_ENV_FORMALDEHYDE:
                         case ATTR_SOCKET_V:
                         case ATTR_SEN_WINDSPEED:
+						case ATTR_CONNECTED_AIRCONDITON:
                         {
                             temp = cJSON_GetObjectItem(attr_json, "value");
                             if(temp == NULL)
