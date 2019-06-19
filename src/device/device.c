@@ -964,11 +964,12 @@ int get_gateway_mode()
     {
         MYLOG_DEBUG("Can not get gatewaycfg mode!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
+		sqlite3_free_table(dbresult);
         return TLV_VALUE_COND_COLD;
     }
 
     int mode = atoi(dbresult[1]);
-
+	sqlite3_free_table(dbresult);
     return mode;
 }
 
@@ -1016,10 +1017,12 @@ int get_system_boiler(char* id)
     {
         MYLOG_DEBUG("Can not get system boiler!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
+		sqlite3_free_table(dbresult)
         return -1;
     }
 
     memcpy(id, dbresult[1], strlen(dbresult[1]));
+	sqlite3_free_table(dbresult);
     return 0;
 }
 
@@ -1056,10 +1059,12 @@ int get_hotwatersystem_socket(char* id)
     {
         MYLOG_DEBUG("Can not get hotwatersystem socket!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
+		sqlite3_free_table(dbresult);
         return -1;
     }
 
     memcpy(id, dbresult[1], strlen(dbresult[1]));
+	sqlite3_free_table(dbresult);
     return 0;
 }
 
@@ -1084,6 +1089,7 @@ int get_hotwatersystem_targettemperature()
     {
         MYLOG_DEBUG("Can not get hotwatersensorid!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
+		sqlite3_free_table(dbresult);
         return -1;
     }
 
@@ -1096,6 +1102,7 @@ int get_hotwatersystem_targettemperature()
 		g_hotwatersystem_settingtemperature = HOTWATER_DEFAULTTEMPERATURE;
 	}
 
+	sqlite3_free_table(dbresult);
     return 0;
 }
 
@@ -1132,10 +1139,12 @@ int get_hotwatersystem_temperaturesensor(char* id)
     {
         MYLOG_DEBUG("Can not get hotwatersensorid!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
+		sqlite3_free_table(dbresult);
         return -1;
     }
 
     memcpy(id, dbresult[1], strlen(dbresult[1]));
+	sqlite3_free_table(dbresult);
     return 0;
 }
 

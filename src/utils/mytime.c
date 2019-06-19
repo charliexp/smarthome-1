@@ -96,7 +96,7 @@ int deltimer(timer* t)
     return 0;
 }
 
-int rebuildtimer(timer* t)
+int restarttimer(timer* t)
 {
     if(t == NULL)
     {

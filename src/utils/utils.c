@@ -438,8 +438,6 @@ void electricity_stat(char* deviceid, int num)
 	memset(sql, 0, 250);
 	sqlite3_free_table(dbresult);
 
-  
-
 	/*年电量处理*/
 	sprintf(sql, "select electricity from electricity_year where deviceid = '%s' and year = %d;", deviceid, year);
 	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);

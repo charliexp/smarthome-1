@@ -102,7 +102,8 @@ int sqlitedb_init()
     if(nrow == 0)
     {
         set_gateway_mode(TLV_VALUE_COND_COLD);
-    }    
+    }
+	sqlite3_free_table(dbresult);
     return 0;
 }
 
@@ -342,7 +343,7 @@ void* devicemsgprocess(void *argc)
                     }
                     else
                     {
-                        rebuildtimer(g_zgbtimer); //zigbee灯闪烁时间重新计时
+                        restarttimer(g_zgbtimer); //zigbee灯闪烁时间重新计时
                     }
                     reportdevices();
                     break;
@@ -1038,6 +1039,7 @@ void* zgbmsgprocess(void* argc)
                 if(nrow == 0) //数据库中没有该设备
                 {
                    MYLOG_INFO("The device has not been registered!");
+				   sqlite3_free_table(dbresult);
                    break;
                 }
                 sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_SHOW);

@@ -92,12 +92,10 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
     
 	root = cJSON_Parse((char*)message->payload);
 
-	if (root == NULL)
+	if(root == NULL)
 	{
 		MYLOG_ERROR("Wrong msg format!");
-        MQTTAsync_freeMessage(&message);
-        MQTTAsync_free(topicName);		
-		return 1;
+        goto end;
 	}
     MYLOG_INFO("Message: %s", cJSON_Print(root));
 
