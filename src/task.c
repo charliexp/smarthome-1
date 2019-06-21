@@ -864,6 +864,7 @@ void* zgbmsgprocess(void* argc)
                 cJSON *temp;
                 int value,oldvalue;
                 int i = 0;
+				int needreport = 1;
                 BYTE attr; 
 
                 needmqtt = false;//是否需要上报状态的标志
@@ -932,7 +933,8 @@ void* zgbmsgprocess(void* argc)
 	                                    	if(flag == 1)
 	                                    	{		                                    		
 		                                        change_system_mode(value);		                                    		
-	                                    	}else{												
+	                                    	}else{
+												needreport = 0;
 												change_panel_mode(db_deviceid, g_system_mode);
 	                                    	}                                    	
 	                                    }
@@ -940,7 +942,7 @@ void* zgbmsgprocess(void* argc)
 	                                default:
 	                                    break;
                                 }
-								if(packetid == 0 && devicetype != DEV_AIR_CON)
+								if(packetid == 0 && devicetype != DEV_AIR_CON && needreport)
 								{
 									Operationlog log = {"0", 1, g_mac, "", 1, devicetype, attr, value, 0, ""};
 									memcpy(log.deviceid, db_deviceid, strlen(db_deviceid));
