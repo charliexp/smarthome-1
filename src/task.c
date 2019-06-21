@@ -458,6 +458,8 @@ void* devicemsgprocess(void *argc)
 					g_devicemsgstatus[i].reportflag = 0;					
                     g_devicemsgstatus[i].result = ret;
                     g_devicemsgstatus[i].finish = 0; //0代表已处理完
+                    memcpy(log->userid, userid, strlen(userid));
+					memcpy(log->deviceid, deviceid, strlen(deviceid));
                     cJSON_AddItemToArray(devs, dev);
                     sqlite3_free_table(dbresult);
                     continue;
