@@ -807,7 +807,8 @@ void* zgbmsgprocess(void* argc)
 	                 sprintf(sql, "insert into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, devicetype, deviceindex);
 	                 MYLOG_INFO("The sql is %s", sql);
 
-	                 if(devicetype == DEV_SOCKET || devicetype == DEV_FAN_COIL || devicetype == DEV_FRESH_AIR)
+	                 if(devicetype == DEV_SOCKET || devicetype == DEV_FAN_COIL || devicetype == DEV_FRESH_AIR || devicetype == DEV_LIGHT
+					 	|| devicetype == SEN_ELECTRICITY_METER)
 	                 {
 	                     devicedatainit(db_deviceid, 1);
 	                 }
