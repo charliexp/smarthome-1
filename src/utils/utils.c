@@ -799,10 +799,11 @@ int debugproc(cJSON* root, char* topic)
         log_init();
         cJSON_AddStringToObject(root, "result", "ok");
     }
-	else if(operationtype == 5)//发送测试日志
+	else if(operationtype == 5)//设备重启
 	{
-		Operationlog log = {"test", 1, g_mac, "00000000000000000", 1, 0, ATTR_SYSMODE, TLV_VALUE_COND_COLD, 1, ""};
-		reportlog(log);			
+        char cmdline[10]={0};
+        sprintf(cmdline, "reboot");
+        system(cmdline);	
 	}
 	else if(operationtype == 6)
     {
