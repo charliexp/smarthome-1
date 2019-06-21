@@ -938,7 +938,7 @@ void* zgbmsgprocess(void* argc)
 												change_panel_mode(db_deviceid, g_system_mode);
 	                                    	}                                    	
 	                                    }else{
-	                                    	needreport = 0l
+	                                    	needreport = 0;
 	                                    }
 	                                    break;
 	                                default:
