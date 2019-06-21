@@ -888,7 +888,7 @@ void* zgbmsgprocess(void* argc)
                     value = zgbdata->pdu[i++]*256*256*256 + zgbdata->pdu[i++]*256*256 
                         + zgbdata->pdu[i++]*256 + zgbdata->pdu[i++];
                     replace_value_json = cJSON_CreateNumber(value);
-
+					MYLOG_DEBUG("The value is %d", value);
                     switch(attr)
                     {
                         case ATTR_DEVICESTATUS:                        
@@ -936,7 +936,7 @@ void* zgbmsgprocess(void* argc)
 												change_panel_mode(db_deviceid, g_system_mode);
 	                                    	}                                    	
 	                                    }
-	                                    continue;
+	                                    break;
 	                                default:
 	                                    break;
                                 }
