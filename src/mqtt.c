@@ -91,6 +91,8 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
 	if (root == NULL)
 	{
 		MYLOG_ERROR("Wrong msg!");
+        MQTTAsync_freeMessage(&message);
+        MQTTAsync_free(topicName);        
 		return 1;
 	}
 
@@ -98,9 +100,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
     if(tmp == NULL)
     {   
         MYLOG_ERROR("Wrong format MQTT message!");
-        MQTTAsync_freeMessage(&message);
-        MQTTAsync_free(topicName);
-        return 1;        
+        goto end;      
     }
     mqttid = tmp->valueint;
     sprintf(topic, "%s/response/%d", topicName, mqttid);
@@ -137,7 +137,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
                 goto end;	        
     	    }	        
     	    char* deviceid = deviceidjson->valuestring;
-    	    char sql[250]={0};   
+    	    char sql[100]={0};   
             int nrow = 0, ncolumn = 0;
             char **dbresult;
             char *zErrMsg = NULL;
@@ -163,11 +163,11 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
             cJSON* record;
             const char* num;
             const char* time;
-            for(int i=1;i<nrow;i++)
+            for(int j=1;j<nrow;j++)
             {
                 record = cJSON_CreateObject();
-                num = (const char*)dbresult[i*2];
-                time = (const char*)dbresult[i*2+1];
+                num = (const char*)dbresult[j*2];
+                time = (const char*)dbresult[j*2+1];
                 cJSON_AddNumberToObject(record, "electricity", atoi(num));
                 switch (type)
                 {
@@ -446,34 +446,34 @@ void* mqttqueueprocess(void *argc)
 
 		switch(msg.msgtype)
 		{
-		case MQTT_MSG_TYPE_PUB:
-		    MYLOG_INFO("A msg need to pub.");
-			result = MQTTAsync_send(client, (const char*)msg.msg.topic, strlen(msg.msg.msgcontent),
-				(void *)msg.msg.msgcontent, msg.msg.qos, msg.msg.retained, NULL);
-			
-			if(result != MQTTASYNC_SUCCESS)
-			{		
-                MYLOG_ERROR("MQTTAsync_send fail! %d", result);
-			}
-			break;
-		case MQTT_MSG_TYPE_SUB:
-		    MYLOG_INFO("A msg need to sub.");
-			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, NULL);
-			if(result != MQTTASYNC_SUCCESS)
-			{		
-                MYLOG_ERROR("MQTTAsync_subscribe fail! %d", result);
-            }
-			break;
-		case MQTT_MSG_TYPE_UNSUB:
-		    MYLOG_INFO("A msg need to unsub.");
-			result = MQTTAsync_unsubscribe(client, (const char*)msg.msg.topic, NULL);
-			if(result != MQTTASYNC_SUCCESS)
-			{
-                MYLOG_ERROR("MQTTAsync_unsubscribe fail! %d\n", result);
-            }
-			break;
-		default:
-			MYLOG_INFO("unknow msg!\n");
+    		case MQTT_MSG_TYPE_PUB:
+    		    MYLOG_INFO("A msg need to pub.");
+    			result = MQTTAsync_send(client, (const char*)msg.msg.topic, strlen(msg.msg.msgcontent),
+    				(void *)msg.msg.msgcontent, msg.msg.qos, msg.msg.retained, NULL);
+    			
+    			if(result != MQTTASYNC_SUCCESS)
+    			{		
+                    MYLOG_ERROR("MQTTAsync_send fail! %d", result);
+    			}
+    			break;
+    		case MQTT_MSG_TYPE_SUB:
+    		    MYLOG_INFO("A msg need to sub.");
+    			result = MQTTAsync_subscribe(client, (const char*)msg.msg.topic, msg.msg.qos, NULL);
+    			if(result != MQTTASYNC_SUCCESS)
+    			{		
+                    MYLOG_ERROR("MQTTAsync_subscribe fail! %d", result);
+                }
+    			break;
+    		case MQTT_MSG_TYPE_UNSUB:
+    		    MYLOG_INFO("A msg need to unsub.");
+    			result = MQTTAsync_unsubscribe(client, (const char*)msg.msg.topic, NULL);
+    			if(result != MQTTASYNC_SUCCESS)
+    			{
+                    MYLOG_ERROR("MQTTAsync_unsubscribe fail! %d\n", result);
+                }
+    			break;
+    		default:
+    			MYLOG_INFO("unknow msg!\n");
 		}
 		if(msg.msgtype == MQTT_MSG_TYPE_PUB)
 		{

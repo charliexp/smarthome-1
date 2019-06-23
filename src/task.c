@@ -350,6 +350,7 @@ void* devicemsgprocess(void *argc)
                     MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
                     cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_UNKNOW_DEVICE);
                     cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_DEVICENOEXIST));
+                    sqlite3_free_table(dbresult);
                     goto response;          
                 }
                 
@@ -370,11 +371,13 @@ void* devicemsgprocess(void *argc)
     			    MYLOG_ERROR(MQTT_MSG_FORMAT_ERROR);
                     cJSON_AddStringToObject(g_device_mqtt_json, "result", MQTT_MSG_FORMAT_ERROR);
                     cJSON_ReplaceItemInObject(g_device_mqtt_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+                    sqlite3_free_table(dbresult);
                     goto response;
     		    }
     		    if (devicetype == DEV_GATEWAY)
     		    {
     		        gatewayproc(operations);
+                    sqlite3_free_table(dbresult);
     		        goto response;
     		    }
     		    
