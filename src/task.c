@@ -864,7 +864,7 @@ void* zgbmsgprocess(void* argc)
                 cJSON *temp;
                 int value,oldvalue;
                 int i = 0;
-				int needreport = 1;
+				int needreport = 1;//日志是否需要上报标志
                 BYTE attr; 
 
                 needmqtt = false;//是否需要上报状态的标志

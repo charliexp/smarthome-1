@@ -869,8 +869,7 @@ int reportlog(Operationlog log)
         return -1;
     }
     else
-    {
-        MYLOG_INFO("Gateway register success!\n");     
+    {  
         curl_easy_cleanup(curl_handle);
         curl_slist_free_all(list);
         curl_global_cleanup();   

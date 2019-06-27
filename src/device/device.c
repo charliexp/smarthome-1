@@ -561,7 +561,8 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SEN_WINDSPEED);
         	cJSON_AddStringToObject(status, "value", 0);
-        	cJSON_AddItemToArray(statusarray, status);            
+        	cJSON_AddItemToArray(statusarray, status);
+			break;
         }
         default:
             device = NULL;
