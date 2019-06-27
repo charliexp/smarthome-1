@@ -560,7 +560,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddNumberToObject(device, "devicetype", SEN_ANEMOGRAPH);
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SEN_WINDSPEED);
-        	cJSON_AddStringToObject(status, "value", 0);
+        	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);
 			break;
         }

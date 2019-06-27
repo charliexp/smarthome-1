@@ -459,6 +459,6 @@ void reportdevices()
         cJSON_AddNumberToObject(root, "devicetype", devicetype);        
         sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
         cJSON_Delete(root);
-    } 
+    }
     sqlite3_free_table(azResult);      
 }
