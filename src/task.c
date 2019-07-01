@@ -413,6 +413,12 @@ void* devicemsgprocess(void *argc)
     			}                
                 
     			deviceid = tmp->valuestring;
+				if(deviceid == NULL){
+                    cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+					cJSON_Delete(dev);
+					cJSON_Delete(devs);
+                    goto response;					
+				}
                 cJSON_AddItemToObject(dev, "deviceid", cJSON_CreateString(deviceid));
 
                 int nrow = 0, ncolumn = 0;

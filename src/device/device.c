@@ -580,6 +580,11 @@ cJSON* dup_device_status_json(char* deviceid)
     cJSON* devicestatus = NULL;
     char* array_deviceid;
 
+	if(deviceid == NULL)
+	{
+		return NULL;
+	}
+
     pthread_mutex_lock(&g_devices_status_mutex);
     devicenum = cJSON_GetArraySize(g_devices_status_json);
 
