@@ -887,7 +887,6 @@ void change_devices_offline()
     int devicenum, online, onlinecheck;
     cJSON* devicestatus = NULL;
     char* array_deviceid;
-    cJSON* offline = cJSON_CreateNumber(0);
 
     pthread_mutex_lock(&g_devices_status_mutex);
     devicenum = cJSON_GetArraySize(g_devices_status_json);
@@ -903,7 +902,7 @@ void change_devices_offline()
             cJSON_GetObjectItem(devicestatus, "online")->valuedouble = onlinecheck;
             report_device_status(devicestatus);
         }
-        if(onlinecheck == 1)
+        if(onlinecheck == TLV_VALUE_ONLINE)
         {
             cJSON_GetObjectItem(devicestatus, "online-check")->valueint = TLV_VALUE_OFFLINE;
             cJSON_GetObjectItem(devicestatus, "online-check")->valuedouble = TLV_VALUE_OFFLINE;
@@ -917,7 +916,6 @@ void change_device_online(char* deviceid, char status)
     int devicenum,length;
     cJSON* devicestatus = NULL;
     char* array_deviceid;
-    cJSON* offline = cJSON_CreateNumber(status);
     pthread_mutex_lock(&g_devices_status_mutex);
     devicenum = cJSON_GetArraySize(g_devices_status_json);
 
