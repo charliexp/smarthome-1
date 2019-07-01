@@ -104,6 +104,7 @@ int sqlitedb_init()
         set_gateway_mode(TLV_VALUE_COND_COLD);
     }
 	sqlite3_free_table(dbresult);
+	sqlite3_free(zErrMsg);
     return 0;
 }
 
@@ -406,6 +407,8 @@ void* devicemsgprocess(void *argc)
                 if(tmp == NULL)
     		    {
                     cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+					cJSON_Delete(dev);
+					cJSON_Delete(devs);
                     goto response;
     			}                
                 
@@ -426,7 +429,8 @@ void* devicemsgprocess(void *argc)
                     g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_DEVICENOEXIST;
                     g_devicemsgstatus[i].finish = 0;
                     cJSON_AddItemToArray(devs, dev);
-                    sqlite3_free_table(dbresult);        			    
+                    sqlite3_free_table(dbresult);
+					sqlite3_free(zErrMsg);
     		        continue;                    
                 }
                 
@@ -440,7 +444,8 @@ void* devicemsgprocess(void *argc)
                     g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_FORMATERROR;
                     g_devicemsgstatus[i].finish = 0;
                     cJSON_AddItemToArray(devs, dev);
-                    sqlite3_free_table(dbresult);        			    
+                    sqlite3_free_table(dbresult);
+					sqlite3_free(zErrMsg);
     		        continue;
     		    }
     		    cJSON_AddItemToObject(dev, "operations", cJSON_Duplicate(operations, 1));
@@ -462,6 +467,7 @@ void* devicemsgprocess(void *argc)
 					memcpy(log->deviceid, deviceid, strlen(deviceid));
                     cJSON_AddItemToArray(devs, dev);
                     sqlite3_free_table(dbresult);
+					sqlite3_free(zErrMsg);
                     continue;
                 }
 
@@ -472,7 +478,8 @@ void* devicemsgprocess(void *argc)
                     g_devicemsgstatus[i].result = MQTT_MSG_ERRORCODE_DEVICEOFFLINE;
                     g_devicemsgstatus[i].finish = 0;
                     cJSON_AddItemToArray(devs, dev);
-                    sqlite3_free_table(dbresult);        			    
+                    sqlite3_free_table(dbresult); 
+					sqlite3_free(zErrMsg);
     		        continue;                    
                 }    		    
     		  
@@ -480,6 +487,7 @@ void* devicemsgprocess(void *argc)
                 int datalen = mqtttozgb(operations, data, devicetype, log);
                 sendzgbmsg(src, data, datalen, ZGB_MSGTYPE_DEVICE_OPERATION, devicetype, deviceindex, packetid);
                 cJSON_AddItemToArray(devs, dev);
+				sqlite3_free(zErrMsg);
                 sqlite3_free_table(dbresult);
 
 				//初始化日志结构体
@@ -526,6 +534,7 @@ void* devicemsgprocess(void *argc)
                 if(tmp == NULL)
     		    {
                     cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+					cJSON_Delete(statusarray);
                     goto response;
     			}                
                 
@@ -546,8 +555,7 @@ void* devicemsgprocess(void *argc)
                     MYLOG_DEBUG("MQTT: Device status query,The status is %s", cJSON_PrintUnformatted(devicestatus));                   
                 }
             }
-            cJSON_AddItemToObject(result_json, "devices", statusarray);
-            
+            cJSON_AddItemToObject(result_json, "devices", statusarray);            
         }
 		else if(operationtype == 3) //删除设备
 		{
@@ -566,6 +574,7 @@ void* devicemsgprocess(void *argc)
                 if(tmp == NULL)
     		    {
                     cJSON_ReplaceItemInObject(result_json, "resultcode", cJSON_CreateNumber(MQTT_MSG_ERRORCODE_FORMATERROR));
+					cJSON_Delete(device_array);
                     goto response;
     			}                
                 
@@ -710,6 +719,7 @@ void* zgbmsgprocess(void* argc)
                 sendzgbmsg(src, NULL, 0, ZGB_MSGTYPE_DEVICEREGISTER, DEV_ANYONE, 0, getpacketid());//要求设备注册
             }
             sqlite3_free_table(dbresult);
+			sqlite3_free(zErrMsg);
             continue;
         }
         else if(qmsg.msg.payload.adf.index[0] == 0xF2 && qmsg.msg.payload.adf.index[1] == 0x03) //设备离网消息
@@ -742,7 +752,7 @@ void* zgbmsgprocess(void* argc)
                     continue;
                 }
                 array_deviceid = deviceid->valuestring;
-                if(strncmp(db_zgbaddress, array_deviceid, 16) == 0)//同一个ZGB设备上的设备
+                if(strncmp(db_zgbaddress, array_deviceid, 16) == 0)//ZGB模块的mac地址16位，同一个ZGB设备上的设备
                 {
                     id = cJSON_CreateString(array_deviceid);
                     cJSON_AddItemToArray(device_array, id);
@@ -760,6 +770,7 @@ void* zgbmsgprocess(void* argc)
                 sendmqttmsg(MQTT_MSG_TYPE_PUB, TOPIC_DEVICE_DELETE, cJSON_PrintUnformatted(device_array), 0, 0);
             }
             pthread_mutex_unlock(&g_devices_status_mutex);
+			cJSON_Delete(device_array);
             continue;
         }
 
@@ -771,7 +782,7 @@ void* zgbmsgprocess(void* argc)
             MYLOG_INFO("Drop a broadcast msg!");
             goto end;
         }
-
+		//如果不是透传报文，直接drop
         if(qmsg.msg.payload.adf.index[0] != 0xA0 || qmsg.msg.payload.adf.index[1] != 0x0F)
         {
             MYLOG_INFO("Drop a not own msg!");
@@ -790,54 +801,58 @@ void* zgbmsgprocess(void* argc)
         {
             case ZGB_MSGTYPE_DEVICEREGISTER_RESPONSE:
             {
-                 cJSON* root = cJSON_CreateObject();
-                 int nrow = 0, ncolumn = 0;
-                 char **azResult; 
+                cJSON* root = cJSON_CreateObject();
+                int nrow = 0, ncolumn = 0;
+                char **azResult;
                  
-                 MYLOG_INFO("[ZGB DEVICE]Get a device network joining response message.");
-                 MYLOG_ZGBMSG(qmsg.msg);
-                 sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", db_deviceid);
-                 MYLOG_INFO(sql);
+                MYLOG_INFO("[ZGB DEVICE]Get a device network joining response message.");
+                MYLOG_ZGBMSG(qmsg.msg);
+                sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", db_deviceid);
+                MYLOG_INFO(sql);
             
-                 sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
-                 if(nrow != 0) //数据库中有该设备
-                 {
-                     MYLOG_INFO("The device has been registered!");
-                 }
-				 else
-				 {	                 
-	                 sprintf(sql, "insert into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, devicetype, deviceindex);
-	                 MYLOG_INFO("The sql is %s", sql);
+                sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
+                if(nrow != 0) //数据库中有该设备
+                {
+                    MYLOG_INFO("The device has been registered!");
+					sqlite3_free(zErrMsg);
+					sqlite3_free_table(azResult);
+                }
+				else
+				{	 
+				    sqlite3_free(zErrMsg);
+					sqlite3_free_table(azResult);
+	                sprintf(sql, "insert into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, devicetype, deviceindex);
+	                MYLOG_INFO("The sql is %s", sql);
+					
+	                rc = sqlite3_exec(g_db, sql, 0, 0, &zErrMsg);
+	                if(rc != SQLITE_OK)
+	                {
+	                    MYLOG_ERROR(zErrMsg);
+						cJSON_Delete(root);
+					    sqlite3_free(zErrMsg);
+	                    break;
+	                }						
 
-	                 if(devicetype == DEV_SOCKET || devicetype == DEV_FAN_COIL || devicetype == DEV_FRESH_AIR || devicetype == DEV_LIGHT
+	                if(devicetype == DEV_SOCKET || devicetype == DEV_FAN_COIL || devicetype == DEV_FRESH_AIR || devicetype == DEV_LIGHT
 					 	|| devicetype == SEN_ELECTRICITY_METER)
-	                 {
-	                     devicedatainit(db_deviceid, 1);
-	                 }
-					 else if(devicetype == SEN_WATER_FLOW)
-	                 {
-	                     devicedatainit(db_deviceid, 2);                       
-	                 }
-	                 
-	                 rc = sqlite3_exec(g_db, sql, 0, 0, &zErrMsg);
-	                 if(rc != SQLITE_OK)
-	                 {
-	                     MYLOG_ERROR(zErrMsg);
-	                     break;
-	                 }	
+	                {
+	                    devicedatainit(db_deviceid, 1);
+	                }
+					else if(devicetype == SEN_WATER_FLOW)
+	                {
+	                    devicedatainit(db_deviceid, 2);                       
+	                }	                
 					 
-	                 cJSON* devicestatus = create_device_status_json(db_deviceid, devicetype);
-	                 cJSON_AddItemToArray(g_devices_status_json, devicestatus);		 
-				}				           
-				 
-				 sqlite3_free_table(azResult); 			
-				 
-                 sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_ADD);
-                 cJSON_AddStringToObject(root, "deviceid", db_deviceid);
-                 cJSON_AddNumberToObject(root, "devicetype", devicetype);
-                 sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
-                 cJSON_Delete(root);
-                 break;
+	                cJSON* devicestatus = create_device_status_json(db_deviceid, devicetype);
+	                cJSON_AddItemToArray(g_devices_status_json, devicestatus);		 
+				}				           				 
+				  							 
+                sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_ADD);
+                cJSON_AddStringToObject(root, "deviceid", db_deviceid);
+                cJSON_AddNumberToObject(root, "devicetype", devicetype);
+                sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);//mqtt发布设备注册信息
+                cJSON_Delete(root);
+                break;
             }
             case ZGB_MSGTYPE_DEVICE_OPERATION_RESULT:
             {
@@ -868,13 +883,13 @@ void* zgbmsgprocess(void* argc)
                 BYTE attr; 
 
                 needmqtt = false;//是否需要上报状态的标志
-                change_device_online(db_deviceid, 1);//收到状态查询报文，改变设备上线状态
+                change_device_online(db_deviceid, DEV_ONLINE);//收到状态查询报文，改变设备上线状态
                 device_json = dup_device_status_json(db_deviceid);
                 if(device_json == NULL)
                 {
                     goto end;
                 }
-               
+               //自定义报文头长度7
                 while(i < (zgbdata->length - 7))
                 {
                     attr = zgbdata->pdu[i++];
@@ -884,6 +899,7 @@ void* zgbmsgprocess(void* argc)
                     
                     if(attr_json == NULL)
                     {
+                    	cJSON_Delete(device_json);
                         goto end;
                     }
                     value = zgbdata->pdu[i++]*256*256*256 + zgbdata->pdu[i++]*256*256 
@@ -901,16 +917,14 @@ void* zgbmsgprocess(void* argc)
                             temp = cJSON_GetObjectItem(attr_json, "value");
                             if(temp == NULL)
                             {
-                                if(device_json != NULL)
-                                {
-                                    cJSON_Delete(device_json);
-                                }
+                                cJSON_Delete(device_json);
                                 goto end;
                             }
                             oldvalue = temp->valueint;
                             if(value == oldvalue)
                             {
                                 needmqtt = false || needmqtt;
+								cJSON_Delete(replace_value_json);//防止内存泄露
                             }
                             else
                             {
@@ -1055,21 +1069,25 @@ void* zgbmsgprocess(void* argc)
                 sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", db_deviceid);
                             
                 sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
-                //MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
                 if(nrow == 0) //数据库中没有该设备
                 {
-                   MYLOG_INFO("The device has not been registered!");
+                   MYLOG_INFO("The device has not been registered!");				   
+				   sqlite3_free(zErrMsg);
 				   sqlite3_free_table(azResult);
+				   cJSON_Delete(root);
                    break;
                 }
                 sprintf(topic, "%s%s", g_topicroot, TOPIC_DEVICE_SHOW);
                 cJSON_AddStringToObject(root, "deviceid", db_deviceid);
                 cJSON_AddNumberToObject(root, "type", devicetype);
                 sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), 0, 0);
-                sqlite3_free_table(azResult);                
-            }
+                sqlite3_free_table(azResult);  
+				sqlite3_free(zErrMsg);
+				cJSON_Delete(root);
+				break;
+            }	
             default: 
-                ;
+            	break;
         }
         end:
             ;
@@ -1092,8 +1110,6 @@ void* uartlisten(void *argc)
     MYLOG_INFO("Thread uartlisten begin!");
     pthread_create(&threads[0], NULL, uartsend, NULL);
     pthread_create(&threads[1], NULL, zgbmsgprocess, NULL);
-
-    MYLOG_DEBUG("pthread uartlisten begin");
     
 	while(1)
 	{

@@ -164,7 +164,7 @@ int sendzgbmsg(ZGBADDRESS address, BYTE *data, char length, char msgtype, char d
 	{
 		sum += ((BYTE *)&msg.payload)[i];
 	}
-    //MYLOG_DEBUG("The sum is %d", sum);
+    
 	msg.check = sum % 256;
 
     uartmsg.msgtype = QUEUE_MSG_UART;
@@ -198,17 +198,17 @@ void devices_status_json_init()
     size_t devicetype;
 
     pthread_mutex_lock(&g_devices_status_mutex);
-
     g_devices_status_json = cJSON_CreateArray();
-
     sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
 
     if(nrow == 0)
     {
         MYLOG_DEBUG("There are not any device!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
-        pthread_mutex_unlock(&g_devices_status_mutex); 
+        pthread_mutex_unlock(&g_devices_status_mutex);
+		
         sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
         return;
     }
 
@@ -221,6 +221,7 @@ void devices_status_json_init()
     }
     pthread_mutex_unlock(&g_devices_status_mutex);
     sqlite3_free_table(dbresult);
+	sqlite3_free(zErrMsg);
 }
 
 /*创建一个设备的json状态指针*/
@@ -676,6 +677,10 @@ void change_device_attr_value(char* deviceid, char attr, int value)
             if(attr_json != NULL){
                 cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);                
             }
+			else
+			{
+				cJSON_Delete(replace_value_json);
+			}
             pthread_mutex_unlock(&g_devices_status_mutex);
             return;
         }
@@ -961,6 +966,7 @@ int check_device_online(char* deviceid)
     return -1;
 }
 
+/*上报设备状态*/
 void report_device_status(cJSON* stat)
 {   
     char topic[TOPIC_LENGTH] = {0};
@@ -986,11 +992,13 @@ int get_gateway_mode()
         MYLOG_DEBUG("Can not get gatewaycfg mode!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
 		sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
         return TLV_VALUE_COND_COLD;
     }
 
     int mode = atoi(dbresult[1]);
 	sqlite3_free_table(dbresult);
+	sqlite3_free(zErrMsg);
     return mode;
 }
 
@@ -1040,11 +1048,13 @@ int get_system_boiler(char* id)
         MYLOG_DEBUG("Can not get system boiler!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
 		sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
         return -1;
     }
 
     memcpy(id, dbresult[1], strlen(dbresult[1]));
 	sqlite3_free_table(dbresult);
+	sqlite3_free(zErrMsg);
     return 0;
 }
 
@@ -1082,11 +1092,13 @@ int get_hotwatersystem_socket(char* id)
         MYLOG_DEBUG("Can not get hotwatersystem socket!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
 		sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
         return -1;
     }
 
     memcpy(id, dbresult[1], strlen(dbresult[1]));
 	sqlite3_free_table(dbresult);
+	sqlite3_free(zErrMsg);
     return 0;
 }
 
@@ -1112,6 +1124,7 @@ int get_hotwatersystem_targettemperature()
         MYLOG_DEBUG("Can not get hotwatersensorid!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
 		sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
         return -1;
     }
 
@@ -1125,6 +1138,7 @@ int get_hotwatersystem_targettemperature()
 	}
 
 	sqlite3_free_table(dbresult);
+	sqlite3_free(zErrMsg);
     return 0;
 }
 
@@ -1162,11 +1176,13 @@ int get_hotwatersystem_temperaturesensor(char* id)
         MYLOG_DEBUG("Can not get hotwatersensorid!");
         MYLOG_DEBUG("The zErrMsg is %s", zErrMsg);
 		sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
         return -1;
     }
 
     memcpy(id, dbresult[1], strlen(dbresult[1]));
 	sqlite3_free_table(dbresult);
+	sqlite3_free(zErrMsg);
     return 0;
 }
 
@@ -1238,12 +1254,14 @@ int electricity_query(cJSON* root,char* topic)
             MYLOG_DEBUG("Can not find the device in devices");
             cJSON_AddItemToObject(device, "records", records);
             sqlite3_free_table(dbresult);
+			sqlite3_free(zErrMsg);
             continue;
         }
 
         devicetype = atoi(dbresult[1]);         
         cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(devicetype));
         sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
         
         switch(type)
         {
@@ -1316,7 +1334,7 @@ int electricity_query(cJSON* root,char* topic)
                 case OP_TYPE_YEAR:
                     cJSON_AddNumberToObject(record, "year", data);
                     break;
-                default:
+                default:					
                     break;                
              
             }
@@ -1329,6 +1347,7 @@ int electricity_query(cJSON* root,char* topic)
         }
         cJSON_AddItemToObject(device, "records", records);       
         sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
     }
     cJSON_AddItemToObject(root, "resultcode", cJSON_CreateNumber(0));
     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
@@ -1387,12 +1406,15 @@ int wateryield_query(cJSON* root,char* topic)
         if(nrow == 0)
         {
             MYLOG_DEBUG("Can not find the device in devices");
+	        sqlite3_free_table(dbresult);
+			sqlite3_free(zErrMsg);			
             continue;
         }
 
         devicetype = atoi(dbresult[1]);        
         cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(devicetype));
         sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
         
         switch(type)
         {
@@ -1474,6 +1496,7 @@ int wateryield_query(cJSON* root,char* topic)
         cJSON_AddItemToObject(device, "records", records);
 
         sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
     }
     cJSON_AddItemToObject(root, "resultcode", cJSON_CreateNumber(0));
     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);

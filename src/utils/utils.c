@@ -393,6 +393,7 @@ void electricity_stat(char* deviceid, int num)
     /*天电量处理*/
 	sprintf(sql, "select electricity from electricity_day where deviceid = '%s' and day = %d;", deviceid, day);
 	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+	sqlite3_free(zErrMsg);
 	memset(sql, 0, 250);
 	if(ncolumn==1&&nrow==1)
 	{
@@ -417,6 +418,7 @@ void electricity_stat(char* deviceid, int num)
 	/*月电量处理*/
 	sprintf(sql, "select electricity from electricity_month where deviceid = '%s' and month = %d;", deviceid, month);
 	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+	sqlite3_free(zErrMsg);
 	memset(sql, 0, 250);
 	if(ncolumn==1&&nrow==1)
 	{
@@ -442,7 +444,7 @@ void electricity_stat(char* deviceid, int num)
 	sprintf(sql, "select electricity from electricity_year where deviceid = '%s' and year = %d;", deviceid, year);
 	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
 	memset(sql, 0, 250);
-	MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
+	sqlite3_free(zErrMsg);
 	if(ncolumn==1&&nrow==1)
 	{
 		year_sum = atoi(dbresult[1]);
@@ -490,6 +492,7 @@ void wateryield_stat(char* deviceid, int num)
     /*天电量处理*/
 	sprintf(sql, "select wateryield from wateryield_day where deviceid = '%s' and day = %d;", deviceid, day);
 	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+	sqlite3_free(zErrMsg);
 	memset(sql, 0, 250);
 	if(ncolumn==1&&nrow==1)
 	{
@@ -514,6 +517,7 @@ void wateryield_stat(char* deviceid, int num)
 	/*月电量处理*/
 	sprintf(sql, "select wateryield from wateryield_month where deviceid = '%s' and month = %d;", deviceid, month);
 	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+	sqlite3_free(zErrMsg);
 	memset(sql, 0, 250);
 	if(ncolumn==1&&nrow==1)
 	{
@@ -540,8 +544,8 @@ void wateryield_stat(char* deviceid, int num)
 	/*年电量处理*/
 	sprintf(sql, "select wateryield from wateryield_year where deviceid = '%s' and year = %d;", deviceid, year);
 	sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+	sqlite3_free(zErrMsg);
 	memset(sql, 0, 250);
-	MYLOG_DEBUG("The nrow is %d, the ncolumn is %d, the zErrMsg is %s", nrow, ncolumn, zErrMsg);
 	if(ncolumn==1&&nrow==1)
 	{
 		year_sum = atoi(dbresult[1]);
@@ -571,9 +575,12 @@ int exec_sql_create(char* sql)
     rc = sqlite3_exec(g_db,sql,0,0,&zErrMsg);
     if(rc != SQLITE_OK && rc != SQLITE_ERROR) //表重复会返回SQLITE_ERROR，该错误属于正常
     {
-        MYLOG_ERROR("zErrMsg = %s rc =%d\n",zErrMsg, rc);  
+        MYLOG_ERROR("zErrMsg = %s rc =%d\n",zErrMsg, rc);
+		sqlite3_free(zErrMsg);
         return -1;          
-    }    
+    } 
+	sqlite3_free(zErrMsg);
+	return 0;
 }
 
 /*电量、水量数据库删除*/
