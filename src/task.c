@@ -270,7 +270,7 @@ void* devicemsgprocess(void *argc)
 	{
 		if (rcvret = msgrcv(g_queueid, (void*)&msg, msglen, QUEUE_MSG_DEVIC, 0) <= 0)
 		{
-            MYLOG_ERROR("recive devicequeuemsg fail!rcvret = %d", rcvret);
+            MYLOG_ERROR("recieve devicequeuemsg fail!rcvret = %d", rcvret);
             continue;
 		}
         
@@ -561,7 +561,7 @@ void* devicemsgprocess(void *argc)
                     MYLOG_DEBUG("MQTT: Device status query,The status is %s", cJSON_PrintUnformatted(devicestatus));                   
                 }
             }
-            cJSON_AddItemToObject(result_json, "devices", statusarray);            
+            cJSON_AddItemToObject(result_json, "devices", statusarray);         
         }
 		else if(operationtype == 3) //删除设备
 		{
@@ -688,12 +688,18 @@ void* zgbmsgprocess(void* argc)
     char db_deviceid[20] = {0}; 
     char msgtype,devicetype,deviceindex,packetid;
     zgbmsg responsemsg;
-    char topic[TOPIC_LENGTH] = {0};
-    char *zErrMsg = NULL;  
+    char topic[TOPIC_LENGTH] = {0};  
     char sql[256] ={0}; 
     BYTE data[72];
     int rc;  
-    int len = 0; 
+    int len = 0;
+	//数据库请求变量
+    int nrow = 0, ncolumn = 0;
+	char **dbresult;
+    char *zErrMsg = NULL;
+	cJSON* root;
+	//循环变量
+	int i;
 
     MYLOG_DEBUG("Enter pthread zgbmsgprocess");
 
@@ -709,10 +715,7 @@ void* zgbmsgprocess(void* argc)
         zgbaddresstodbaddress(src, db_zgbaddress);
 
         if(qmsg.msg.payload.adf.index[0] == 0x00 && qmsg.msg.payload.adf.index[1] == 0x00) //设备入网消息
-        {
-            int nrow = 0, ncolumn = 0;
-	        char **dbresult;
-	                
+        {	                
             MYLOG_INFO("[ZGB DEVICE]Get a device network joining message.");
 		    MYLOG_ZGBMSG(qmsg.msg);            
             sprintf(sql,"SELECT * FROM devices WHERE zgbaddress = '%s';", db_zgbaddress);
@@ -745,7 +748,7 @@ void* zgbmsgprocess(void* argc)
             devicenum = cJSON_GetArraySize(g_devices_status_json);
 
             //删除内存设备状态表中相关的设备
-            for (int i=0; i < devicenum;)
+            for (i=0; i < devicenum;)
             {
                 devicestatus = cJSON_GetArrayItem(g_devices_status_json, i);
                 if(devicestatus == NULL)
@@ -807,26 +810,24 @@ void* zgbmsgprocess(void* argc)
         {
             case ZGB_MSGTYPE_DEVICEREGISTER_RESPONSE:
             {
-                cJSON* root = cJSON_CreateObject();
-                int nrow = 0, ncolumn = 0;
-                char **azResult;
+                root = cJSON_CreateObject();
                  
                 MYLOG_INFO("[ZGB DEVICE]Get a device network joining response message.");
                 MYLOG_ZGBMSG(qmsg.msg);
                 sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", db_deviceid);
                 MYLOG_INFO(sql);
             
-                sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
+                sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
                 if(nrow != 0) //数据库中有该设备
                 {
                     MYLOG_INFO("The device has been registered!");
 					sqlite3_free(zErrMsg);
-					sqlite3_free_table(azResult);
+					sqlite3_free_table(dbresult);
                 }
 				else
 				{	 
 				    sqlite3_free(zErrMsg);
-					sqlite3_free_table(azResult);
+					sqlite3_free_table(dbresult);
 	                sprintf(sql, "insert into devices values('%s', '%s', %d, %d, 1);", db_deviceid, db_zgbaddress, devicetype, deviceindex);
 	                MYLOG_INFO("The sql is %s", sql);
 					
@@ -837,7 +838,11 @@ void* zgbmsgprocess(void* argc)
 						cJSON_Delete(root);
 					    sqlite3_free(zErrMsg);
 	                    break;
-	                }						
+	                }
+					else
+					{
+						sqlite3_free(zErrMsg);
+					}
 
 	                if(devicetype == DEV_SOCKET || devicetype == DEV_FAN_COIL || devicetype == DEV_FRESH_AIR || devicetype == DEV_LIGHT
 					 	|| devicetype == SEN_ELECTRICITY_METER)
@@ -881,10 +886,8 @@ void* zgbmsgprocess(void* argc)
                 MYLOG_ZGBMSG(qmsg.msg);             
                 cJSON *device_json;
                 cJSON *attr_json;
-                cJSON *replace_value_json;
                 cJSON *temp;
                 int value,oldvalue;
-                int i = 0;
 				int needreport = 1;//日志是否需要上报标志
                 BYTE attr; 
 
@@ -895,7 +898,9 @@ void* zgbmsgprocess(void* argc)
                 {
                     goto end;
                 }
-               //自定义报文头长度7
+				
+				i=0;
+                //自定义报文头长度7
                 while(i < (zgbdata->length - 7))
                 {
                     attr = zgbdata->pdu[i++];
@@ -909,8 +914,7 @@ void* zgbmsgprocess(void* argc)
                         goto end;
                     }
                     value = zgbdata->pdu[i++]*256*256*256 + zgbdata->pdu[i++]*256*256 
-                        + zgbdata->pdu[i++]*256 + zgbdata->pdu[i++];
-                    replace_value_json = cJSON_CreateNumber(value);
+                        + zgbdata->pdu[i++]*256 + zgbdata->pdu[i++];                    
 					MYLOG_DEBUG("The value is %d", value);
                     switch(attr)
                     {
@@ -930,12 +934,11 @@ void* zgbmsgprocess(void* argc)
                             if(value == oldvalue)
                             {
                                 needmqtt = false || needmqtt;
-								cJSON_Delete(replace_value_json);//防止内存泄露
                             }
                             else
                             {
                                 //修改的是复制出来的设备属性表
-                                cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);
+                                cJSON_ReplaceItemInObject(attr_json, "value", cJSON_CreateNumber(value));
                                 //修改的是全局的设备属性表
                                 change_device_attr_value(db_deviceid, attr, value);
                                 needmqtt = true || needmqtt;
@@ -953,7 +956,9 @@ void* zgbmsgprocess(void* argc)
 	                                    	if(flag == 1)
 	                                    	{		                                    		
 		                                        change_system_mode(value);		                                    		
-	                                    	}else{
+	                                    	}
+											else
+											{
 												needreport = 0;
 												change_panel_mode(db_deviceid, g_system_mode);
 	                                    	}                                    	
@@ -964,7 +969,7 @@ void* zgbmsgprocess(void* argc)
 	                                default:
 	                                    break;
                                 }
-								if(packetid == 0 && devicetype != DEV_AIR_CON && needreport)
+								if(packetid == 0 && devicetype != DEV_AIR_CON && needreport)//本地操作记录日志
 								{
 									Operationlog log = {"0", 1, g_mac, "", 1, devicetype, attr, value, 0, ""};
 									memcpy(log.deviceid, db_deviceid, strlen(db_deviceid));
@@ -986,10 +991,7 @@ void* zgbmsgprocess(void* argc)
                             temp = cJSON_GetObjectItem(attr_json, "value");
                             if(temp == NULL)
                             {
-                                if(device_json != NULL)
-                                {
-                                    cJSON_Delete(device_json);
-                                }
+                                cJSON_Delete(device_json);
                                 goto end;
                             }
                             oldvalue = temp->valueint;
@@ -1000,7 +1002,7 @@ void* zgbmsgprocess(void* argc)
                             else
                             {
                                 //修改的是复制出来的设备属性表
-                                cJSON_ReplaceItemInObject(attr_json, "value", replace_value_json);
+                                cJSON_ReplaceItemInObject(attr_json, "value", cJSON_CreateNumber(value));
                                 //修改的是全局的设备属性表
                                 change_device_attr_value(db_deviceid, attr, value);
                                 needmqtt = true || needmqtt;
@@ -1042,23 +1044,23 @@ void* zgbmsgprocess(void* argc)
                             cJSON* tmp;
                             for(int i = 0; i < sum; )
                             {
-                                tmp = cJSON_GetArrayItem(status, i);
-                                attr = cJSON_GetObjectItem(tmp, "type")->valueint;
-                                //如果不是类型属性和状态属性全部删除
-                                if(attr != ATTR_DEVICESTATUS && attr != ATTR_DEVICETYPE && attr != ATTR_ENV_HUMIDITY)
-                                {
-                                    cJSON_DeleteItemFromArray(status, i);
-                                    sum--;
-                                }
-                                else
-                                {
-                                    i++;
-                                }
-                             }
-                        }
-                      }
-                      sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device_json), 0, 0);
-                  }
+                               tmp = cJSON_GetArrayItem(status, i);
+                               attr = cJSON_GetObjectItem(tmp, "type")->valueint;
+                               //如果不是类型属性和状态属性全部删除
+                               if(attr != ATTR_DEVICESTATUS && attr != ATTR_DEVICETYPE && attr != ATTR_ENV_HUMIDITY)
+                               {
+                                   cJSON_DeleteItemFromArray(status, i);
+                                   sum--;
+                               }
+                               else
+                               {
+                                   i++;
+                               }
+                           }
+                       }
+                   }
+                   sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(device_json), 0, 0);
+               }
                cJSON_Delete(device_json);
                break;
             }
@@ -1066,20 +1068,18 @@ void* zgbmsgprocess(void* argc)
             {
                 MYLOG_INFO("[ZGB DEVICE]Get a device location message.");
                 MYLOG_ZGBMSG(qmsg.msg);             
-                cJSON* root = cJSON_CreateObject();
-                int nrow = 0, ncolumn = 0;
-                char **azResult; 
+                root = cJSON_CreateObject();
                  
                 MYLOG_INFO("[ZGB DEVICE]Get a device location message.");
                  
                 sprintf(sql,"SELECT * FROM devices WHERE deviceid = '%s';", db_deviceid);
                             
-                sqlite3_get_table(g_db, sql, &azResult, &nrow, &ncolumn, &zErrMsg);
+                sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
                 if(nrow == 0) //数据库中没有该设备
                 {
                    MYLOG_INFO("The device has not been registered!");				   
 				   sqlite3_free(zErrMsg);
-				   sqlite3_free_table(azResult);
+				   sqlite3_free_table(dbresult);
 				   cJSON_Delete(root);
                    break;
                 }
@@ -1087,7 +1087,7 @@ void* zgbmsgprocess(void* argc)
                 cJSON_AddStringToObject(root, "deviceid", db_deviceid);
                 cJSON_AddNumberToObject(root, "type", devicetype);
                 sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), 0, 0);
-                sqlite3_free_table(azResult);  
+                sqlite3_free_table(dbresult);  
 				sqlite3_free(zErrMsg);
 				cJSON_Delete(root);
 				break;
@@ -1112,6 +1112,7 @@ void* uartlisten(void *argc)
     zgbqueuemsg zgbqmsg;
 	int i, j, sum;
     int ret;
+	int needbyte;
 
     MYLOG_INFO("Thread uartlisten begin!");
     pthread_create(&threads[0], NULL, uartsend, NULL);
@@ -1144,7 +1145,7 @@ void* uartlisten(void *argc)
 			zmsg.msglength = msgbuf[i + 1];
             if(zmsg.msglength+4 > bitnum-i) //如果ZGB消息长度大于接受到字节剩余长度说明还要接受后续字节
             {
-                int needbyte = (zmsg.msglength + 4) -  (bitnum - i);//构造当前报文还需接收的字节数
+                needbyte = (zmsg.msglength + 4) -  (bitnum - i);//构造当前报文还需接收的字节数
                         
                 nbyte = read(g_uartfd, msgbuf+bitnum, needbyte);
                 bitnum = bitnum + nbyte;

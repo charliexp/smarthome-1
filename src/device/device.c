@@ -655,7 +655,6 @@ cJSON* get_attr_value_object_json(cJSON* device, char attrtype)
                 return attr;
             }        
         }
-
     }
     return NULL;
 }
@@ -896,7 +895,6 @@ void change_devices_offline()
 {
     int devicenum, online, onlinecheck;
     cJSON* devicestatus = NULL;
-    char* array_deviceid;
 
     pthread_mutex_lock(&g_devices_status_mutex);
     devicenum = cJSON_GetArraySize(g_devices_status_json);

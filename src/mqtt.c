@@ -52,6 +52,8 @@ void sendmqttmsg(long messagetype, char* topic, char* message, int qos, int reta
 	if (ret = msgsnd(g_queueid, &msg, msglen, 0) != 0)
 	{
 		MYLOG_ERROR("send mqttqueuemsg fail!");
+		free(msg.msg.topic);
+		free(msg.msg.msgcontent);
 		return;
 	}
 
@@ -118,10 +120,10 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
     {
         ret = wateryield_query(root, topic);      	   
     }
-    /*设备操作*/
+    /*设备操作或查询*/
 	else if (strstr(topicName, "operation") != 0)
 	{
-        MYLOG_INFO("get an operation msg.\n");
+        MYLOG_INFO("get an operation msg.");
         
         msg.msgtype = QUEUE_MSG_DEVIC;
         msg.p_operation_json = cJSON_Duplicate(root, 1);
