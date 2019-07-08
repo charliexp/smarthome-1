@@ -51,8 +51,20 @@ int sqlitedb_init()
         sprintf(sql,"CREATE TABLE devices (deviceid TEXT, zgbaddress TEXT, devicetype CHAR(1), deviceindex CHAR(1), online CHAR(1), primary key(deviceid));");
         exec_sql_create(sql);
 
-        sprintf(sql,"CREATE TABLE [electricity_day]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[day] INT NOT NULL, primary key(deviceid, day));");
+        sprintf(sql,"CREATE TABLE [temperature_hour]([deviceid] TEXT NOT NULL,[temperature] INT NOT NULL,[hour] INT NOT NULL, primary key(deviceid, hour));");
         exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [temperature_day]([deviceid] TEXT NOT NULL,[temperature_high] INT NOT NULL,[temperature_low] INT NOT NULL,[day] INT NOT NULL, primary key(deviceid, day));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [temperature_month]([deviceid] TEXT NOT NULL,[temperature_high] INT NOT NULL,[temperature_low] INT NOT NULL,[month] INT NOT NULL, primary key(deviceid, month));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [temperature_year]([deviceid] TEXT NOT NULL,[temperature_high] INT NOT NULL,[temperature_low] INT NOT NULL,[year] INT NOT NULL, primary key(deviceid, year));");
+        exec_sql_create(sql);		
+
+        sprintf(sql,"CREATE TABLE [electricity_day]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[day] INT NOT NULL, primary key(deviceid, day));");
+        exec_sql_create(sql);		
 
         sprintf(sql,"CREATE TABLE [electricity_month]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[month] INT NOT NULL, primary key(deviceid, month));");
         exec_sql_create(sql);
@@ -852,7 +864,15 @@ void* zgbmsgprocess(void* argc)
 					else if(devicetype == SEN_WATER_FLOW)
 	                {
 	                    devicedatainit(db_deviceid, 2);                       
-	                }	                
+	                }
+					else if(devicetype == SEN_ENV_BOX)
+	                {
+	                    devicedatainit(db_deviceid, 3);                       
+	                }	
+					else if(devicetype == DEV_CONTROL_PANEL)
+	                {
+	                    devicedatainit(db_deviceid, 3);                       
+	                }						
 					 
 	                cJSON* devicestatus = create_device_status_json(db_deviceid, devicetype);
 	                cJSON_AddItemToArray(g_devices_status_json, devicestatus);		 

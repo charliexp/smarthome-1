@@ -156,6 +156,18 @@ void timerinit()
 	}
 
     timer = createtimer(time_sec, electtimerfun);
+    addtimer(timer);
+
+	if(min == 58)
+	{
+		time_sec = 120 - sec + 58*60;
+	}
+	else
+	{
+		time_sec = 58*60 - min*60 -sec;//当前一小时剩余的秒数加上下个58分钟的秒数,alarm函数不精确 		
+	}
+
+    timer = createtimer(time_sec, envdatatimerfun);
     addtimer(timer);	
     signal(SIGALRM, sigalrm_fn); 
     alarm(1);    
@@ -223,6 +235,49 @@ void electtimerfun(timer* t)
     t->timevalue = time_sec;
     t->lefttime = time_sec;
     return;    
+}
+
+void envdatatimerfun(timer* t)
+{
+    time_t time_now;
+    struct tm* tm;
+    int sec,min,hour,day,month,year;
+    int time_sec;//需要定时的秒数
+
+    time(&time_now);
+    tm = localtime(&time_now);
+    sec   = tm->tm_sec;
+    min   = tm->tm_min;
+	hour  = tm->tm_hour;
+	day   = tm->tm_mday;
+	month = tm->tm_mon + 1;
+	year  = tm->tm_year + 1900;	
+
+	//置零当前小时的数据
+	char sql[100] = {0};
+
+	sprintf(sql, "update electricity_hour set electricity = 0 where hour = %d;", hour);
+	exec_sql_create(sql);
+
+	int num = cJSON_GetArraySize(g_devices_status_json);
+	cJSON* devicestatus,devicejson,attrjson;
+	char* deviceid;
+	int devicetype;
+	int temperature;
+	for(int i=0;i<num;i++){
+		devicejson = cJSON_GetArrayItem(g_devices_status_json, i);
+		devicetype = cJSON_GetObjectItem(devicestatus, "devicetype")->valueint;
+		if(devicetype == DEV_CONTROL_PANEL || devicetype == SEN_ENV_BOX)
+		{
+			deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
+			attrjson = get_attr_value_object_json(devicejson, ATTR_ENV_TEMPERATURE);
+			temperature = cJSON_GetObjectItem(attrjson, "value")->valueint;
+			temperaturedata_stat(deviceid, temperature);
+		}		
+	}
+    time_sec = (60*60 - min*60 -sec) + 58*60;//当前一小时剩余的秒数加上下个59分钟的秒数,alarm函数不精确
+    t->timevalue = time_sec;
+    t->lefttime = time_sec;	
 }
 
 void airconditiontimerfun(timer* t)
@@ -293,7 +348,7 @@ void statustimerfun(timer* t)
     MYLOG_DEBUG("device status query!");
     change_devices_offline();
     ZGBADDRESS address = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}; //广播报文
-    sendzgbmsg(address, 0, 0, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, getpacketid());    
+    sendzgbmsg(address, 0, 0, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, getpacketid());
     t->timevalue = 10;
     t->lefttime = 10;
     return;      

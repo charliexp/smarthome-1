@@ -23,6 +23,8 @@ void timerinit();
 
 void electtimerfun(timer* t);
 
+void envdatatimerfun(timer* t);
+
 void statustimerfun(timer* t);
 
 void airconditiontimerfun(timer* t);

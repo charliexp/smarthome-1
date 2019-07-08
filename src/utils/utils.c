@@ -565,6 +565,155 @@ void wateryield_stat(char* deviceid, int num)
 	sqlite3_free_table(dbresult); 	
 }
 
+/*温度数据处理*/
+void temperaturedata_stat(char* deviceid, int num)
+{
+    time_t time_now;
+    int min,hour,day,month,year;
+    int temperature_low,temperature_high;
+    char sql[250]={0};
+    int nrow = 0, ncolumn = 0;
+    char **dbresult;
+    char *zErrMsg = NULL;
+    struct tm* t;
+    time(&time_now);
+    t = localtime(&time_now);
+
+    min   = t->tm_min;
+	hour  = t->tm_hour;
+	day   = t->tm_mday;
+	month = t->tm_mon + 1;
+	year  = t->tm_year + 1900;
+	
+	sprintf(sql, "update temperature_hour set temperature=%d where deviceid='%s' and hour=%d;", num, deviceid, hour);
+    exec_sql_create(sql);
+	memset(sql, 0, 250);
+
+	//每天0点
+	if(hour == 0)
+	{
+		sprintf(sql, "select temperature_high,temperature_low from temperature_day where deviceid='%s' and day=%d;", deviceid, day);
+		sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+		sqlite3_free(zErrMsg);
+		memset(sql, 0, 250);
+		sqlite3_free_table(dbresult);
+		if(ncolumn==1&&nrow==1)
+		{
+			sprintf(sql, "update temperature_day set temperature_low=%d,temperature_high=%d where deviceid='%s' and day=%d;", num, num, deviceid, day);
+		    exec_sql_create(sql); 			
+		}else{
+			sprintf(sql, "insert into temperature_day(deviceid, temperature_high, temperature_low, day) values(%s, %d, %d, %d);", deviceid, num, num, day);
+		    exec_sql_create(sql);			
+		}
+		//月初1号0点
+		sprintf(sql, "select temperature_high,temperature_low from temperature_month where deviceid='%s' and month=%d;", deviceid, month);
+		sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+		sqlite3_free(zErrMsg);
+		memset(sql, 0, 250);		
+		if(day == 1)
+		{
+			sqlite3_free_table(dbresult);
+			if(ncolumn==1&&nrow==1)
+			{
+				sprintf(sql, "update temperature_month set temperature_low=%d,temperature_high=%d where deviceid='%s' and month=%d;", num, num, deviceid, month);
+			    exec_sql_create(sql);
+			}else{
+				sprintf(sql, "insert into temperature_month(deviceid, temperature_high, temperature_low, month) values(%s, %d, %d, %d);", deviceid, num, num, month);
+			    exec_sql_create(sql);			
+			}
+			
+			//年初1月1号0点
+			sprintf(sql, "select temperature_high,temperature_low from temperature_year where deviceid='%s' and year=%d;", deviceid, year);
+			sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+			sqlite3_free(zErrMsg);
+			memset(sql, 0, 250);			
+			if(month == 1)
+			{
+				sqlite3_free_table(dbresult);
+				if(ncolumn==1&&nrow==1)
+				{
+					sprintf(sql, "update temperature_year set temperature_low=%d,temperature_high=%d where deviceid='%s' and year=%d;", num, num, deviceid, year);
+				    exec_sql_create(sql);
+				}
+				else
+				{
+					sprintf(sql, "insert into temperature_year(deviceid, temperature_high, temperature_low, year) values(%s, %d, %d, %d);", deviceid, num, num, year);
+				    exec_sql_create(sql);			
+				}				
+			}
+			else
+			{
+				if(ncolumn==1&&nrow==1)
+				{
+					temperature_high = atoi(dbresult[2]);
+					temperature_low = atoi(dbresult[3]);
+					//更新高温
+					if(num > temperature_high)
+					{				
+						sprintf(sql, "update temperature_year set  temperature_high=%d where deviceid='%s' and year=%d;", num, deviceid, year);
+					    exec_sql_create(sql);						
+					}else if(num < temperature_low){//更新低温
+						sprintf(sql, "update temperature_year set  temperature_low=%d where deviceid='%s' and year=%d;", num, deviceid, year);
+					    exec_sql_create(sql);						
+					}					
+				}
+				else
+				{
+					sprintf(sql, "insert into temperature_year(deviceid, temperature_high, temperature_low, year) values(%s, %d, %d, %d);", deviceid, num, num, year);
+				    exec_sql_create(sql);			
+				}
+				sqlite3_free_table(dbresult);
+			}
+		}
+		else 
+		{
+			if(ncolumn==1&&nrow==1)
+			{
+				temperature_high = atoi(dbresult[2]);
+				temperature_low = atoi(dbresult[3]);
+				//更新高温
+				if(num > temperature_high)
+				{				
+					sprintf(sql, "update temperature_month set temperature_high=%d where deviceid='%s' and month=%d;", num, deviceid, month);
+					exec_sql_create(sql);						
+				}else if(num < temperature_low){//更新低温
+					sprintf(sql, "update temperature_month set temperature_low=%d where deviceid='%s' and month=%d;", num, deviceid, month);
+					exec_sql_create(sql);						
+				}					
+			}
+			else
+			{
+				sprintf(sql, "insert into temperature_month(deviceid, temperature_high, temperature_low, month) values(%s, %d, %d, %d);", deviceid, num, num, month);
+				exec_sql_create(sql);			
+			}
+			sqlite3_free_table(dbresult);			
+		}
+	}
+	else
+	{
+		if(ncolumn==1&&nrow==1)
+		{
+			temperature_high = atoi(dbresult[2]);
+			temperature_low = atoi(dbresult[3]);
+			//更新高温
+			if(num > temperature_high)
+			{				
+				sprintf(sql, "update temperature_day set temperature_high=%d where deviceid='%s' and day=%d;", num, deviceid, day);
+				exec_sql_create(sql);						
+			}else if(num < temperature_low){//更新低温
+				sprintf(sql, "update temperature_day set temperature_low=%d where deviceid='%s' and day=%d;", num, deviceid, day);
+				exec_sql_create(sql);						
+			}					
+		}
+		else
+		{
+			sprintf(sql, "insert into temperature_day(deviceid, temperature_high, temperature_low, day) values(%s, %d, %d, %d);", deviceid, num, num, day);
+			exec_sql_create(sql);			
+		}
+		sqlite3_free_table(dbresult);			
+	}	
+}
+
 
 int exec_sql_create(char* sql)
 {
@@ -573,6 +722,7 @@ int exec_sql_create(char* sql)
     
     MYLOG_DEBUG("The sql is %s", sql);
     rc = sqlite3_exec(g_db,sql,0,0,&zErrMsg);
+	memset(sql, 0, strlen(sql));
     if(rc != SQLITE_OK && rc != SQLITE_ERROR) //表重复会返回SQLITE_ERROR，该错误属于正常
     {
         MYLOG_ERROR("zErrMsg = %s rc =%d\n",zErrMsg, rc);
@@ -645,6 +795,16 @@ void devicedatainit(char* id,int type)
             exec_sql_create(sql); 
             memset(sql, 0, 100);        
         }          
+    }
+	//温度数据初始化
+	else if(type == 3)
+    {
+        for(int i = 0;i<24;i++)
+        {
+            sprintf(sql, "INSERT INTO temperature_hour values('%s', 0, %d);", id, i);
+            exec_sql_create(sql); 
+            memset(sql, 0, 100);        
+        }     
     }
 
 }
@@ -793,8 +953,13 @@ int debugproc(cJSON* root, char* topic)
         }      
     }
     else if(operationtype == 2)
-    {
-        int loglevel = cJSON_GetObjectItem(root, "value")->valueint;
+    {        
+		cJSON* tmp = cJSON_GetObjectItem(root, "value");
+		if(tmp == NULL)
+		{
+			return;
+		}
+		int loglevel = tmp->valueint;
         g_log_level = loglevel;
         cJSON_AddStringToObject(root, "result", "ok");
     }
@@ -826,6 +991,21 @@ int debugproc(cJSON* root, char* topic)
             cJSON_AddStringToObject(root, "result", "fail");                
         }        
     }
+	else if(operationtype == 7)//下发单个设备电量查询
+	{
+		cJSON* tmp = cJSON_GetObjectItem(root, "value");
+		if(tmp == NULL)
+		{
+			return;
+		}
+		char* id = tmp->valuestring;
+		ZGBADDRESS addr;
+		dbaddresstozgbaddress(id, addr);
+		BYTE payload[] = {ATTR_SOCKET_E};
+		milliseconds_sleep(500);
+		sendzgbmsg(addr, payload, 1, ZGB_MSGTYPE_DEVICE_STATUS_QUERY, DEV_ANYONE, 0, getpacketid());//查询电量
+	}
+		
     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);    
 }
 
