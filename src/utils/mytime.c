@@ -260,16 +260,16 @@ void envdatatimerfun(timer* t)
 	exec_sql_create(sql);
 
 	int num = cJSON_GetArraySize(g_devices_status_json);
-	cJSON* devicestatus,devicejson,attrjson;
+	cJSON* devicejson,*attrjson;
 	char* deviceid;
 	int devicetype;
 	int temperature;
 	for(int i=0;i<num;i++){
 		devicejson = cJSON_GetArrayItem(g_devices_status_json, i);
-		devicetype = cJSON_GetObjectItem(devicestatus, "devicetype")->valueint;
+		devicetype = cJSON_GetObjectItem(devicejson, "devicetype")->valueint;
 		if(devicetype == DEV_CONTROL_PANEL || devicetype == SEN_ENV_BOX)
 		{
-			deviceid = cJSON_GetObjectItem(devicestatus, "deviceid")->valuestring;
+			deviceid = cJSON_GetObjectItem(devicejson, "deviceid")->valuestring;
 			attrjson = get_attr_value_object_json(devicejson, ATTR_ENV_TEMPERATURE);
 			temperature = cJSON_GetObjectItem(attrjson, "value")->valueint;
 			temperaturedata_stat(deviceid, temperature);
