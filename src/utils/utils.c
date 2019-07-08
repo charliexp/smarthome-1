@@ -24,6 +24,7 @@
 #include "error.h"
 #include "../mqtt.h"
 #include "../log/log.h"
+#include "../device/device.h"
 
 extern sqlite3* g_db;
 extern int g_uartfd;
@@ -957,7 +958,7 @@ int debugproc(cJSON* root, char* topic)
 		cJSON* tmp = cJSON_GetObjectItem(root, "value");
 		if(tmp == NULL)
 		{
-			return;
+			return 0;
 		}
 		int loglevel = tmp->valueint;
         g_log_level = loglevel;
@@ -996,7 +997,7 @@ int debugproc(cJSON* root, char* topic)
 		cJSON* tmp = cJSON_GetObjectItem(root, "value");
 		if(tmp == NULL)
 		{
-			return;
+			return 0;
 		}
 		char* id = tmp->valuestring;
 		ZGBADDRESS addr;
