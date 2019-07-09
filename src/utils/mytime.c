@@ -264,6 +264,7 @@ void envdatatimerfun(timer* t)
 	char* deviceid;
 	int devicetype;
 	int temperature;
+	int humidity;
 	for(int i=0;i<num;i++){
 		devicejson = cJSON_GetArrayItem(g_devices_status_json, i);
 		devicetype = cJSON_GetObjectItem(devicejson, "devicetype")->valueint;
@@ -272,7 +273,10 @@ void envdatatimerfun(timer* t)
 			deviceid = cJSON_GetObjectItem(devicejson, "deviceid")->valuestring;
 			attrjson = get_attr_value_object_json(devicejson, ATTR_ENV_TEMPERATURE);
 			temperature = cJSON_GetObjectItem(attrjson, "value")->valueint;
+			attrjson = get_attr_value_object_json(devicejson, ATTR_ENV_HUMIDITY);
+			humidity = cJSON_GetObjectItem(attrjson, "value")->valueint;
 			temperaturedata_stat(deviceid, temperature);
+			humiditydata_stat(deviceid, humidity);
 		}		
 	}
     time_sec = (60*60 - min*60 -sec) + 58*60;//当前一小时剩余的秒数加上下个59分钟的秒数,alarm函数不精确

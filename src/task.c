@@ -59,6 +59,18 @@ int sqlitedb_init()
         exec_sql_create(sql);
 
         sprintf(sql,"CREATE TABLE [temperature_year]([deviceid] TEXT NOT NULL,[temperature_high] INT NOT NULL,[temperature_low] INT NOT NULL,[year] INT NOT NULL, primary key(deviceid, year));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [humidity_hour]([deviceid] TEXT NOT NULL,[humidity] INT NOT NULL,[hour] INT NOT NULL, primary key(deviceid, hour));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [humidity_day]([deviceid] TEXT NOT NULL,[humidity_high] INT NOT NULL,[humidity_low] INT NOT NULL,[day] INT NOT NULL, primary key(deviceid, day));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [humidity_month]([deviceid] TEXT NOT NULL,[thumidity_high] INT NOT NULL,[humidity_low] INT NOT NULL,[month] INT NOT NULL, primary key(deviceid, month));");
+        exec_sql_create(sql);
+
+        sprintf(sql,"CREATE TABLE [humidity_year]([deviceid] TEXT NOT NULL,[humidity_high] INT NOT NULL,[humidity_low] INT NOT NULL,[year] INT NOT NULL, primary key(deviceid, year));");
         exec_sql_create(sql);		
 
         sprintf(sql,"CREATE TABLE [electricity_day]([deviceid] TEXT NOT NULL,[electricity] INT NOT NULL,[day] INT NOT NULL, primary key(deviceid, day));");

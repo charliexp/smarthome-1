@@ -769,6 +769,209 @@ void temperaturedata_stat(char* deviceid, int num)
 }
 
 
+/*湿度数据处理*/
+void humiditydata_stat(char* deviceid, int num)
+{
+    time_t time_now;
+    int min,hour,day,month,year;
+    int humidity_low,humidity_high;
+    char sql[250]={0};
+    int nrow = 0, ncolumn = 0;
+    char **dbresult;
+    char *zErrMsg = NULL;
+    struct tm* t;
+    time(&time_now);
+    t = localtime(&time_now);
+
+    min   = t->tm_min;
+	hour  = t->tm_hour;
+	day   = t->tm_mday;
+	month = t->tm_mon + 1;
+	year  = t->tm_year + 1900;
+	
+	sprintf(sql, "update humidity_hour set humidity=%d where deviceid='%s' and hour=%d;", num, deviceid, hour);
+    exec_sql_create(sql);
+	memset(sql, 0, 250);
+
+	//每天0点
+	if(hour == 0)
+	{
+		sprintf(sql, "select humidity_high,humidity_low from humidity_day where deviceid='%s' and day=%d;", deviceid, day);
+		sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+		sqlite3_free(zErrMsg);
+		memset(sql, 0, 250);
+		sqlite3_free_table(dbresult);
+		if(nrow==1)
+		{
+			sprintf(sql, "update humidity_day set humidity_low=%d,humidity_high=%d where deviceid='%s' and day=%d;", num, num, deviceid, day);
+		    exec_sql_create(sql); 			
+		}else{
+			sprintf(sql, "insert into humidity_day(deviceid, humidity_high, humidity_low, day) values('%s', %d, %d, %d);", deviceid, num, num, day);
+		    exec_sql_create(sql);			
+		}
+		//月初1号0点
+		sprintf(sql, "select humidity_high,humidity_low from humidity_month where deviceid='%s' and month=%d;", deviceid, month);
+		sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+		sqlite3_free(zErrMsg);
+		memset(sql, 0, 250);	
+		if(day == 1)
+		{
+			sqlite3_free_table(dbresult);
+			if(nrow==1)
+			{
+				sprintf(sql, "update humidity_month set humidity_low=%d,humidity_high=%d where deviceid='%s' and month=%d;", num, num, deviceid, month);
+			    exec_sql_create(sql);
+			}else{
+				sprintf(sql, "insert into humidity_month(deviceid, humidity_high, humidity_low, month) values('%s', %d, %d, %d);", deviceid, num, num, month);
+			    exec_sql_create(sql);			
+			}
+			
+			//年初1月1号0点
+			sprintf(sql, "select humidity_high,humidity_low from humidity_year where deviceid='%s' and year=%d;", deviceid, year);
+			sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+			sqlite3_free(zErrMsg);
+			memset(sql, 0, 250);			
+			if(month == 1)
+			{
+				sqlite3_free_table(dbresult);
+				if(nrow==1)
+				{
+					sprintf(sql, "update humidity_year set humidity_low=%d,humidity_high=%d where deviceid='%s' and year=%d;", num, num, deviceid, year);
+				    exec_sql_create(sql);
+				}
+				else
+				{
+					sprintf(sql, "insert into humidity_year(deviceid, humidity_high, humidity_low, year) values('%s', %d, %d, %d);", deviceid, num, num, year);
+				    exec_sql_create(sql);			
+				}				
+			}
+			else
+			{
+				if(nrow==1)
+				{
+					humidity_high = atoi(dbresult[2]);
+					humidity_low = atoi(dbresult[3]);
+					//更新高温
+					if(num > humidity_high)
+					{				
+						sprintf(sql, "update humidity_year set humidity_high=%d where deviceid='%s' and year=%d;", num, deviceid, year);
+					    exec_sql_create(sql);						
+					}else if(num < humidity_low){//更新低温
+						sprintf(sql, "update humidity_year set humidity_low=%d where deviceid='%s' and year=%d;", num, deviceid, year);
+					    exec_sql_create(sql);						
+					}					
+				}
+				else
+				{
+					sprintf(sql, "insert into humidity_year(deviceid, humidity_high, humidity_low, year) values('%s', %d, %d, %d);", deviceid, num, num, year);
+				    exec_sql_create(sql);			
+				}
+				sqlite3_free_table(dbresult);
+			}
+		}
+		else 
+		{
+			if(nrow==1)
+			{
+				humidity_high = atoi(dbresult[2]);
+				humidity_low = atoi(dbresult[3]);
+				//更新高温
+				if(num > humidity_high)
+				{				
+					sprintf(sql, "update humidity_month set humidity_high=%d where deviceid='%s' and month=%d;", num, deviceid, month);
+					exec_sql_create(sql);						
+				}else if(num < humidity_low){//更新低温
+					sprintf(sql, "update humidity_month set humidity_low=%d where deviceid='%s' and month=%d;", num, deviceid, month);
+					exec_sql_create(sql);						
+				}					
+			}
+			else
+			{
+				sprintf(sql, "insert into humidity_month(deviceid, humidity_high, humidity_low, month) values('%s', %d, %d, %d);", deviceid, num, num, month);
+				exec_sql_create(sql);			
+			}
+			sqlite3_free_table(dbresult);		
+		}
+	}
+	else
+	{
+		sprintf(sql, "select humidity_high,humidity_low from humidity_day where deviceid='%s' and day=%d;", deviceid, day);
+		sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+		sqlite3_free(zErrMsg);
+		memset(sql, 0, 250);	
+		if(nrow==1)
+		{
+			humidity_high = atoi(dbresult[2]);
+			humidity_low = atoi(dbresult[3]);
+			//更新高温
+			if(num > humidity_high)
+			{				
+				sprintf(sql, "update humidity_day set humiditye_high=%d where deviceid='%s' and day=%d;", num, deviceid, day);
+				exec_sql_create(sql);						
+			}else if(num < humidity_low){//更新低温
+				sprintf(sql, "update humidity_day set humidity_low=%d where deviceid='%s' and day=%d;", num, deviceid, day);
+				exec_sql_create(sql);						
+			}					
+		}
+		else
+		{
+			sprintf(sql, "insert into humidity_day(deviceid, humidity_high, humidity_low, day) values('%s', %d, %d, %d);", deviceid, num, num, day);
+			exec_sql_create(sql);			
+		}
+		//月温度数据统计
+		sprintf(sql, "select humidity_high,humidity_low from humidity_month where deviceid='%s' and month=%d;", deviceid, month);
+		sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+		sqlite3_free(zErrMsg);
+		memset(sql, 0, 250);
+		if(nrow==1)
+		{
+			humidity_high = atoi(dbresult[2]);
+			humidity_low = atoi(dbresult[3]);
+			//更新高温
+			if(num > humidity_high)
+			{				
+				sprintf(sql, "update humidity_month set humidity_high=%d where deviceid='%s' and month=%d;", num, deviceid, month);
+				exec_sql_create(sql);						
+			}else if(num < humidity_low){//更新低温
+				sprintf(sql, "update humidity_month set humidity_low=%d where deviceid='%s' and month=%d;", num, deviceid, month);
+				exec_sql_create(sql);						
+			}					
+		}
+		else
+		{
+			sprintf(sql, "insert into humidity_month(deviceid, humidity_high, humidity_low, month) values('%s', %d, %d, %d);", deviceid, num, num, month);
+			exec_sql_create(sql);			
+		}
+		sqlite3_free_table(dbresult);
+		//年温度数据处理
+		sprintf(sql, "select humidity_high,humidity_low from humidity_year where deviceid='%s' and year=%d;", deviceid, year);
+		sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+		sqlite3_free(zErrMsg);
+		memset(sql, 0, 250);
+		if(nrow==1)
+		{
+			humidity_high = atoi(dbresult[2]);
+			humidity_low = atoi(dbresult[3]);
+			//更新高温
+			if(num > humidity_high)
+			{				
+				sprintf(sql, "update humidity_year set humidity_high=%d where deviceid='%s' and year=%d;", num, deviceid, year);
+				exec_sql_create(sql);						
+			}else if(num < humidity_low){//更新低温
+				sprintf(sql, "update humidity_year set humidity_low=%d where deviceid='%s' and year=%d;", num, deviceid, year);
+				exec_sql_create(sql);						
+			}					
+		}
+		else
+		{
+			sprintf(sql, "insert into humidity_year(deviceid, humidity_high, humidity_low, year) values('%s', %d, %d, %d);", deviceid, num, num, year);
+			exec_sql_create(sql);			
+		}
+		sqlite3_free_table(dbresult);			
+	}	
+}
+
+
 int exec_sql_create(char* sql)
 {
     char *zErrMsg = 0; 

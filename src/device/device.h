@@ -99,4 +99,7 @@ int wateryield_query(cJSON* root,char* topic);
 
 /*环境温度历史数据查询*/
 int temperaturedata_query(cJSON* root,char* topic);
+/*环境湿度历史数据查询*/
+int humidity_query(cJSON* root,char* topic);
+
 #endif

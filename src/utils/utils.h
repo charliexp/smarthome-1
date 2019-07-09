@@ -58,6 +58,9 @@ void wateryield_stat(char* deviceid, int num);
 /*温度数据统计*/
 void temperaturedata_stat(char* deviceid, int num);
 
+/*湿度数据统计*/
+void humiditydata_stat(char* deviceid, int num);
+
 /*sql语句执行*/
 int exec_sql_create(char* sql);
 

@@ -1518,6 +1518,336 @@ int wateryield_query(cJSON* root,char* topic)
 /*温度历史数据查询*/
 int temperaturedata_query(cJSON* root,char* topic)
 {
-	return 0;
+    MYLOG_INFO("An temperature qury!");
+    int devicetype;
+    cJSON* t = cJSON_GetObjectItem(root, "operation");        
+    if(t == NULL)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;    	        
+    }
+    int type = t->valueint;
+    cJSON* devices = cJSON_GetObjectItem(root, "devices");
+    if(devices == NULL)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;	        
+    }
+    int num = cJSON_GetArraySize(devices);
+    if(num == 0)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;	        
+    }	    
+    for(int i=0;i<num;i++){
+        cJSON* device = cJSON_GetArrayItem(devices, i);
+        cJSON* deviceidjson = cJSON_GetObjectItem(device, "deviceid");
+        cJSON* records = cJSON_CreateArray();
+        cJSON* record;    
+	    char* deviceid = deviceidjson->valuestring;
+	    char sql[250]={0};   
+        int nrow = 0, ncolumn = 0;
+        char **dbresult;
+        char *zErrMsg = NULL;
+        int temperature,temperature_high,temperature_low;
+        int date;
+        time_t time_now;
+        struct tm* t;        
+        
+        cJSON_AddItemToObject(device, "result", cJSON_CreateNumber(0));
+	    if(deviceidjson == NULL)
+	    {
+            MYLOG_ERROR("Wrong format MQTT message!");
+            return -1;	        
+	    }	        
+       
+        sprintf(sql, "select devicetype from devices where deviceid='%s';", deviceid);
+        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+        if(nrow == 0)
+        {
+            MYLOG_DEBUG("Can not find the device in devices");
+	        sqlite3_free_table(dbresult);
+			sqlite3_free(zErrMsg);			
+            continue;
+        }
+
+        devicetype = atoi(dbresult[1]);        
+        cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(devicetype));
+        sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
+        
+        switch(type)
+        {
+            case OP_TYPE_HOUR:
+                sprintf(sql, "select temperature,hour from temperature_hour where deviceid='%s';", deviceid);
+                break;
+            case OP_TYPE_DAY:
+                sprintf(sql, "select temperature_high,temperature_low,day from temperature_day where deviceid='%s';", deviceid);
+                break;
+            case OP_TYPE_MONTH:
+                sprintf(sql, "select temperature_high,temperature_low,month from temperature_month where deviceid='%s';", deviceid);
+                break;
+            case OP_TYPE_YEAR:
+                sprintf(sql, "select temperature_high,temperature_low,year from temperature_year where deviceid='%s';", deviceid);
+                break;
+            default:
+                break;
+        }    
+        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+
+        time(&time_now);
+        t = localtime(&time_now);
+        int day   = t->tm_mday;
+    	int month = t->tm_mon + 1; //localtime获取的month范围0-11
+    	int year  = t->tm_year;
+    	
+        for(int i=1;i<=nrow;i++)
+        {  
+            int recordflag = 1;        
+            record = cJSON_CreateObject();
+            switch (type)
+            {
+                case OP_TYPE_HOUR:
+                {
+		            temperature = atoi((const char*)dbresult[i*2])/10;
+		            date = atoi((const char*)dbresult[i*2+1]);					
+                    cJSON_AddNumberToObject(record, "hour", date);
+					cJSON_AddNumberToObject(record, "temperature", temperature); 
+                    break;                	
+                }
+                case OP_TYPE_DAY:
+                { 
+		            temperature_high = atoi((const char*)dbresult[i*2])/10;
+					temperature_low = atoi((const char*)dbresult[i*2+1])/10;
+		            date = atoi((const char*)dbresult[i*2+2]);						
+                    if(day < date && date >= 29)
+                    {
+                        if(date == 29 && (month-1) == 2)
+                        {
+                            if(!isLeapYear(year)) 
+                                recordflag = 0;
+                        }
+                        else if((date == 30 || date == 31) && (month-1) == 2)
+                        {
+                            recordflag == 0;
+                        }                            
+                        else if(((month -1) == 4 || (month -1) == 6 || (month -1) == 9 || (month -1) == 11) && date == 31)
+                        {
+                            recordflag == 0;
+                        }                        
+                    }
+
+                    if(recordflag)
+                    {
+                        cJSON_AddNumberToObject(record, "day", date);
+						cJSON_AddNumberToObject(record, "temperature_high", temperature_high);
+						cJSON_AddNumberToObject(record, "temperature_low", temperature_low);
+                    }
+                    break; 
+                }
+                case OP_TYPE_MONTH:
+                {
+		            temperature_high = atoi((const char*)dbresult[i*2])/10;
+					temperature_low = atoi((const char*)dbresult[i*2+1])/10;
+		            date = atoi((const char*)dbresult[i*2+2]);	                
+                    cJSON_AddNumberToObject(record, "month", date);
+                    break;
+                }
+                case OP_TYPE_YEAR:
+                {
+		            temperature_high = atoi((const char*)dbresult[i*2])/10;
+					temperature_low = atoi((const char*)dbresult[i*2+1])/10;
+		            date = atoi((const char*)dbresult[i*2+2]);	                
+                    cJSON_AddNumberToObject(record, "year", date);
+                    break;
+                }
+                default:
+                    break;                
+             
+            }
+            if(recordflag)
+            {                
+                cJSON_AddItemToArray(records, record);                     
+            }   
+        }
+        cJSON_AddItemToObject(device, "records", records);
+
+        sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
+    }
+    cJSON_AddItemToObject(root, "resultcode", cJSON_CreateNumber(0));
+    sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
+	return 0; 
 }
+
+/*温度湿度数据查询*/
+int humidity_query(cJSON* root,char* topic)
+{
+    MYLOG_INFO("An humidity qury!");
+    int devicetype;
+    cJSON* t = cJSON_GetObjectItem(root, "operation");        
+    if(t == NULL)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;    	        
+    }
+    int type = t->valueint;
+    cJSON* devices = cJSON_GetObjectItem(root, "devices");
+    if(devices == NULL)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;	        
+    }
+    int num = cJSON_GetArraySize(devices);
+    if(num == 0)
+    {
+        MYLOG_ERROR("Wrong format MQTT message!");
+        return -1;	        
+    }	    
+    for(int i=0;i<num;i++){
+        cJSON* device = cJSON_GetArrayItem(devices, i);
+        cJSON* deviceidjson = cJSON_GetObjectItem(device, "deviceid");
+        cJSON* records = cJSON_CreateArray();
+        cJSON* record;    
+	    char* deviceid = deviceidjson->valuestring;
+	    char sql[250]={0};   
+        int nrow = 0, ncolumn = 0;
+        char **dbresult;
+        char *zErrMsg = NULL;
+        int humidity,humidity_high,humidity_low;
+        int date;
+        time_t time_now;
+        struct tm* t;        
+        
+        cJSON_AddItemToObject(device, "result", cJSON_CreateNumber(0));
+	    if(deviceidjson == NULL)
+	    {
+            MYLOG_ERROR("Wrong format MQTT message!");
+            return -1;	        
+	    }	        
+       
+        sprintf(sql, "select devicetype from devices where deviceid='%s';", deviceid);
+        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+        if(nrow == 0)
+        {
+            MYLOG_DEBUG("Can not find the device in devices");
+	        sqlite3_free_table(dbresult);
+			sqlite3_free(zErrMsg);			
+            continue;
+        }
+
+        devicetype = atoi(dbresult[1]);        
+        cJSON_AddItemToObject(device, "devicetype", cJSON_CreateNumber(devicetype));
+        sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
+        
+        switch(type)
+        {
+            case OP_TYPE_HOUR:
+                sprintf(sql, "select humidity,hour from humidity_hour where deviceid='%s';", deviceid);
+                break;
+            case OP_TYPE_DAY:
+                sprintf(sql, "select humidity_high,humidity_low,day from humidity_day where deviceid='%s';", deviceid);
+                break;
+            case OP_TYPE_MONTH:
+                sprintf(sql, "select humidity_high,humidity_low,month from humidity_month where deviceid='%s';", deviceid);
+                break;
+            case OP_TYPE_YEAR:
+                sprintf(sql, "select humidity_high,humidity_low,year from humidity_year where deviceid='%s';", deviceid);
+                break;
+            default:
+                break;
+        }    
+        sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+
+        time(&time_now);
+        t = localtime(&time_now);
+        int day   = t->tm_mday;
+    	int month = t->tm_mon + 1; //localtime获取的month范围0-11
+    	int year  = t->tm_year;
+    	
+        for(int i=1;i<=nrow;i++)
+        {  
+            int recordflag = 1;        
+            record = cJSON_CreateObject();
+            switch (type)
+            {
+                case OP_TYPE_HOUR:
+                {
+		            humidity = atoi((const char*)dbresult[i*2])/10;
+		            date = atoi((const char*)dbresult[i*2+1]);					
+                    cJSON_AddNumberToObject(record, "hour", date);
+					cJSON_AddNumberToObject(record, "humidity", humidity); 
+                    break;                	
+                }
+                case OP_TYPE_DAY:
+                { 
+		            humidity_high = atoi((const char*)dbresult[i*2])/10;
+					humidity_low = atoi((const char*)dbresult[i*2+1])/10;
+		            date = atoi((const char*)dbresult[i*2+2]);						
+                    if(day < date && date >= 29)
+                    {
+                        if(date == 29 && (month-1) == 2)
+                        {
+                            if(!isLeapYear(year)) 
+                                recordflag = 0;
+                        }
+                        else if((date == 30 || date == 31) && (month-1) == 2)
+                        {
+                            recordflag == 0;
+                        }                            
+                        else if(((month -1) == 4 || (month -1) == 6 || (month -1) == 9 || (month -1) == 11) && date == 31)
+                        {
+                            recordflag == 0;
+                        }                        
+                    }
+
+                    if(recordflag)
+                    {
+                        cJSON_AddNumberToObject(record, "day", date);
+						cJSON_AddNumberToObject(record, "humidity_high", humidity_high);
+						cJSON_AddNumberToObject(record, "humidity_low", humidity_low);
+                    }
+                    break; 
+                }
+                case OP_TYPE_MONTH:
+                {
+		            humidity_high = atoi((const char*)dbresult[i*2])/10;
+					humidity_low = atoi((const char*)dbresult[i*2+1])/10;
+		            date = atoi((const char*)dbresult[i*2+2]);	                
+                    cJSON_AddNumberToObject(record, "month", date);
+					cJSON_AddNumberToObject(record, "humidity_high", humidity_high);
+					cJSON_AddNumberToObject(record, "humidity_low", humidity_low);					
+                    break;
+                }
+                case OP_TYPE_YEAR:
+                {
+		            humidity_high = atoi((const char*)dbresult[i*2])/10;
+					humidity_low = atoi((const char*)dbresult[i*2+1])/10;
+		            date = atoi((const char*)dbresult[i*2+2]);	                
+                    cJSON_AddNumberToObject(record, "year", date);
+					cJSON_AddNumberToObject(record, "humidity_high", humidity_high);
+					cJSON_AddNumberToObject(record, "humidity_low", humidity_low);					
+                    break;
+                }
+                default:
+                    break;                
+             
+            }
+            if(recordflag)
+            {                
+                cJSON_AddItemToArray(records, record);                     
+            }   
+        }
+        cJSON_AddItemToObject(device, "records", records);
+
+        sqlite3_free_table(dbresult);
+		sqlite3_free(zErrMsg);
+    }
+    cJSON_AddItemToObject(root, "resultcode", cJSON_CreateNumber(0));
+    sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
+	return 0; 
+
+}
+
 
