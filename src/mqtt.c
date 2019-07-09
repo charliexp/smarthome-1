@@ -120,6 +120,11 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
     {
         ret = wateryield_query(root, topic);      	   
     }
+    /*环境温度历史数据查询*/
+    else if(strstr(topicName, "temperature") != 0)
+    {
+        ret = temperaturedata_query(root, topic);      	   
+    }	
     /*设备操作或查询*/
 	else if (strstr(topicName, "operation") != 0)
 	{

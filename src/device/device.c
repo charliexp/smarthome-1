@@ -565,6 +565,15 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddItemToArray(statusarray, status);
 			break;
         }
+        case SEN_WATER_IMMERSION:
+        {
+        	cJSON_AddNumberToObject(device, "devicetype", SEN_WATER_IMMERSION);
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_WARNING_FINDING_WATER);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddItemToArray(statusarray, status);
+			break;
+        }		
         default:
             device = NULL;
             
@@ -1505,3 +1514,10 @@ int wateryield_query(cJSON* root,char* topic)
     sendmqttmsg(MQTT_MSG_TYPE_PUB, topic, cJSON_PrintUnformatted(root), QOS_LEVEL_2, 0);
 	return 0;      
 }
+
+/*温度历史数据查询*/
+int temperaturedata_query(cJSON* root,char* topic)
+{
+	return 0;
+}
+

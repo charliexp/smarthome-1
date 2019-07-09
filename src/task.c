@@ -17,7 +17,7 @@ int g_hotwatersystem_settingtemperature = 45;
 char g_hotwatersystem_socket[20];
 char g_hotwatersystem_temperaturesensor[20];
 char g_topicroot[20] = {0};
-char g_topics[TOPICSNUM][50] ={{0},{0},{0}};
+char g_topics[TOPICSNUM][50] ={{0},{0}};
 timer* g_zgbtimer;
 cJSON* g_devices_status_json;
 ZGB_MSG_STATUS g_devicemsgstatus[ZGBMSG_MAX_NUM];
@@ -25,7 +25,7 @@ pthread_mutex_t g_devices_status_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 //程序启动后申请堆存放需要订阅的topic
-char g_topicthemes[TOPICSNUM][20] = {{"devices/operation"},{"devices/electric"},{"devices/wateryield"},{"gateway"}};
+char g_topicthemes[TOPICSNUM][20] = {{"devices/#"},{"gateway"}};
 char g_clientid[30], g_clientid_pub[30];
 
 

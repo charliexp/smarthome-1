@@ -598,28 +598,28 @@ void temperaturedata_stat(char* deviceid, int num)
 		sqlite3_free(zErrMsg);
 		memset(sql, 0, 250);
 		sqlite3_free_table(dbresult);
-		if(ncolumn==1&&nrow==1)
+		if(nrow==1)
 		{
 			sprintf(sql, "update temperature_day set temperature_low=%d,temperature_high=%d where deviceid='%s' and day=%d;", num, num, deviceid, day);
 		    exec_sql_create(sql); 			
 		}else{
-			sprintf(sql, "insert into temperature_day(deviceid, temperature_high, temperature_low, day) values(%s, %d, %d, %d);", deviceid, num, num, day);
+			sprintf(sql, "insert into temperature_day(deviceid, temperature_high, temperature_low, day) values('%s', %d, %d, %d);", deviceid, num, num, day);
 		    exec_sql_create(sql);			
 		}
 		//月初1号0点
 		sprintf(sql, "select temperature_high,temperature_low from temperature_month where deviceid='%s' and month=%d;", deviceid, month);
 		sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
 		sqlite3_free(zErrMsg);
-		memset(sql, 0, 250);		
+		memset(sql, 0, 250);	
 		if(day == 1)
 		{
 			sqlite3_free_table(dbresult);
-			if(ncolumn==1&&nrow==1)
+			if(nrow==1)
 			{
 				sprintf(sql, "update temperature_month set temperature_low=%d,temperature_high=%d where deviceid='%s' and month=%d;", num, num, deviceid, month);
 			    exec_sql_create(sql);
 			}else{
-				sprintf(sql, "insert into temperature_month(deviceid, temperature_high, temperature_low, month) values(%s, %d, %d, %d);", deviceid, num, num, month);
+				sprintf(sql, "insert into temperature_month(deviceid, temperature_high, temperature_low, month) values('%s', %d, %d, %d);", deviceid, num, num, month);
 			    exec_sql_create(sql);			
 			}
 			
@@ -631,27 +631,27 @@ void temperaturedata_stat(char* deviceid, int num)
 			if(month == 1)
 			{
 				sqlite3_free_table(dbresult);
-				if(ncolumn==1&&nrow==1)
+				if(nrow==1)
 				{
 					sprintf(sql, "update temperature_year set temperature_low=%d,temperature_high=%d where deviceid='%s' and year=%d;", num, num, deviceid, year);
 				    exec_sql_create(sql);
 				}
 				else
 				{
-					sprintf(sql, "insert into temperature_year(deviceid, temperature_high, temperature_low, year) values(%s, %d, %d, %d);", deviceid, num, num, year);
+					sprintf(sql, "insert into temperature_year(deviceid, temperature_high, temperature_low, year) values('%s', %d, %d, %d);", deviceid, num, num, year);
 				    exec_sql_create(sql);			
 				}				
 			}
 			else
 			{
-				if(ncolumn==1&&nrow==1)
+				if(nrow==1)
 				{
 					temperature_high = atoi(dbresult[2]);
 					temperature_low = atoi(dbresult[3]);
 					//更新高温
 					if(num > temperature_high)
 					{				
-						sprintf(sql, "update temperature_year set  temperature_high=%d where deviceid='%s' and year=%d;", num, deviceid, year);
+						sprintf(sql, "update temperature_year set temperature_high=%d where deviceid='%s' and year=%d;", num, deviceid, year);
 					    exec_sql_create(sql);						
 					}else if(num < temperature_low){//更新低温
 						sprintf(sql, "update temperature_year set  temperature_low=%d where deviceid='%s' and year=%d;", num, deviceid, year);
@@ -660,7 +660,7 @@ void temperaturedata_stat(char* deviceid, int num)
 				}
 				else
 				{
-					sprintf(sql, "insert into temperature_year(deviceid, temperature_high, temperature_low, year) values(%s, %d, %d, %d);", deviceid, num, num, year);
+					sprintf(sql, "insert into temperature_year(deviceid, temperature_high, temperature_low, year) values('%s', %d, %d, %d);", deviceid, num, num, year);
 				    exec_sql_create(sql);			
 				}
 				sqlite3_free_table(dbresult);
@@ -668,7 +668,7 @@ void temperaturedata_stat(char* deviceid, int num)
 		}
 		else 
 		{
-			if(ncolumn==1&&nrow==1)
+			if(nrow==1)
 			{
 				temperature_high = atoi(dbresult[2]);
 				temperature_low = atoi(dbresult[3]);
@@ -684,15 +684,19 @@ void temperaturedata_stat(char* deviceid, int num)
 			}
 			else
 			{
-				sprintf(sql, "insert into temperature_month(deviceid, temperature_high, temperature_low, month) values(%s, %d, %d, %d);", deviceid, num, num, month);
+				sprintf(sql, "insert into temperature_month(deviceid, temperature_high, temperature_low, month) values('%s', %d, %d, %d);", deviceid, num, num, month);
 				exec_sql_create(sql);			
 			}
-			sqlite3_free_table(dbresult);			
+			sqlite3_free_table(dbresult);		
 		}
 	}
 	else
 	{
-		if(ncolumn==1&&nrow==1)
+		sprintf(sql, "select temperature_high,temperature_low from temperature_day where deviceid='%s' and day=%d;", deviceid, day);
+		sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+		sqlite3_free(zErrMsg);
+		memset(sql, 0, 250);	
+		if(nrow==1)
 		{
 			temperature_high = atoi(dbresult[2]);
 			temperature_low = atoi(dbresult[3]);
@@ -708,7 +712,56 @@ void temperaturedata_stat(char* deviceid, int num)
 		}
 		else
 		{
-			sprintf(sql, "insert into temperature_day(deviceid, temperature_high, temperature_low, day) values(%s, %d, %d, %d);", deviceid, num, num, day);
+			sprintf(sql, "insert into temperature_day(deviceid, temperature_high, temperature_low, day) values('%s', %d, %d, %d);", deviceid, num, num, day);
+			exec_sql_create(sql);			
+		}
+		//月温度数据统计
+		sprintf(sql, "select temperature_high,temperature_low from temperature_month where deviceid='%s' and month=%d;", deviceid, month);
+		sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+		sqlite3_free(zErrMsg);
+		memset(sql, 0, 250);
+		if(nrow==1)
+		{
+			temperature_high = atoi(dbresult[2]);
+			temperature_low = atoi(dbresult[3]);
+			//更新高温
+			if(num > temperature_high)
+			{				
+				sprintf(sql, "update temperature_month set temperature_high=%d where deviceid='%s' and month=%d;", num, deviceid, month);
+				exec_sql_create(sql);						
+			}else if(num < temperature_low){//更新低温
+				sprintf(sql, "update temperature_month set temperature_low=%d where deviceid='%s' and month=%d;", num, deviceid, month);
+				exec_sql_create(sql);						
+			}					
+		}
+		else
+		{
+			sprintf(sql, "insert into temperature_month(deviceid, temperature_high, temperature_low, month) values('%s', %d, %d, %d);", deviceid, num, num, month);
+			exec_sql_create(sql);			
+		}
+		sqlite3_free_table(dbresult);
+		//年温度数据处理
+		sprintf(sql, "select temperature_high,temperature_low from temperature_year where deviceid='%s' and year=%d;", deviceid, year);
+		sqlite3_get_table(g_db, sql, &dbresult, &nrow, &ncolumn, &zErrMsg);
+		sqlite3_free(zErrMsg);
+		memset(sql, 0, 250);
+		if(nrow==1)
+		{
+			temperature_high = atoi(dbresult[2]);
+			temperature_low = atoi(dbresult[3]);
+			//更新高温
+			if(num > temperature_high)
+			{				
+				sprintf(sql, "update temperature_year set temperature_high=%d where deviceid='%s' and year=%d;", num, deviceid, year);
+				exec_sql_create(sql);						
+			}else if(num < temperature_low){//更新低温
+				sprintf(sql, "update temperature_year set temperature_low=%d where deviceid='%s' and year=%d;", num, deviceid, year);
+				exec_sql_create(sql);						
+			}					
+		}
+		else
+		{
+			sprintf(sql, "insert into temperature_year(deviceid, temperature_high, temperature_low, year) values('%s', %d, %d, %d);", deviceid, num, num, year);
 			exec_sql_create(sql);			
 		}
 		sqlite3_free_table(dbresult);			

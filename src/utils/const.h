@@ -41,7 +41,7 @@
 
 #define USERNAME    "root"
 #define PASSWORD    "root"
-#define TOPICSNUM          4
+#define TOPICSNUM          2
 #define RESPONSE_WAIT      3000 //消息响应等待时间(毫秒)
 #define ZGB_ADDRESS_LENGTH 8
 #define ZGBMSG_MAX_NUM     20
@@ -97,8 +97,8 @@
 #define SEN_ELECTRICITY_METER         0x54  //电量计 
 #define SEN_GAS_METER                 0x55  //气量计
 #define SEN_ANEMOGRAPH                0x56  //风速计
+#define SEN_WATER_IMMERSION           0x57  //水浸传感器
 #define DEV_ANYONE                    0xFF  //任何设备
-
 
 
 #define DEV_ONLINE 1
@@ -200,6 +200,8 @@
 #define ATTR_HOTWATER_TIME                0x54 //热水器灭菌时长
 #define ATTR_HOTWATER_CONNECTED_SOCKET    0x55 //热水器关联插座
 #define ATTR_HOTWATER_CONNECTED_TEMPERATURE_SEN 0x56 //热水器回水口温度传感器
+
+#define ATTR_WARNING_FINDING_WATER        0x60 //0:未发现水，1:检测到水
 
 #define TLV_VALUE_SPEED_HIGH    0x00     //风盘高速
 #define TLV_VALUE_SPEED_MEDIU   0x01     //风盘中速
