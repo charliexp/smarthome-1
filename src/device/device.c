@@ -1617,9 +1617,9 @@ int temperaturedata_query(cJSON* root,char* topic)
                 }
                 case OP_TYPE_DAY:
                 { 
-		            temperature_high = atoi((const char*)dbresult[i*2])/10;
-					temperature_low = atoi((const char*)dbresult[i*2+1])/10;
-		            date = atoi((const char*)dbresult[i*2+2]);						
+		            temperature_high = atoi((const char*)dbresult[i*3])/10;
+					temperature_low = atoi((const char*)dbresult[i*3+1])/10;
+		            date = atoi((const char*)dbresult[i*3+2]);						
                     if(day < date && date >= 29)
                     {
                         if(date == 29 && (month-1) == 2)
@@ -1647,17 +1647,17 @@ int temperaturedata_query(cJSON* root,char* topic)
                 }
                 case OP_TYPE_MONTH:
                 {
-		            temperature_high = atoi((const char*)dbresult[i*2])/10;
-					temperature_low = atoi((const char*)dbresult[i*2+1])/10;
-		            date = atoi((const char*)dbresult[i*2+2]);	                
+		            temperature_high = atoi((const char*)dbresult[i*3])/10;
+					temperature_low = atoi((const char*)dbresult[i*3+1])/10;
+		            date = atoi((const char*)dbresult[i*3+2]);	                
                     cJSON_AddNumberToObject(record, "month", date);
                     break;
                 }
                 case OP_TYPE_YEAR:
                 {
-		            temperature_high = atoi((const char*)dbresult[i*2])/10;
-					temperature_low = atoi((const char*)dbresult[i*2+1])/10;
-		            date = atoi((const char*)dbresult[i*2+2]);	                
+		            temperature_high = atoi((const char*)dbresult[i*3])/10;
+					temperature_low = atoi((const char*)dbresult[i*3+1])/10;
+		            date = atoi((const char*)dbresult[i*3+2]);	                
                     cJSON_AddNumberToObject(record, "year", date);
                     break;
                 }
@@ -1782,9 +1782,9 @@ int humidity_query(cJSON* root,char* topic)
                 }
                 case OP_TYPE_DAY:
                 { 
-		            humidity_high = atoi((const char*)dbresult[i*2])/10;
-					humidity_low = atoi((const char*)dbresult[i*2+1])/10;
-		            date = atoi((const char*)dbresult[i*2+2]);						
+		            humidity_high = atoi((const char*)dbresult[i*3])/10;
+					humidity_low = atoi((const char*)dbresult[i*3+1])/10;
+		            date = atoi((const char*)dbresult[i*3+2]);						
                     if(day < date && date >= 29)
                     {
                         if(date == 29 && (month-1) == 2)
@@ -1812,9 +1812,9 @@ int humidity_query(cJSON* root,char* topic)
                 }
                 case OP_TYPE_MONTH:
                 {
-		            humidity_high = atoi((const char*)dbresult[i*2])/10;
-					humidity_low = atoi((const char*)dbresult[i*2+1])/10;
-		            date = atoi((const char*)dbresult[i*2+2]);	                
+		            humidity_high = atoi((const char*)dbresult[i*3])/10;
+					humidity_low = atoi((const char*)dbresult[i*3+1])/10;
+		            date = atoi((const char*)dbresult[i*3+2]);	                
                     cJSON_AddNumberToObject(record, "month", date);
 					cJSON_AddNumberToObject(record, "humidity_high", humidity_high);
 					cJSON_AddNumberToObject(record, "humidity_low", humidity_low);					
@@ -1822,9 +1822,9 @@ int humidity_query(cJSON* root,char* topic)
                 }
                 case OP_TYPE_YEAR:
                 {
-		            humidity_high = atoi((const char*)dbresult[i*2])/10;
-					humidity_low = atoi((const char*)dbresult[i*2+1])/10;
-		            date = atoi((const char*)dbresult[i*2+2]);	                
+		            humidity_high = atoi((const char*)dbresult[i*3])/10;
+					humidity_low = atoi((const char*)dbresult[i*3+1])/10;
+		            date = atoi((const char*)dbresult[i*3+2]);	                
                     cJSON_AddNumberToObject(record, "year", date);
 					cJSON_AddNumberToObject(record, "humidity_high", humidity_high);
 					cJSON_AddNumberToObject(record, "humidity_low", humidity_low);					
