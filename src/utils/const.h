@@ -41,7 +41,7 @@
 
 #define USERNAME    "root"
 #define PASSWORD    "root"
-#define TOPICSNUM          2
+#define TOPICSNUM          6
 #define RESPONSE_WAIT      3000 //消息响应等待时间(毫秒)
 #define ZGB_ADDRESS_LENGTH 8
 #define ZGBMSG_MAX_NUM     20
