@@ -1053,14 +1053,17 @@ void devicedatainit(char* id,int type)
             memset(sql, 0, 100);        
         }          
     }
-	//温度数据初始化
+	//温度湿度数据初始化
 	else if(type == 3)
     {
         for(int i = 0;i<24;i++)
         {
             sprintf(sql, "INSERT INTO temperature_hour values('%s', 0, %d);", id, i);
             exec_sql_create(sql); 
-            memset(sql, 0, 100);        
+            memset(sql, 0, 100); 
+            sprintf(sql, "INSERT INTO humidity_hour values('%s', 0, %d);", id, i);
+            exec_sql_create(sql); 
+            memset(sql, 0, 100);  			
         }     
     }
 

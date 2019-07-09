@@ -843,6 +843,14 @@ void* zgbmsgprocess(void* argc)
                 if(nrow != 0) //数据库中有该设备
                 {
                     MYLOG_INFO("The device has been registered!");
+					if(devicetype == SEN_ENV_BOX)
+	                {
+	                    devicedatainit(db_deviceid, 3);                       
+	                }	
+					else if(devicetype == DEV_CONTROL_PANEL)
+	                {
+	                    devicedatainit(db_deviceid, 3);                       
+	                }						
 					sqlite3_free(zErrMsg);
 					sqlite3_free_table(dbresult);
                 }
