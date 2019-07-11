@@ -429,7 +429,7 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         {
         	cJSON_AddNumberToObject(device, "devicetype", SEN_WIND_PRESSURE);
         	status = cJSON_CreateObject();
-        	cJSON_AddNumberToObject(status, "type", ATTR_SOCKET_V);
+        	cJSON_AddNumberToObject(status, "type", ATTR_SEN_WINDPRESSURE);
         	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);          	
             break;        
@@ -570,6 +570,15 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddNumberToObject(device, "devicetype", SEN_WATER_IMMERSION);
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_WARNING_FINDING_WATER);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddItemToArray(statusarray, status);
+			break;
+        }
+        case SEN_WATER_PRESSURE:
+        {
+        	cJSON_AddNumberToObject(device, "devicetype", SEN_WATER_PRESSURE);
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_SEN_WATERPRESSURE);
         	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);
 			break;

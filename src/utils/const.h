@@ -98,6 +98,7 @@
 #define SEN_GAS_METER                 0x55  //气量计
 #define SEN_ANEMOGRAPH                0x56  //风速计
 #define SEN_WATER_IMMERSION           0x57  //水浸传感器
+#define SEN_WATER_PRESSURE            0x58  //水压传感器
 #define DEV_ANYONE                    0xFF  //任何设备
 
 
@@ -192,6 +193,7 @@
 #define ATTR_SEN_WATERPRESSURE 0x47         //水压
 #define ATTR_SEN_WATERSPEED    0x48         //水速
 #define ATTR_SEN_WINDSPEED     0x49         //风速 单位m/s
+#define ATTR_SEN_WINDPRESSURE  0x4A         //风压
 
 #define ATTR_HOTWATER_SYSTEM_STATUS       0x50 //热水系统状态       0关闭 1开启
 #define ATTR_HOTWATER_TEMPERATURE_TARGET  0x51 //热水器目标温度

@@ -1026,6 +1026,8 @@ void* zgbmsgprocess(void* argc)
                         case ATTR_SEN_WINDSPEED:
 						case ATTR_CONNECTED_AIRCONDITON:
 						case ATTR_WARNING_FINDING_WATER:
+						case ATTR_SEN_WINDPRESSURE:
+						case ATTR_SEN_WATERPRESSURE
                         {
                             temp = cJSON_GetObjectItem(attr_json, "value");
                             if(temp == NULL)
