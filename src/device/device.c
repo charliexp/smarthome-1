@@ -345,10 +345,12 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_CURTAIN_PERCENT);
         	cJSON_AddNumberToObject(status, "value", 0);
-        	cJSON_AddItemToArray(statusarray, status);  
+        	cJSON_AddItemToArray(statusarray, status);
+			status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_CURTAIN_TARGET_PERCENT);
         	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);
+			status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_CURTAIN_PAUSE);
         	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);			
@@ -357,7 +359,6 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         case SEN_ELECTRICITY_METER:
         {
         	cJSON_AddNumberToObject(device, "devicetype", SEN_ELECTRICITY_METER);
-        	status = cJSON_CreateObject();
         	status = cJSON_CreateObject();
         	cJSON_AddNumberToObject(status, "type", ATTR_SOCKET_E);
         	cJSON_AddNumberToObject(status, "value", 0);
