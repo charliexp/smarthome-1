@@ -961,6 +961,7 @@ void* zgbmsgprocess(void* argc)
                         case ATTR_SETTING_TEMPERATURE:
                         case ATTR_SETTING_HUMIDITY:
                         case ATTR_SYSMODE:
+						case ATTR_CURTAIN_TARGET_PERCENT:
                         {
                             temp = cJSON_GetObjectItem(attr_json, "value");
                             if(temp == NULL)
@@ -1027,7 +1028,8 @@ void* zgbmsgprocess(void* argc)
 						case ATTR_CONNECTED_AIRCONDITON:
 						case ATTR_WARNING_FINDING_WATER:
 						case ATTR_SEN_WINDPRESSURE:
-						case ATTR_SEN_WATERPRESSURE
+						case ATTR_SEN_WATERPRESSURE:
+						case ATTR_CURTAIN_PERCENT:							
                         {
                             temp = cJSON_GetObjectItem(attr_json, "value");
                             if(temp == NULL)

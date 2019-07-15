@@ -338,7 +338,22 @@ cJSON* create_device_status_json(char* deviceid, char devicetype)
         	cJSON_AddNumberToObject(status, "value", 0);
         	cJSON_AddItemToArray(statusarray, status);       	
             break;
-        }		
+        }
+		case DEV_CURTAIN:
+		{
+        	cJSON_AddNumberToObject(device, "devicetype", DEV_CURTAIN);
+        	status = cJSON_CreateObject();
+        	cJSON_AddNumberToObject(status, "type", ATTR_CURTAIN_PERCENT);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddItemToArray(statusarray, status);  
+        	cJSON_AddNumberToObject(status, "type", ATTR_CURTAIN_TARGET_PERCENT);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddItemToArray(statusarray, status);
+        	cJSON_AddNumberToObject(status, "type", ATTR_CURTAIN_PAUSE);
+        	cJSON_AddNumberToObject(status, "value", 0);
+        	cJSON_AddItemToArray(statusarray, status);			
+            break;
+        }	
         case SEN_ELECTRICITY_METER:
         {
         	cJSON_AddNumberToObject(device, "devicetype", SEN_ELECTRICITY_METER);
@@ -753,7 +768,8 @@ int mqtttozgb(cJSON* op, BYTE* zgbdata, int devicetype, Operationlog* log)
             case ATTR_SYSMODE:
             case ATTR_SETTING_HUMIDITY:
             case ATTR_SOCKET_E:
-            case ATTR_SOCKET_WORKTIME:
+			case ATTR_CURTAIN_TARGET_PERCENT:
+			case ATTR_CURTAIN_PAUSE:
             {
                 int j = 4;
                 int attrvalue = value;

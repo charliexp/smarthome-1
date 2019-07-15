@@ -171,13 +171,15 @@
 #define ATTR_WINDSPEED_NUM            0x07  //无级风速: 0-100
 #define ATTR_SETTING_HUMIDITY         0x08  //设备设定湿度：0-100
 #define ATTR_SETTING_TEMPERATURE      0x09  //设备设定温度: 0-100
+#define ATTR_CURTAIN_PERCENT          0x0A  //窗帘当前开合百分比
+#define ATTR_CURTAIN_TARGET_PERCENT   0x0B  //窗帘目标开合百分比
+#define ATTR_CURTAIN_PAUSE            0x0C  //窗帘暂停运行
 
 /*插座数据*/
 #define ATTR_SOCKET_E                 0x10 //电量
 #define ATTR_SOCKET_P                 0x11 //功率
 #define ATTR_SOCKET_V                 0x12 //电压
 #define ATTR_SOCKET_I                 0x13 //电流
-#define ATTR_SOCKET_WORKTIME          0x15 //插座通电时间
 
 #define ATTR_CONNECTED_AIRCONDITON    0x20  //面板是否连接了空调主机  0-未连接 1-连接
 #define ATTR_SYSTEM_BOILER            0x21  //系统控制锅炉的插座
