@@ -126,19 +126,19 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTAsync_message *me
         ret = temperaturedata_query(root, topic);      	   
     }
     /*环境湿度历史数据查询*/
-    else if(strstr(topicName, "temperature") != 0)
+    else if(strstr(topicName, "humidity") != 0)
     {
         ret = humidity_query(root, topic);      	   
     }	
     /*设备操作或查询*/
-	else if (strstr(topicName, "operation") != 0)
+	else if(strstr(topicName, "operation") != 0)
 	{
         MYLOG_INFO("get an operation msg.");
         
         msg.msgtype = QUEUE_MSG_DEVIC;
         msg.p_operation_json = cJSON_Duplicate(root, 1);
         
-        if (sendret = msgsnd(g_queueid, (void*)&msg, msglen, 0) != 0)
+        if(sendret = msgsnd(g_queueid, (void*)&msg, msglen, 0) != 0)
         {
             MYLOG_ERROR("sendret = %d", sendret);
             MYLOG_ERROR("send devicequeuemsg fail!");
