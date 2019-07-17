@@ -1800,7 +1800,7 @@ int humidity_query(cJSON* root,char* topic)
             {
                 case OP_TYPE_HOUR:
                 {
-		            humidity = atoi((const char*)dbresult[i*2])/10;
+		            humidity = atoi((const char*)dbresult[i*2]);
 		            date = atoi((const char*)dbresult[i*2+1]);					
                     cJSON_AddNumberToObject(record, "hour", date);
 					cJSON_AddNumberToObject(record, "humidity", humidity); 
@@ -1808,7 +1808,7 @@ int humidity_query(cJSON* root,char* topic)
                 }
                 case OP_TYPE_DAY:
                 { 
-		            humidity_high = atoi((const char*)dbresult[i*3])/10;
+		            humidity_high = atoi((const char*)dbresult[i*3]);
 					humidity_low = atoi((const char*)dbresult[i*3+1])/10;
 		            date = atoi((const char*)dbresult[i*3+2]);						
                     if(day < date && date >= 29)
@@ -1838,7 +1838,7 @@ int humidity_query(cJSON* root,char* topic)
                 }
                 case OP_TYPE_MONTH:
                 {
-		            humidity_high = atoi((const char*)dbresult[i*3])/10;
+		            humidity_high = atoi((const char*)dbresult[i*3]);
 					humidity_low = atoi((const char*)dbresult[i*3+1])/10;
 		            date = atoi((const char*)dbresult[i*3+2]);	                
                     cJSON_AddNumberToObject(record, "month", date);
@@ -1848,7 +1848,7 @@ int humidity_query(cJSON* root,char* topic)
                 }
                 case OP_TYPE_YEAR:
                 {
-		            humidity_high = atoi((const char*)dbresult[i*3])/10;
+		            humidity_high = atoi((const char*)dbresult[i*3]);
 					humidity_low = atoi((const char*)dbresult[i*3+1])/10;
 		            date = atoi((const char*)dbresult[i*3+2]);	                
                     cJSON_AddNumberToObject(record, "year", date);
