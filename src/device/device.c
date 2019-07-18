@@ -1677,6 +1677,8 @@ int temperaturedata_query(cJSON* root,char* topic)
 					temperature_low = atoi((const char*)dbresult[i*3+1])/10;
 		            date = atoi((const char*)dbresult[i*3+2]);	                
                     cJSON_AddNumberToObject(record, "month", date);
+					cJSON_AddNumberToObject(record, "temperature_high", temperature_high);
+					cJSON_AddNumberToObject(record, "temperature_low", temperature_low);					
                     break;
                 }
                 case OP_TYPE_YEAR:
@@ -1685,6 +1687,8 @@ int temperaturedata_query(cJSON* root,char* topic)
 					temperature_low = atoi((const char*)dbresult[i*3+1])/10;
 		            date = atoi((const char*)dbresult[i*3+2]);	                
                     cJSON_AddNumberToObject(record, "year", date);
+					cJSON_AddNumberToObject(record, "temperature_high", temperature_high);
+					cJSON_AddNumberToObject(record, "temperature_low", temperature_low);					
                     break;
                 }
                 default:
